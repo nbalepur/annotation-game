@@ -60,6 +60,7 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+web/game/static
 
 # Flask stuff:
 instance/
@@ -142,3 +143,6 @@ db.sqlite3
 .env.local
 
 pbdump.json
+
+# Static files
+web/static

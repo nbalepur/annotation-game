@@ -2,14 +2,15 @@
 // Plays client-side game
 
 const wsScheme = window.location.protocol == "https:" ? "wss" : "ws";
+console.log(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname)
 const gamesock = new WebSocket(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname);
 
 let username;
 let userID;
 let lockedOut;
 
-let gameState = 'idle';
-let currentAction = 'idle';
+let gameState = 'idle'; // idle, playing, contest
+let currentAction = 'idle'; // idle, buzz, chat, 
 
 let currentTime;
 let startTime;
@@ -21,10 +22,11 @@ let buzzTime = 8;
 
 let question;
 let category;
-let currQuestionContent;
 let players;
 let messages;
 let changeLocked = false;
+
+let isFeedbackLoaded = false;
 
 // Set up client
 gamesock.onopen = () => {
@@ -51,18 +53,13 @@ gamesock.onopen = () => {
  * Update game locally
  */
 function update() {
-
+  // console.log(gameState);
   if (question === undefined) {
     return;
   }
 
   let timePassed = currentTime - startTime;
   let duration = endTime - startTime;
-
-  // Update if game is going
-  buzzProgress.style.width = Math.round(100 * (1.1 * buzzPassedTime / buzzTime)) + '%';
-  contentProgress.style.width = Math.round(100 * (1.05 * timePassed / duration)) + '%';
-  questionSpace.innerHTML = currQuestionContent;
 
   switch (gameState) {
 
@@ -73,16 +70,21 @@ function update() {
         getAnswer();
       }
 
+      if (!isFeedbackLoaded) {
+        isFeedbackLoaded = true;
+        getCurrentFeedback();
+      }
+
       contentProgress.style.width = '0%';
-      questionSpace.innerHTML = question;
       break;
 
     case 'playing':
+
+      // Update if game is going
+      buzzProgress.style.width = Math.round(100 * (1.1 * buzzPassedTime / buzzTime)) + '%';
+      contentProgress.style.width = Math.round(100 * (1.05 * timePassed / duration)) + '%';
+
       buzzPassedTime = 0;
-      currQuestionContent = question.substring(
-        0,
-        Math.round(question.length * (timePassed / (duration - graceTime)))
-      );
       currentTime += 0.1;
 
       contentProgress.style.display = '';
@@ -92,10 +94,6 @@ function update() {
 
     case 'contest':
       timePassed = buzzStartTime - startTime;
-      currQuestionContent = question.substring(
-        0,
-        Math.round(question.length * (timePassed / (duration - graceTime)))
-      );
 
       contentProgress.style.display = 'none';
       buzzProgress.style.display = '';
@@ -103,16 +101,19 @@ function update() {
       // auto answer if over buzz time
       if (buzzPassedTime >= buzzTime) {
         answer();
+        contentProgress.style.width = '0%';
       }
       buzzPassedTime += 0.1;
       break;
   }
 
-  // transition to idle if overtime while playing
-  if (gameState === 'playing' && currentTime >= endTime) {
-    gameState = 'idle';
-    getAnswer();
-  }
+  // transition to idle if over time while playing
+  // if (gameState === 'playing' && currentTime >= endTime) {
+  //   gameState = 'idle';
+  //   getAnswer();
+  //   getCurrentFeedback();
+  //   //TODO: ADD MODAL FOR FEEDBACK HERE
+  // }
 }
 
 // Handle server response
@@ -128,7 +129,6 @@ gamesock.onmessage = message => {
     startTime = data['start_time'];
     endTime = data['end_time'];
     buzzStartTime = data['buzz_start_time'];
-    question = data['current_question_content'];
     category = data['category'];
     messages = data['messages'];
     players = data['players'];
@@ -140,180 +140,15 @@ gamesock.onmessage = message => {
 
     // Update scoreboard
     // TODO: Make it so we don't have to redo popover??
-    $('[data-toggle="popover"]').popover('hide')
-    scoreboard.innerHTML = '';
-    for (i = 0; i < players.length; i++) {
-      const icon = document.createElement('i');
-      icon.classList.add('fas');
-      icon.classList.add('fa-circle');
-      icon.style.margin = '0.5em';
-      icon.style.color = players[i]['active'] ? '#00ff00' : '#aaaaaa';
-
-      // Find last seen
-      const lastSeenDiff = Date.now() / 1000 - new Date(players[i]['last_seen']);
-      let lastSeenMessage = ''
-      if (lastSeenDiff < 1) {
-        lastSeenMessage = 'Now';
-      } else if (lastSeenDiff < 60) {
-        lastSeenMessage = `${Math.round(lastSeenDiff)} seconds ago`;
-      } else if (lastSeenDiff < 3600) {
-        lastSeenMessage = `${Math.round(lastSeenDiff / 60)} minutes ago`;
-      } else if (lastSeenDiff < 86400) {
-        lastSeenMessage = `${Math.round(lastSeenDiff / 3600)} hours ago`;
-      } else {
-        lastSeenMessage = 'Over a day ago';
-      }
-
-      const row = scoreboard.insertRow(icon);
-
-      const cell1 = row.insertCell();
-      cell1.append(icon);
-      cell1.append(players[i]['user_name']);
-      cell1.style = 'word-break: break-all;'
-
-      cell1.style.outline = 'none';
-      cell1.setAttribute('tabindex', 1)
-      cell1.setAttribute('data-toggle', 'popover');
-      cell1.setAttribute('data-trigger', 'hover');
-      cell1.setAttribute('title', players[i]['user_name']);
-      cell1.setAttribute('data-content', `
-        <table class="table">
-          <tbody>
-          <tr>
-            <td>Correct</td>
-            <td>${players[i]['correct']}</td>
-          </tr>
-          <tr>
-            <td>Negs</td>
-            <td>${players[i]['negs']}</td>
-          </tr>
-          <tr>
-            <td>Last Seen</td>
-            <td>${lastSeenMessage}</td>
-          </tr>
-        </tbody>
-        </table>
-      `);
-      $(cell1).popover({ html: true });
-
-      const cell2 = row.insertCell();
-      cell2.append(players[i]['score']);
-    }
+    updateScoreboard();
 
     // Update messages
-    messageSpace.innerHTML = '';
-    for (i = 0; i < messages.length; i++) {
+    updateMessages();
 
-      const icon = document.createElement('i');
-      let msgHTML;
-
-      icon.style.margin = '0.5em';
-      switch (messages[i]['tag']) {
-        case "buzz_correct":
-          icon.classList.add('far');
-          icon.classList.add('fa-circle');
-          icon.style.color = '#00cc00';
-          break;
-        case "buzz_wrong":
-          icon.classList.add('far');
-          icon.classList.add('fa-circle');
-          icon.style.color = '#cc0000';
-          break;
-        case "chat":
-          icon.classList.add('far');
-          icon.classList.add('fa-comment-alt');
-          icon.style.color = '#aaaaaa';
-          break;
-        case "leave":
-          icon.classList.add('fas');
-          icon.classList.add('fa-door-open');
-          icon.style.color = '#99bbff';
-          break;
-        case "join":
-          icon.classList.add('fas');
-          icon.classList.add('fa-sign-in-alt');
-          icon.style.color = '#99bbff';
-          break;
-        default:
-          icon.classList.add('far');
-          icon.classList.add('fa-circle');
-          icon.style.opacity = 0;
-          break;
-      }
-
-      switch (messages[i]['tag']) {
-        case "join":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has joined the room`;
-          break;
-        case "leave":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has left the room`;
-          break;
-        case "buzz_init":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has buzzed`;
-          break;
-        case "buzz_correct":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has correctly answered <strong>${messages[i]['content']}</strong>`;
-          break;
-        case "buzz_wrong":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has incorrectly answered <strong>${messages[i]['content']}</strong>`;
-          break;
-        case "buzz_forfeit":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has forfeit the question`;
-          break;
-        case "set_category":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has changed the category to <strong>${messages[i]['content']}</strong>`;
-          break;
-        case "set_difficulty":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has changed the difficulty to <strong>${messages[i]['content']}</strong>`;
-          break;
-        case "reset_score":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has reset their score`;
-          break;
-        case "chat":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong>: ${messages[i]['content']}`;
-          break;
-      }
-
-      const msg = document.createElement('div');
-      msg.innerHTML = msgHTML;
-
-      const leftSide = document.createElement('div');
-      leftSide.style.display = 'flex';
-      leftSide.style.alignItems = 'center';
-      leftSide.append(icon);
-      leftSide.append(msg);
-
-      const messageID = messages[i]['message_id'];
-      const reportBtn = document.createElement('div');
-      reportBtn.title = 'Flag as inappropriate'
-      reportBtn.className = 'btn btn-sm';
-      reportBtn.innerHTML = `<i class="fas fa-flag" style="color: gray;"></i>`;
-      reportBtn.onclick = () => {
-        const res = confirm('Report the player that wrote this message?');
-        if (res) {
-          reportMessage(messageID);
-        }
-      }
-
-      const li = document.createElement('li');
-      li.classList.add('list-group-item');
-      li.style.display = 'flex';
-      li.style.justifyContent = 'space-between';
-      li.style.alignItems = 'center';
-      li.append(leftSide);
-
-      if (messages[i]['tag'] === 'chat' ||
-        messages[i]['tag'] === 'buzz_correct' ||
-        messages[i]['tag'] === 'buzz_wrong') {
-        li.append(reportBtn);
-      }
-
-      messageSpace.append(li);
-    }
-
-    categoryHeader.innerHTML = `Category ${category}`;
+    categoryHeader.innerHTML = `Category: ${category}`;
     categorySelect.value = data['room_category'];
     difficultySelect.value = data['difficulty'];
+    speedSlider.value = data['speed'];
 
   } else if (data['response_type'] === "new_user") {
 
@@ -324,12 +159,23 @@ gamesock.onmessage = message => {
     lockedOut = false;
 
     // Update name
-    name.value = username;
+    nameInput.value = username;
     ping();
 
   } else if (data['response_type'] === "send_answer") {
 
-    answerHeader.innerHTML = `Answer: ${data['answer']}`;
+    setAnswer(data['answer']);
+
+  } else if (data['response_type'] === "get_shown_question") {
+
+    setQuestion(data['shown_question']);
+
+  } else if (data['response_type'] === "get_question_feedback") {
+
+    console.log(data)
+    enableFeedbackCollapseToggle();
+    expandFeedback();
+    populateQuestionFeedback(data['question_feedback']);
 
   } else if (data['response_type'] === "lock_out") {
 
@@ -361,77 +207,83 @@ gamesock.onmessage = message => {
 }
 
 /**
- * Ping server for state
+ * ==================================================
+ * START OF FUNCTIONS THAT CHANGE FRONTEND
+ * ==================================================
  */
+
+function setQuestion(question_text) {
+  questionSpace.innerHTML = question_text;
+  question = question_text;
+}
+
+function setAnswer(answer) {
+  answerHeader.innerHTML = `Answer: ${answer}`;
+}
+
+
+/**
+ * ==================================================
+ * END OF FUNCTIONS THAT CHANGE FRONTEND
+ * ==================================================
+ */
+
+
+/**
+ * ==================================================
+ * START OF FUNCTIONS THAT PRIMARILY SEND TO BACKEND
+ * ==================================================
+ */
+
+/**
+ * Send request to server
+ * @param {string} requestType - Type of request
+ * @param {string} [content=""] - Request content
+ */
+function sendRequest(requestType, content = "") {
+  const requestData = {
+    user_id: userID,
+    request_type: requestType,
+    content: content
+  };
+
+  gamesock.send(JSON.stringify(requestData));
+}
+
+// SENDING MESSAGES TO BACKEND
 function ping() {
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "ping",
-    content: ""
-  }));
+  sendRequest("ping");
 }
 
-/**
- * Join room
- */
-function join() {
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "join",
-    content: ""
-  }));
-}
-
-/**
- * Leave room
- */
-function leave() {
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "leave",
-    content: ""
-  }));
-}
-
-/**
- * Request new user
- */
-function newUser() {
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "new_user",
-    content: ""
-  }));
-}
-
-/**
- * Request change name
- */
-function setName() {
-  setCookie('user_name', name.value);
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "set_name",
-    content: name.value,
-  }));
-}
-
-/**
- * Init buzz
- */
-function buzz() {
-  if (!lockedOut && gameState === 'playing') {
-    gamesock.send(JSON.stringify({
-      user_id: userID,
-      request_type: "buzz_init",
-      content: ""
-    }));
+function getShownQuestion() {
+  if (gameState === 'playing' || gameState === 'contest') {
+    sendRequest("get_shown_question");
   }
 }
 
-/**
- * Answer question during buzz
- */
+function join() {
+  sendRequest("join");
+}
+
+function leave() {
+  sendRequest("leave");
+}
+
+function newUser() {
+  sendRequest("new_user");
+}
+
+function setName() {
+  setCookie('user_name', nameInput.value);
+  sendRequest("set_name", nameInput.value);
+}
+
+function buzz() {
+  if (!lockedOut && gameState === 'playing') {
+    sendRequest("buzz_init");
+  }
+}
+
 function answer() {
   if (gameState === 'contest') {
 
@@ -439,27 +291,24 @@ function answer() {
     buzzBtn.style.display = '';
     chatBtn.style.display = '';
     requestContentInput.style.display = 'none';
-    gameState = 'playing';
+    // gameState = 'playing';
     currentAction = 'idle';
 
-    gamesock.send(JSON.stringify({
-      user_id: userID,
-      request_type: "buzz_answer",
-      content: requestContentInput.value,
-    }));
+    sendRequest("buzz_answer", requestContentInput.value);
+    getShownQuestion();
+    update();
   }
 }
 
-/**
- * Open chat
- */
 function chatInit() {
   if (currentAction !== 'buzz') {
     currentAction = 'chat';
 
+    // Show input bar
     requestContentInput.value = '';
     requestContentInput.style.display = '';
 
+    // Hide buttons 
     nextBtn.style.display = 'none';
     buzzBtn.style.display = 'none';
     chatBtn.style.display = 'none';
@@ -470,9 +319,6 @@ function chatInit() {
   }
 }
 
-/**
- * Send chat message
- */
 function sendChat() {
   if (currentAction === 'chat') {
 
@@ -482,85 +328,52 @@ function sendChat() {
     requestContentInput.style.display = 'none';
     currentAction = 'idle';
 
-    if (requestContentInput.value === "") {
-      return;
-    }
-
-    gamesock.send(JSON.stringify({
-      user_id: userID,
-      request_type: "chat",
-      content: requestContentInput.value,
-    }));
+    if (requestContentInput.value !== "") sendRequest("chat", requestContentInput.value);
   }
 }
 
-/**
- * Request next question
- */
 function next() {
-  if (gameState == 'idle') {
-    questionSpace.innerHTML = '';
-
-    gamesock.send(JSON.stringify({
-      user_id: userID,
-      request_type: "next",
-      content: ""
-    }));
-  }
-}
-
-/**
- * Request answer
- */
-function getAnswer() {
   if (gameState === 'idle') {
-    gamesock.send(JSON.stringify({
-      user_id: userID,
-      request_type: "get_answer",
-    }));
+    gameState = 'playing';
+    isFeedbackLoaded = false;
+
+    // Collapse feedback section
+    disableFeedbackCollapseToggle();
+    collapseFeedback();
+    sendRequest("next");
   }
 }
 
-/**
- * Set category
- */
+function getAnswer() {
+  if (gameState === 'idle') sendRequest("get_answer");
+}
+
+function getCurrentFeedback() {
+  if (gameState === 'idle') sendRequest("get_current_question_feedback");
+}
+
 function setCategory() {
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "set_category",
-    content: categorySelect.value,
-  }));
+  sendRequest("set_category", categorySelect.value);
 }
 
-/**
- * Set difficulty
- */
 function setDifficulty() {
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "set_difficulty",
-    content: difficultySelect.value,
-  }));
+  sendRequest("set_difficulty", difficultySelect.value);
 }
 
-/**
- * Reset score
- */
+function setSpeed() {
+  if (gameState === 'idle') sendRequest("set_speed", speedSlider.value);
+}
+
 function resetScore() {
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "reset_score",
-  }));
+  sendRequest("reset_score");
+}
+
+function reportMessage(messageID) {
+  sendRequest("report_message", messageID);
 }
 
 /**
- * Report message
- * @param {*} messageID 
+ * ==================================================
+ * END OF FUNCTIONS THAT PRIMARILY SEND TO BACKEND
+ * ==================================================
  */
-function reportMessage(messageID) {
-  gamesock.send(JSON.stringify({
-    user_id: userID,
-    request_type: "report_message",
-    content: messageID,
-  }));
-}

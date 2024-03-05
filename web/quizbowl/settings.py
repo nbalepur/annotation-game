@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'game',
+    'fontawesomefree',
 ]
 
 MIDDLEWARE = [
@@ -79,14 +80,14 @@ CHANNEL_LAYERS = {
     "default": {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG':{'hosts':[
-            (os.getenv('REDIS_SERVICE', 'localhost'), int(os.getenv('REDIS_PORT', '6379'))),
+            (os.getenv('REDIS_SERVICE', '127.0.0.1'), int(os.getenv('REDIS_PORT', '6379'))),
         ]},
     },
 }
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -137,3 +138,18 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    }
+}

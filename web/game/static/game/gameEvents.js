@@ -12,12 +12,13 @@ const messageSpace = document.getElementById('message-space');
 const categoryHeader = document.getElementById('category-header');
 const categorySelect = document.getElementById('category-select');
 const difficultySelect = document.getElementById('difficulty-select');
-const name = document.getElementById('name');
+const speedSlider = document.getElementById('speed-slider');
 const nextBtn = document.getElementById('next-btn');
 const buzzBtn = document.getElementById('buzz-btn');
 const chatBtn = document.getElementById('chat-btn');
 const resetBtn = document.getElementById('reset-btn');
 const banAlert = document.getElementById('ban-alert');
+
 
 // Init tooltip and popover
 $(document).ready(() => {
@@ -25,31 +26,32 @@ $(document).ready(() => {
   $('[data-toggle="popover"]').popover();
 });
 
-// Timed events
+// Timed events (ms)
 window.setInterval(ping, 5000);
 window.setInterval(update, 100);
+window.setInterval(getShownQuestion, 50)
 
 window.onbeforeunload = leave;
 
-name.oninput = debounce(setName, 100);
+nameInput.addEventListener('input', debounce(setName, 100));
 
-document.onkeypress = (e) => {
-  if (e.target.tagName != 'INPUT') {
-    if (e.which == 110) {
+document.addEventListener('keypress', (e) => {
+  if (e.target.tagName != 'INPUT' && e.target.tagName != 'TEXTAREA') {
+    if (e.key == 'n') {
       next();
     }
-    else if (e.which == 32) {
+    else if (e.key == ' ') {
       buzz();
       e.preventDefault();
     }
-    else if (e.which == 99) {
+    else if (e.key == 'c') {
       chatInit();
     }
   }
-}
+});
 
-requestContentInput.onkeypress = (e) => {
-  if (e.which == 13) {
+requestContentInput.addEventListener('keypress', (e) => {
+  if (e.key == 'Enter') {
     if (currentAction == 'buzz') {
       answer();
     }
@@ -57,11 +59,12 @@ requestContentInput.onkeypress = (e) => {
       sendChat();
     }
   }
-}
+});
 
-categorySelect.onchange = setCategory;
-difficultySelect.onchange = setDifficulty;
-buzzBtn.onclick = buzz;
-nextBtn.onclick = next;
-resetBtn.onclick = resetScore;
-chatBtn.onclick = chatInit
+categorySelect.addEventListener('change', setCategory);
+difficultySelect.addEventListener('change', setDifficulty);
+buzzBtn.addEventListener('click', buzz);
+nextBtn.addEventListener('click', next);
+resetBtn.addEventListener('click', resetScore);
+chatBtn.addEventListener('click', chatInit);
+speedSlider.addEventListener('change', setSpeed);

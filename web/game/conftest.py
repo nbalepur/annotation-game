@@ -12,10 +12,8 @@ def django_db_setup(django_db_setup, django_db_blocker):
         Question.objects.create(
             pk=1,
             category="Literature",
-            points=20,
             content="Test content",
             answer="Test answer",
-            duration=23.6,
             difficulty="HS",
         )
 

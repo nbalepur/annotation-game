@@ -6,8 +6,28 @@ Real-time multiplayer quizbowl
 
 ## Local Development
 
+### Setting up PostgreSQL
+Install PostgreSQL. One quick and dirty way to install postgres is with:
+```
+conda install anaconda::postgresql
+```
+
+Ensure you initialize the desired file system location of the database cluster with the -D option. By default `/usr/local/pgsql/data`, but you might run into issues using WSL if you don't use a home subdirectory, but you might run into issues using WSL if you don't use a home subdirectory.
+```
+mkdir datadir
+pg_ctl -D datadir initdb
+pg_ctl -D datadir -l logfile start
+```
+
+Create a user called `postgres` and a database called `kuiperbowl`.
+```
+createuser -s postgres
+createdb -U postgres -h localhost -p 5432 kuiperbowl
+```
+
 Configure `web/.env.local` from `.env` with proper credentials.
 
+### Run the application
 Set up a virtual environment if desired and run:
 
 ```
