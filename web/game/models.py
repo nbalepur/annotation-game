@@ -193,6 +193,7 @@ class Player(models.Model):
 
 class QuestionFeedback(models.Model):
     """Feedback for quizbowl questions"""
+    submitted = models.BooleanField(default=False)
 
     class Rating(models.IntegerChoices):
         ONE_STAR = 1, _('1 Star')
@@ -231,7 +232,7 @@ class QuestionFeedback(models.Model):
     submitted_clue_order = models.JSONField(null=True, blank=True)
 
     # For each index i, the value of the below list is true if it is flagged to have content to be not factual
-    submitted_untrue_mask_list = models.JSONField(null=True, blank=True) 
+    submitted_factual_mask_list = models.JSONField(null=True, blank=True) 
     inversions = models.IntegerField()
 
     feedback_text = models.TextField(blank=True, max_length=500)

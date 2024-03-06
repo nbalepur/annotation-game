@@ -74,7 +74,6 @@ function update() {
         isFeedbackLoaded = true;
         getCurrentFeedback();
       }
-
       contentProgress.style.width = '0%';
       break;
 

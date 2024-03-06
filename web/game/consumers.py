@@ -356,6 +356,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             try:
                 feedback = QuestionFeedback.objects.get(question=current_question, player=player)
             except QuestionFeedback.DoesNotExist:
+                print()
                 feedback = QuestionFeedback.objects.create(
                     question=current_question,
                     player=player,
@@ -363,7 +364,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     interestingness_rating=0,
                     submitted_clue_list=current_question.clue_list,
                     submitted_clue_order=list(range(current_question.length)),
-                    submitted_untrue_mask_list=[False] * current_question.length,
+                    submitted_factual_mask_list=[True] * current_question.length,
                     inversions=0,
                     feedback_text='',
                     improved_question='',
@@ -495,7 +496,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 interestingness_rating=0,
                 submitted_clue_list=current_question.clue_list,
                 submitted_clue_order=list(range(current_question.length)),
-                submitted_untrue_mask_list=[False] * current_question.length,
+                submitted_factual_mask_list=[True] * current_question.length,
                 inversions=0,
                 feedback_text='',
                 improved_question='',
@@ -509,7 +510,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     interestingness_rating=0,
                     submitted_clue_list=current_question.clue_list,
                     submitted_clue_order=list(range(current_question.length)),
-                    submitted_untrue_mask_list=[False] * current_question.length,
+                    submitted_factual_mask_list=[True] * current_question.length,
                     inversions=0,
                     feedback_text='',
                     improved_question='',

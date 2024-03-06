@@ -29,3 +29,198 @@
 2024-03-05 23:07:44.231 EST [53559] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
 2024-03-05 23:07:44.242 EST [53560] LOG:  database system was shut down at 2024-03-05 23:07:43 EST
 2024-03-05 23:07:44.246 EST [53559] LOG:  database system is ready to accept connections
+2024-03-05 23:31:46.389 EST [53559] LOG:  received fast shutdown request
+2024-03-05 23:31:46.391 EST [53559] LOG:  aborting any active transactions
+2024-03-05 23:31:46.392 EST [53559] LOG:  background worker "logical replication launcher" (PID 53566) exited with exit code 1
+2024-03-05 23:31:46.393 EST [53561] LOG:  shutting down
+2024-03-05 23:31:46.407 EST [53559] LOG:  database system is shut down
+2024-03-05 23:31:56.480 EST [60695] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-05 23:31:56.481 EST [60695] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-05 23:31:56.486 EST [60695] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-05 23:31:56.498 EST [60696] LOG:  database system was shut down at 2024-03-05 23:31:56 EST
+2024-03-05 23:31:56.502 EST [60695] LOG:  database system is ready to accept connections
+2024-03-05 23:32:59.173 EST [61545] ERROR:  null value in column "answered_correctly" violates not-null constraint
+2024-03-05 23:32:59.173 EST [61545] DETAIL:  Failing row contains (2, f, , 0, ["In 1137 AH, Shaikh Mohamed Saeed rallied support for a militar..., [0, 1, 2, 3, 4, 5, 6, 7], [true, true, true, true, true, true, true, true], 0, , , null, 0, 0, f, null, 1, 292).
+2024-03-05 23:32:59.173 EST [61545] STATEMENT:  INSERT INTO "game_questionfeedback" ("submitted", "question_id", "player_id", "guessed_generation_method", "interestingness_rating", "submitted_clue_list", "submitted_clue_order", "submitted_factual_mask_list", "inversions", "feedback_text", "improved_question", "answered_correctly", "buzz_position_word", "buzz_position_norm", "buzzed", "submission_datetime") VALUES (false, 292, 1, '', 0, '["In 1137 AH, Shaikh Mohamed Saeed rallied support for a military force within a caliphate that regained strength after the Buyids'' decline.", "However, by the late 8th century, it had alienated Arab \"mawali\" and Iranian bureaucrats, losing authority over regions like Al-Andalus and Egypt to other dynasties.", "Al-Mutawakkil''s troops were annihilated in Anatolia in 863.", "Over time, the caliphs became ceremonial figures as viziers gained power and a Persian bureaucracy replaced the Arab aristocracy.", "This caliphate saw advancements in paper making, with assembly-line methods for hand-copying manuscripts.", "Its cultural growth ended abruptly in 1258 with the sack of Baghdad by the Mongols.", "It contributed significantly to Islamic philosophy, not necessarily religious or exclusively Muslim.", "For 10 points, name this caliphate that succeeded the Umayyads."]', '[0, 1, 2, 3, 4, 5, 6, 7]', '[true, true, true, true, true, true, true, true]', 0, '', '', NULL, 0, 0.0, false, NULL) RETURNING "game_questionfeedback"."id"
+2024-03-05 23:37:13.705 EST [60695] LOG:  received fast shutdown request
+2024-03-05 23:37:13.707 EST [60695] LOG:  aborting any active transactions
+2024-03-05 23:37:13.708 EST [60695] LOG:  background worker "logical replication launcher" (PID 60702) exited with exit code 1
+2024-03-05 23:37:13.739 EST [60697] LOG:  shutting down
+2024-03-05 23:37:13.750 EST [60695] LOG:  database system is shut down
+2024-03-05 23:37:14.494 EST [62554] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-05 23:37:14.494 EST [62554] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-05 23:37:14.499 EST [62554] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-05 23:37:14.511 EST [62555] LOG:  database system was shut down at 2024-03-05 23:37:14 EST
+2024-03-05 23:37:14.515 EST [62554] LOG:  database system is ready to accept connections
+2024-03-05 23:40:09.731 EST [63503] ERROR:  null value in column "answered_correctly" violates not-null constraint
+2024-03-05 23:40:09.731 EST [63503] DETAIL:  Failing row contains (2, f, , 0, ["This poem's speaker describes a \"savage race\" that \"hoard, ..., [0, 1, 2, 3], [true, true, true, true], 0, , , null, 0, 0, f, null, 1, 245).
+2024-03-05 23:40:09.731 EST [63503] STATEMENT:  INSERT INTO "game_questionfeedback" ("submitted", "question_id", "player_id", "guessed_generation_method", "interestingness_rating", "submitted_clue_list", "submitted_clue_order", "submitted_factual_mask_list", "inversions", "feedback_text", "improved_question", "answered_correctly", "buzz_position_word", "buzz_position_norm", "buzzed", "submission_datetime") VALUES (false, 245, 1, '', 0, '["This poem''s speaker describes a \"savage race\" that \"hoard, and sleep, and feed, and know not me\" in a kingdom that he plans to leave to his son, Telemachus.", "The speaker of this poem, who \"cannot rest from travel,\" declares that \"all times I have enjoyed / Greatly, have suffered greatly,\" and that \"I am become a name.\"", "The speaker of this poem, who \"strove with gods,\" declares his intention to \"sail beyond the sunset\" with his \"mariners, souls that have toiled, and wrought, and thought with me.\"", "For 10 points, name this poem by Alfred, Lord Tennyson about a hero of the Odyssey."]', '[0, 1, 2, 3]', '[true, true, true, true]', 0, '', '', NULL, 0, 0.0, false, NULL) RETURNING "game_questionfeedback"."id"
+2024-03-05 23:41:06.394 EST [62554] LOG:  received fast shutdown request
+2024-03-05 23:41:06.398 EST [62554] LOG:  aborting any active transactions
+2024-03-05 23:41:06.399 EST [62554] LOG:  background worker "logical replication launcher" (PID 62561) exited with exit code 1
+2024-03-05 23:41:06.399 EST [62556] LOG:  shutting down
+2024-03-05 23:41:06.441 EST [62554] LOG:  database system is shut down
+2024-03-05 23:41:07.244 EST [63785] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-05 23:41:07.244 EST [63785] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-05 23:41:07.249 EST [63785] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-05 23:41:07.263 EST [63786] LOG:  database system was shut down at 2024-03-05 23:41:06 EST
+2024-03-05 23:41:07.268 EST [63785] LOG:  database system is ready to accept connections
+2024-03-05 23:45:42.488 EST [65424] ERROR:  null value in column "answered_correctly" violates not-null constraint
+2024-03-05 23:45:42.488 EST [65424] DETAIL:  Failing row contains (2, f, , 0, ["This protein's DNA sequence has seven exons producing five tra..., [0, 1, 2, 3, 4], [true, true, true, true, true], 0, , , null, 0, 0, f, null, 1, 148).
+2024-03-05 23:45:42.488 EST [65424] STATEMENT:  INSERT INTO "game_questionfeedback" ("submitted", "question_id", "player_id", "guessed_generation_method", "interestingness_rating", "submitted_clue_list", "submitted_clue_order", "submitted_factual_mask_list", "inversions", "feedback_text", "improved_question", "answered_correctly", "buzz_position_word", "buzz_position_norm", "buzzed", "submission_datetime") VALUES (false, 148, 1, '', 0, '["This protein''s DNA sequence has seven exons producing five transcripts.", "Its monomeric form''s crystal structure was solved in 1990.", "Its nuclear organization varies across cell types, and its cytoskeleton requires other proteins for formation and function.", "It interacts extensively with cellular membranes, and its filaments can rapidly remodel, altering cellular structure in response to stimuli.", "For 10 points, name this major cytoskeleton component."]', '[0, 1, 2, 3, 4]', '[true, true, true, true, true]', 0, '', '', NULL, 0, 0.0, false, NULL) RETURNING "game_questionfeedback"."id"
+2024-03-05 23:46:21.501 EST [63785] LOG:  received fast shutdown request
+2024-03-05 23:46:21.503 EST [63785] LOG:  aborting any active transactions
+2024-03-05 23:46:21.504 EST [63785] LOG:  background worker "logical replication launcher" (PID 63792) exited with exit code 1
+2024-03-05 23:46:21.538 EST [63787] LOG:  shutting down
+2024-03-05 23:46:21.550 EST [63785] LOG:  database system is shut down
+2024-03-05 23:46:22.276 EST [65636] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-05 23:46:22.276 EST [65636] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-05 23:46:22.281 EST [65636] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-05 23:46:22.292 EST [65637] LOG:  database system was shut down at 2024-03-05 23:46:22 EST
+2024-03-05 23:46:22.295 EST [65636] LOG:  database system is ready to accept connections
+2024-03-05 23:47:08.385 EST [66508] ERROR:  null value in column "answered_correctly" violates not-null constraint
+2024-03-05 23:47:08.385 EST [66508] DETAIL:  Failing row contains (1, f, , 0, ["This work's protagonist recalls a time when she and her friend..., [0, 1, 2, 3], [true, true, true, true], 0, , , null, 0, 0, f, null, 1, 290).
+2024-03-05 23:47:08.385 EST [66508] STATEMENT:  INSERT INTO "game_questionfeedback" ("submitted", "question_id", "player_id", "guessed_generation_method", "interestingness_rating", "submitted_clue_list", "submitted_clue_order", "submitted_factual_mask_list", "inversions", "feedback_text", "improved_question", "answered_correctly", "buzz_position_word", "buzz_position_norm", "buzzed", "submission_datetime") VALUES (false, 290, 1, '', 0, '["This work''s protagonist recalls a time when she and her friend Moira were sent to the Red Center, a re-education camp run by Aunts.", "The protagonist of this work is assigned to a Commander named Fred, leading to her being called Offred.", "This work is set in a dystopian future where a theocratic regime called Gilead has taken over the United States and women are forced into sexual servitude to combat declining birth rates.", "For 10 points, name this novel written by Margaret Atwood."]', '[0, 1, 2, 3]', '[true, true, true, true]', 0, '', '', NULL, 0, 0.0, false, NULL) RETURNING "game_questionfeedback"."id"
+2024-03-05 23:47:26.374 EST [65636] LOG:  received fast shutdown request
+2024-03-05 23:47:26.376 EST [65636] LOG:  aborting any active transactions
+2024-03-05 23:47:26.377 EST [65636] LOG:  background worker "logical replication launcher" (PID 65643) exited with exit code 1
+2024-03-05 23:47:26.377 EST [65638] LOG:  shutting down
+2024-03-05 23:47:26.415 EST [65636] LOG:  database system is shut down
+2024-03-05 23:47:27.134 EST [66670] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-05 23:47:27.134 EST [66670] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-05 23:47:27.138 EST [66670] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-05 23:47:27.150 EST [66671] LOG:  database system was shut down at 2024-03-05 23:47:26 EST
+2024-03-05 23:47:27.154 EST [66670] LOG:  database system is ready to accept connections
+2024-03-06 00:02:49.510 EST [66670] LOG:  received fast shutdown request
+2024-03-06 00:02:49.513 EST [66670] LOG:  aborting any active transactions
+2024-03-06 00:02:49.515 EST [66670] LOG:  background worker "logical replication launcher" (PID 66677) exited with exit code 1
+2024-03-06 00:02:49.515 EST [66672] LOG:  shutting down
+2024-03-06 00:02:49.533 EST [66670] LOG:  database system is shut down
+2024-03-06 00:02:51.910 EST [70432] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:02:51.910 EST [70432] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:02:51.915 EST [70432] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:02:51.926 EST [70433] LOG:  database system was shut down at 2024-03-06 00:02:51 EST
+2024-03-06 00:02:51.930 EST [70432] LOG:  database system is ready to accept connections
+2024-03-06 00:04:17.761 EST [70432] LOG:  received fast shutdown request
+2024-03-06 00:04:17.765 EST [70432] LOG:  aborting any active transactions
+2024-03-06 00:04:17.766 EST [70432] LOG:  background worker "logical replication launcher" (PID 70439) exited with exit code 1
+2024-03-06 00:04:17.766 EST [70434] LOG:  shutting down
+2024-03-06 00:04:17.805 EST [70432] LOG:  database system is shut down
+2024-03-06 00:04:18.527 EST [71041] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:04:18.527 EST [71041] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:04:18.532 EST [71041] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:04:18.543 EST [71042] LOG:  database system was shut down at 2024-03-06 00:04:18 EST
+2024-03-06 00:04:18.546 EST [71041] LOG:  database system is ready to accept connections
+2024-03-06 00:09:08.700 EST [71041] LOG:  received fast shutdown request
+2024-03-06 00:09:08.704 EST [71041] LOG:  aborting any active transactions
+2024-03-06 00:09:08.705 EST [71041] LOG:  background worker "logical replication launcher" (PID 71048) exited with exit code 1
+2024-03-06 00:09:08.706 EST [71043] LOG:  shutting down
+2024-03-06 00:09:08.754 EST [71041] LOG:  database system is shut down
+2024-03-06 00:09:09.540 EST [72178] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:09:09.540 EST [72178] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:09:09.544 EST [72178] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:09:09.559 EST [72179] LOG:  database system was shut down at 2024-03-06 00:09:09 EST
+2024-03-06 00:09:09.562 EST [72178] LOG:  database system is ready to accept connections
+2024-03-06 00:17:23.213 EST [72178] LOG:  received fast shutdown request
+2024-03-06 00:17:23.217 EST [72178] LOG:  aborting any active transactions
+2024-03-06 00:17:23.218 EST [72178] LOG:  background worker "logical replication launcher" (PID 72185) exited with exit code 1
+2024-03-06 00:17:23.218 EST [72180] LOG:  shutting down
+2024-03-06 00:17:23.236 EST [72178] LOG:  database system is shut down
+2024-03-06 00:17:24.024 EST [74125] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:17:24.024 EST [74125] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:17:24.029 EST [74125] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:17:24.041 EST [74126] LOG:  database system was shut down at 2024-03-06 00:17:23 EST
+2024-03-06 00:17:24.045 EST [74125] LOG:  database system is ready to accept connections
+2024-03-06 00:28:00.263 EST [74125] LOG:  received fast shutdown request
+2024-03-06 00:28:00.266 EST [74125] LOG:  aborting any active transactions
+2024-03-06 00:28:00.267 EST [74125] LOG:  background worker "logical replication launcher" (PID 74132) exited with exit code 1
+2024-03-06 00:28:00.267 EST [74127] LOG:  shutting down
+2024-03-06 00:28:00.285 EST [74125] LOG:  database system is shut down
+2024-03-06 00:28:01.067 EST [76826] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:28:01.067 EST [76826] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:28:01.072 EST [76826] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:28:01.083 EST [76827] LOG:  database system was shut down at 2024-03-06 00:28:00 EST
+2024-03-06 00:28:01.087 EST [76826] LOG:  database system is ready to accept connections
+2024-03-06 00:45:24.718 EST [76826] LOG:  received fast shutdown request
+2024-03-06 00:45:24.722 EST [76826] LOG:  aborting any active transactions
+2024-03-06 00:45:24.723 EST [76826] LOG:  background worker "logical replication launcher" (PID 76833) exited with exit code 1
+2024-03-06 00:45:24.723 EST [76828] LOG:  shutting down
+2024-03-06 00:45:24.741 EST [76826] LOG:  database system is shut down
+2024-03-06 00:45:26.773 EST [80614] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:45:26.773 EST [80614] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:45:26.776 EST [80614] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:45:26.788 EST [80615] LOG:  database system was shut down at 2024-03-06 00:45:26 EST
+2024-03-06 00:45:26.792 EST [80614] LOG:  database system is ready to accept connections
+2024-03-06 00:47:57.486 EST [80614] LOG:  received fast shutdown request
+2024-03-06 00:47:57.491 EST [80614] LOG:  aborting any active transactions
+2024-03-06 00:47:57.492 EST [80614] LOG:  background worker "logical replication launcher" (PID 80621) exited with exit code 1
+2024-03-06 00:47:57.492 EST [80616] LOG:  shutting down
+2024-03-06 00:47:57.532 EST [80614] LOG:  database system is shut down
+2024-03-06 00:47:58.270 EST [81920] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:47:58.271 EST [81920] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:47:58.276 EST [81920] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:47:58.289 EST [81921] LOG:  database system was shut down at 2024-03-06 00:47:58 EST
+2024-03-06 00:47:58.293 EST [81920] LOG:  database system is ready to accept connections
+2024-03-06 00:49:53.131 EST [81920] LOG:  received fast shutdown request
+2024-03-06 00:49:53.133 EST [81920] LOG:  aborting any active transactions
+2024-03-06 00:49:53.134 EST [81920] LOG:  background worker "logical replication launcher" (PID 81927) exited with exit code 1
+2024-03-06 00:49:53.134 EST [81922] LOG:  shutting down
+2024-03-06 00:49:53.175 EST [81920] LOG:  database system is shut down
+2024-03-06 00:49:53.906 EST [82772] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:49:53.907 EST [82772] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:49:53.911 EST [82772] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:49:53.923 EST [82773] LOG:  database system was shut down at 2024-03-06 00:49:53 EST
+2024-03-06 00:49:53.927 EST [82772] LOG:  database system is ready to accept connections
+2024-03-06 00:52:37.357 EST [82772] LOG:  received fast shutdown request
+2024-03-06 00:52:37.361 EST [82772] LOG:  aborting any active transactions
+2024-03-06 00:52:37.362 EST [82772] LOG:  background worker "logical replication launcher" (PID 82779) exited with exit code 1
+2024-03-06 00:52:37.363 EST [82774] LOG:  shutting down
+2024-03-06 00:52:37.402 EST [82772] LOG:  database system is shut down
+2024-03-06 00:52:38.128 EST [83770] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 00:52:38.128 EST [83770] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 00:52:38.132 EST [83770] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 00:52:38.145 EST [83771] LOG:  database system was shut down at 2024-03-06 00:52:37 EST
+2024-03-06 00:52:38.149 EST [83770] LOG:  database system is ready to accept connections
+2024-03-06 01:04:04.315 EST [83770] LOG:  received fast shutdown request
+2024-03-06 01:04:04.319 EST [83770] LOG:  aborting any active transactions
+2024-03-06 01:04:04.320 EST [83770] LOG:  background worker "logical replication launcher" (PID 83777) exited with exit code 1
+2024-03-06 01:04:04.321 EST [83772] LOG:  shutting down
+2024-03-06 01:04:04.343 EST [83770] LOG:  database system is shut down
+2024-03-06 01:04:05.114 EST [86467] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 01:04:05.114 EST [86467] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 01:04:05.119 EST [86467] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 01:04:05.132 EST [86468] LOG:  database system was shut down at 2024-03-06 01:04:04 EST
+2024-03-06 01:04:05.136 EST [86467] LOG:  database system is ready to accept connections
+2024-03-06 01:04:11.524 EST [86467] LOG:  received fast shutdown request
+2024-03-06 01:04:11.529 EST [86467] LOG:  aborting any active transactions
+2024-03-06 01:04:11.530 EST [86467] LOG:  background worker "logical replication launcher" (PID 86474) exited with exit code 1
+2024-03-06 01:04:11.530 EST [86469] LOG:  shutting down
+2024-03-06 01:04:11.570 EST [86467] LOG:  database system is shut down
+2024-03-06 01:04:12.287 EST [86569] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 01:04:12.287 EST [86569] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 01:04:12.292 EST [86569] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 01:04:12.303 EST [86570] LOG:  database system was shut down at 2024-03-06 01:04:12 EST
+2024-03-06 01:04:12.307 EST [86569] LOG:  database system is ready to accept connections
+2024-03-06 01:05:38.615 EST [86569] LOG:  received fast shutdown request
+2024-03-06 01:05:38.619 EST [86569] LOG:  aborting any active transactions
+2024-03-06 01:05:38.620 EST [86569] LOG:  background worker "logical replication launcher" (PID 86576) exited with exit code 1
+2024-03-06 01:05:38.621 EST [86571] LOG:  shutting down
+2024-03-06 01:05:38.661 EST [86569] LOG:  database system is shut down
+2024-03-06 01:05:39.380 EST [87471] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 01:05:39.380 EST [87471] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 01:05:39.385 EST [87471] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 01:05:39.397 EST [87472] LOG:  database system was shut down at 2024-03-06 01:05:39 EST
+2024-03-06 01:05:39.401 EST [87471] LOG:  database system is ready to accept connections
+2024-03-06 01:11:19.416 EST [87471] LOG:  received fast shutdown request
+2024-03-06 01:11:19.421 EST [87471] LOG:  aborting any active transactions
+2024-03-06 01:11:19.422 EST [87471] LOG:  background worker "logical replication launcher" (PID 87478) exited with exit code 1
+2024-03-06 01:11:19.422 EST [87473] LOG:  shutting down
+2024-03-06 01:11:19.437 EST [87471] LOG:  database system is shut down
+2024-03-06 01:11:20.195 EST [89536] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-03-06 01:11:20.196 EST [89536] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-03-06 01:11:20.200 EST [89536] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-03-06 01:11:20.213 EST [89537] LOG:  database system was shut down at 2024-03-06 01:11:19 EST
+2024-03-06 01:11:20.217 EST [89536] LOG:  database system is ready to accept connections
+2024-03-06 01:11:50.722 EST [90022] ERROR:  null value in column "answered_correctly" violates not-null constraint
+2024-03-06 01:11:50.722 EST [90022] DETAIL:  Failing row contains (1, f, , 0, ["Oprah Winfrey's promotion of this work occurred during a chall..., [0, 1, 2, 3, 4, 5], [true, true, true, true, true, true], 0, , , null, 0, 0, f, null, 1, 172).
+2024-03-06 01:11:50.722 EST [90022] STATEMENT:  INSERT INTO "game_questionfeedback" ("submitted", "question_id", "player_id", "guessed_generation_method", "interestingness_rating", "submitted_clue_list", "submitted_clue_order", "submitted_factual_mask_list", "inversions", "feedback_text", "improved_question", "answered_correctly", "buzz_position_word", "buzz_position_norm", "buzzed", "submission_datetime") VALUES (false, 172, 1, '', 0, '["Oprah Winfrey''s promotion of this work occurred during a challenging period for memoirs, following James Frey''s autobiography scandal.", "Its author, influenced by existentialists at the Sorbonne, emphasizes \"true stories\" in this work.", "The protagonist, Eliezer, fears beatings and lies motionless in his bunk.", "A harrowing scene depicts the separation of men and women at Auschwitz-Birkenau.", "The narrative also questions the fate of the train that brought them there.", "For 10 points, name this Holocaust memoir by Elie Wiesel."]', '[0, 1, 2, 3, 4, 5]', '[true, true, true, true, true, true]', 0, '', '', NULL, 0, 0.0, false, NULL) RETURNING "game_questionfeedback"."id"

@@ -106,15 +106,26 @@ function createListItem(index, text) {
     // Create a Bootstrap grid container
     let gridContainer = document.createElement('div');
     gridContainer.className = 'row align-items-center';
+
+
+    // Create a column for the clue number
+    let clueNumberColumn = document.createElement('div');
+    clueNumberColumn.className = 'col-1';
+    clueNumberColumn.innerHTML = `
+        <div class="row">
+            <div class="col-1"><i class="fas fa-up-down"></i></div>
+            <div class="col-1">${index}</div>
+        </div>
+    `;
     
-    // Create a column for the text (col-9)
+    // Create a column for the clue text
     let textColumn = document.createElement('div');
-    textColumn.className = 'col-9';
+    textColumn.className = 'col-8';
     textColumn.textContent = text;
     
-    // Create a column for the toggle switch (col-3)
+    // Create a column for the toggle switch
     let toggleColumn = document.createElement('div');
-    toggleColumn.className = 'col-3';
+    toggleColumn.className = 'col-3 text-center';
     
     // Create the toggle switch container
     let toggleContainer = document.createElement('div');
@@ -126,16 +137,17 @@ function createListItem(index, text) {
     toggleInput.type = 'checkbox';
     toggleInput.role = 'switch';
     toggleInput.id = 'flexSwitchCheckDefault' + index;
+    toggleInput.checked = true;
     
     // Create the label for the toggle switch
     let toggleLabel = document.createElement('label');
     toggleLabel.className = 'form-check-label';
     toggleLabel.setAttribute('for', 'flexSwitchCheckDefault' + index);
     // Set initial text content for the label
-    toggleLabel.textContent = toggleInput.checked ? 'Untrue' : 'Factual';
+    toggleLabel.textContent = toggleInput.checked ? 'Factual' : 'Untrue';
     // Set initial color for the label
-    toggleLabel.classList.toggle('text-danger', toggleInput.checked);
-    toggleLabel.classList.toggle('text-success', !toggleInput.checked);
+    toggleLabel.classList.toggle('text-danger', !toggleInput.checked);
+    toggleLabel.classList.toggle('text-success', toggleInput.checked);
     
     // Append the toggle switch input and label to the container
     toggleContainer.appendChild(toggleInput);
@@ -145,6 +157,7 @@ function createListItem(index, text) {
     toggleColumn.appendChild(toggleContainer);
     
     // Append the text and toggle columns to the grid container
+    gridContainer.appendChild(clueNumberColumn);
     gridContainer.appendChild(textColumn);
     gridContainer.appendChild(toggleColumn);
     
@@ -164,7 +177,7 @@ function populatePyramidalityFactualAccuracyList(feedback) {
     // Iterate through submitted clues
     feedback.submitted_clue_order.forEach(function(index) {
         // Generate text for the clue
-        let text = 'Clue ' + index + ' | ' + feedback.submitted_clue_list[index];
+        let text = feedback.submitted_clue_list[index];
         // Create a list item with a toggle switch and label
         let [listItem, toggleInput, toggleLabel] = createListItem(index, text);
         // Append the list item to the list
@@ -173,10 +186,10 @@ function populatePyramidalityFactualAccuracyList(feedback) {
         // Add event listener to toggle switch input
         toggleInput.addEventListener('change', function() {
             // Update label text content based on toggle state
-            toggleLabel.textContent = toggleInput.checked ? 'Untrue' : 'Factual';
+            toggleLabel.textContent = toggleInput.checked ? 'Factual' : 'Untrue';
             // Update label color based on toggle state
-            toggleLabel.classList.toggle('text-danger', toggleInput.checked);
-            toggleLabel.classList.toggle('text-success', !toggleInput.checked);
+            toggleLabel.classList.toggle('text-danger', !toggleInput.checked);
+            toggleLabel.classList.toggle('text-success', toggleInput.checked);
         });
     });
 

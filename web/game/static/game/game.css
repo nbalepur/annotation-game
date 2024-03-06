@@ -72,4 +72,19 @@
 /* Draggable table */
 td:hover{
   cursor:move;
-  }
+}
+
+/* Show items in the pyramidality-factual-accuracy-list is draggable*/
+#pyramidality-factual-accuracy-list .row {
+    cursor: move; /* fallback if grab cursor is unsupported */
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+/* Apply a "closed-hand" cursor during drag operation. */
+#pyramidality-factual-accuracy-list .row:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
