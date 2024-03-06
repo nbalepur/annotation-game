@@ -241,10 +241,11 @@ class QuestionFeedback(models.Model):
     answered_correctly = models.BooleanField()
     buzz_position_word = models.IntegerField(validators=[MinValueValidator(0)])
     buzz_position_norm = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    buzzed = models.BooleanField(default=False)
     submission_datetime = models.DateTimeField(null=True)
 
     def __str__(self):
-        return f"Feedback for Question {self.question.question_id} by {self.player.user.username} ({self.player.user.user_id})"
+        return f"Feedback for Question {self.question.question_id} by {self.player.user.name} ({self.player.user.user_id})"
     
     class Meta:
         # Indicate a composite key for player and question

@@ -146,3 +146,4 @@ pbdump.json
 
 # Static files
 web/static
+**/logfile

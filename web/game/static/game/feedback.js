@@ -63,10 +63,10 @@ const expandFeedback = () => feedbackCollapse.classList.add('show');
 function handleGameStateChange() {
     if (gameState === 'idle' && questionSpace.innerText !== "") {
         // Enable collapsing
-        enableFeedback();
+        enableFeedbackCollapseToggle();
     } else {
         // Disable
-        disableFeedback();
+        disableFeedbackCollapseToggle();
     }
 }
 // ============================== FEEDBACK INITIATING END ==============================

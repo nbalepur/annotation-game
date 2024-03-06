@@ -81,7 +81,6 @@ function update() {
     case 'playing':
 
       // Update if game is going
-      buzzProgress.style.width = Math.round(100 * (1.1 * buzzPassedTime / buzzTime)) + '%';
       contentProgress.style.width = Math.round(100 * (1.05 * timePassed / duration)) + '%';
 
       buzzPassedTime = 0;
@@ -95,6 +94,7 @@ function update() {
     case 'contest':
       timePassed = buzzStartTime - startTime;
 
+      buzzProgress.style.width = Math.round(100 * (1.05 * buzzPassedTime / buzzTime)) + '%';
       contentProgress.style.display = 'none';
       buzzProgress.style.display = '';
 
@@ -107,13 +107,6 @@ function update() {
       break;
   }
 
-  // transition to idle if over time while playing
-  // if (gameState === 'playing' && currentTime >= endTime) {
-  //   gameState = 'idle';
-  //   getAnswer();
-  //   getCurrentFeedback();
-  //   //TODO: ADD MODAL FOR FEEDBACK HERE
-  // }
 }
 
 // Handle server response
