@@ -2,23 +2,25 @@
 {% load static %}
 
 {% block title %}
-<title>Home - Kuiperbowl</title>
+<title>Qantabowl</title>
 {% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="jumbotron">
 
-    <h1 class="display-4">Welcome to Kuiperbowl</h1>
+    <h1 class="display-4 text-center">Welcome to Qantabowl</h1>
 
-    <p class="lead">
-      Kuiperbowl is a real-time multiplayer trivia game.
+    <p class="lead text-center">
+      Qantabowl is a real-time single-player trivia game used by researchers at the University of Maryland to better generate quizbowl questions using AI.
+      <br>
       To play, please join one of the default rooms below, or you can make your own by typing in the field.
     </p>
 
     <div class="container">
       <div style="margin-left: 20%; margin-right: 20%; text-align: center;">
         <div class="mt-5">
+          <a class="btn btn-secondary m-1" href="/game/evaluation">hs</a>
           <a class="btn btn-secondary m-1" href="/game/hs">hs</a>
           <a class="btn btn-secondary m-1" href="/game/ms">ms</a>
           <a class="btn btn-secondary m-1" href="/game/college">college</a>

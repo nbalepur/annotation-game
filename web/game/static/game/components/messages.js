@@ -9,32 +9,26 @@ function updateMessages() {
         case "buzz_init":
           icon.classList.add('fa-regular');
           icon.classList.add('fa-bell');
-          icon.style.color = '#99bbff';
           break;
         case "buzz_correct":
           icon.classList.add('fa-solid');
           icon.classList.add('fa-circle-check');
-          icon.style.color = '#00cc00';
           break;
         case "buzz_wrong":
           icon.classList.add('fa-solid');
           icon.classList.add('fa-circle-xmark');
-          icon.style.color = '#cc0000';
           break;
         case "chat":
           icon.classList.add('fa-regular');
           icon.classList.add('fa-comment-alt');
-          icon.style.color = '#aaaaaa';
           break;
         case "leave":
           icon.classList.add('fas');
           icon.classList.add('fa-door-open');
-          icon.style.color = '#99bbff';
           break;
         case "join":
           icon.classList.add('fas');
           icon.classList.add('fa-sign-in-alt');
-          icon.style.color = '#99bbff';
           break;
         default:
           icon.classList.add('far');

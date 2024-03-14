@@ -5,6 +5,35 @@
 .navbar .navbar-brand img {
   height: 30px;
 }
+
+/* Font awesome icons */
+
+.fa-bell {
+  color: #99bbff;
+}
+
+.fa-circle-check {
+  color: #00cc00;
+}
+
+.fa-circle-xmark {
+  color: #cc0000;
+}
+
+.fa-comment-alt {
+  color: #aaaaaa;
+}
+
+.fa-door-open {
+  color: #99bbff;
+}
+
+.fa-sign-in-alt {
+  color: #99bbff;
+}
+
+
+
 /*  
  *  Pure CSS star rating that works without reversing order
  *  of inputs

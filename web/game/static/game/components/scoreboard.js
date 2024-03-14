@@ -26,9 +26,8 @@ function updateScoreboard() {
       const playerCell = row.insertCell();
       playerCell.append(icon);
       playerCell.append(players[i]['user_name']);
-      playerCell.style = 'word-break: break-all;'
+      playerCell.style = 'word-break: break-all; outline: none; display: flex; align-items: center;';
 
-      playerCell.style.outline = 'none';
       playerCell.setAttribute('tabindex', 1)
       playerCell.setAttribute('data-toggle', 'popover');
       playerCell.setAttribute('data-trigger', 'hover');

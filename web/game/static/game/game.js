@@ -165,9 +165,11 @@ gamesock.onmessage = message => {
   } else if (data['response_type'] === "get_question_feedback") {
 
     console.log(data)
+    
     enableFeedbackCollapseToggle();
     expandFeedback();
-    populateQuestionFeedback(data['question_feedback']);
+    populateInitialQuestionFeedback(data['question_feedback']);
+    populateAdditionalQuestionFeedback(data['question_feedback'])
 
   } else if (data['response_type'] === "lock_out") {
 
@@ -292,6 +294,24 @@ function answer() {
   }
 }
 
+function submitInitialFeedback() {
+  if (gameState === 'idle') {
+    sendRequest("submit_initial_feedback", {'guessed_generatation_method': guessedGenerationMethod, 'interestingness_rating': interestingnessRating});
+  }
+}
+
+function submitAdditionalFeedback() {
+  if (gameState === 'idle') {
+    sendRequest("submit_additional_feedback",
+    {
+      'submitted_clue_order': clueOrder,
+      'submitted_factual_mask_list': factualMaskList, 
+      'improved_question': improvedQuestionForm.value,
+      'feedback_text': feedbackTextForm.value
+    });
+  }
+}
+
 function chatInit() {
   if (currentAction !== 'buzz') {
     currentAction = 'chat';
@@ -325,7 +345,7 @@ function sendChat() {
 }
 
 function next() {
-  if (gameState === 'idle') {
+  if (gameState === 'idle' && completedFeedback) {
     gameState = 'playing';
     isFeedbackLoaded = false;
 

@@ -4,98 +4,13 @@
     </div>
 
     
-    <div class="card-body collapse" id="feedback-collapse">
+    <div class="card-body collapse" id="feedback-collapse" data-toggle="validator">
         <span id="feedback-space">
-            <div class="card-body">
-                <h5>Generation Method</h5>
-                <!-- Asking for user belief about the question -->
-                <div class="form-group">
-                    <label for="question-origin">Do you think is human-written or AI generated?</label>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="question-origin" id="human-written" value="human">
-                        <label class="form-check-label" for="human-written">
-                        Human-Written
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="question-origin" id="ai-generated" value="ai">
-                        <label class="form-check-label" for="ai-generated">
-                        AI-Generated
-                        </label>
-                    </div>
-                </div>
-            </div>
+            <form id="initial-feedback" class="needs-validation" novalidate></form>
 
-            <div class="card-body">
-                <h5>Interestingness</h5>
-                <div class="interestingness-rating">
-                    <label for="rating-group">How interesting is this question?</label>
-                    <div class="rating-group" id="interestingness-rating">
-                        <input disabled checked class="rating__input rating__input--none" name="rating3" id="rating3-none" value="0" type="radio">
-                        <label aria-label="1 star" class="rating__label" for="rating3-1"><i class="rating__icon rating__icon--star fas fa-star"></i></label>
-                        <input class="rating__input" name="rating3" id="rating3-1" value="1" type="radio">
-                        <label aria-label="2 stars" class="rating__label" for="rating3-2"><i class="rating__icon rating__icon--star fas fa-star"></i></label>
-                        <input class="rating__input" name="rating3" id="rating3-2" value="2" type="radio">
-                        <label aria-label="3 stars" class="rating__label" for="rating3-3"><i class="rating__icon rating__icon--star fas fa-star"></i></label>
-                        <input class="rating__input" name="rating3" id="rating3-3" value="3" type="radio">
-                        <label aria-label="4 stars" class="rating__label" for="rating3-4"><i class="rating__icon rating__icon--star fas fa-star"></i></label>
-                        <input class="rating__input" name="rating3" id="rating3-4" value="4" type="radio">
-                        <label aria-label="5 stars" class="rating__label" for="rating3-5"><i class="rating__icon rating__icon--star fas fa-star"></i></label>
-                        <input class="rating__input" name="rating3" id="rating3-5" value="5" type="radio">
-                    </div>
-                </div>
-            </div>
+            <form id="additional-feedback" class="needs-validation" novalidate></form>
 
-            <div class="card-body">
-                <h5>Pyramidality and Factual Accuracy</h5>
-                <div class="pyramidality-factual-accuracy">
-                    <ul id="pyramidality-factual-accuracy-list" class="list-group">
-                    </ul>
-                </div>
-            </div>
-
-            <div class="card-body">
-                <form id="feedback-form">
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label for="buzz-position-norm" class="form-label">Buzz Position (Relative)</label>
-                            <input type="number" class="form-control" id="buzz-position-norm" min="0" max="1" step="0.01" disabled>
-                        </div>
-                        <div class="col">
-                            <label for="buzz-position-word" class="form-label">Buzz Position (Word)</label>
-                            <input type="number" class="form-control" id="buzz-position-word" min="0" disabled>
-                        </div>
-                        <div class="col">
-                            <label for="answered-correctly" class="form-label">Answer Correctly</label>
-                            <select class="form-select" id="answered-correctly" disabled>
-                                <option selected disabled>Select</option>
-                                <option value="true">True</option>
-                                <option value="false">False</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label for="feedback-text" class="form-label">Feedback Text</label>
-                            <textarea class="form-control" id="feedback-text" maxlength="500" rows="3" required></textarea>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label for="improved-question" class="form-label">Improved Question</label>
-                            <textarea class="form-control" id="improved-question" maxlength="500" rows="3" required></textarea>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col">
-                            <button type="submit" class="btn btn-primary">Submit</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+            
         </span>
     </div>
 </div>

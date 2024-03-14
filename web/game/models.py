@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 import datetime
+from tzlocal import get_localzone
 
 import nltk
 # Download the punkt tokenizer models if not already downloaded
@@ -53,7 +54,8 @@ class Question(models.Model):
     answer = models.TextField()
     difficulty = models.TextField(default=Difficulty.HS)
     subdifficulty = models.TextField(default=Subdifficulty.REGULAR)
-    generation_method = models.CharField(default=GenerationMethod.HUMAN, choices=GenerationMethod.choices, max_length=30)
+    is_human_written = models.BooleanField()
+    generation_method = models.CharField(default=GenerationMethod.HUMAN, max_length=30)
     clue_list = models.JSONField(null=True, blank=True)
     length = models.IntegerField(default=0, validators=[MinValueValidator(0)])
 
@@ -118,7 +120,7 @@ class Room(models.Model):
     def get_players(self):
 
         valid_players = self.players.filter(
-            Q(last_seen__gte=datetime.datetime.now().timestamp() - 3600) &
+            Q(last_seen__gte=timezone.now().timestamp() - 3600) &
             Q(banned=False)
         )
 
@@ -129,7 +131,7 @@ class Room(models.Model):
             'correct': player.correct,
             'negs': player.negs,
             'last_seen': player.last_seen,
-            'active': datetime.datetime.now().timestamp() - player.last_seen < 10,
+            'active': timezone.now().timestamp() - player.last_seen < 10,
         } for player in valid_players]
 
         player_list.sort(key=lambda player: player['score'])
@@ -193,7 +195,6 @@ class Player(models.Model):
 
 class QuestionFeedback(models.Model):
     """Feedback for quizbowl questions"""
-    submitted = models.BooleanField(default=False)
 
     class Rating(models.IntegerChoices):
         ONE_STAR = 1, _('1 Star')
@@ -214,6 +215,8 @@ class QuestionFeedback(models.Model):
         related_name='feedback',
     )
 
+    guessed_answer = models.CharField(default="", max_length=30)
+
     # Generation Method
     guessed_generation_method = models.CharField(choices=Question.GenerationMethod.choices, max_length=30)
 
@@ -231,19 +234,25 @@ class QuestionFeedback(models.Model):
     # For example, [1, 0, 2, 3], means the 1st clue was easier than the 0th
     submitted_clue_order = models.JSONField(null=True, blank=True)
 
-    # For each index i, the value of the below list is true if it is flagged to have content to be not factual
+    # For each index i, the value of the below list is true if it is a factual clue
     submitted_factual_mask_list = models.JSONField(null=True, blank=True) 
     inversions = models.IntegerField()
 
     feedback_text = models.TextField(blank=True, max_length=500)
     improved_question = models.TextField(blank=False, max_length=500)
 
-    # Book-keeping
+    # Play data
     answered_correctly = models.BooleanField()
     buzz_position_word = models.IntegerField(validators=[MinValueValidator(0)])
     buzz_position_norm = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
     buzzed = models.BooleanField(default=False)
-    submission_datetime = models.DateTimeField(null=True)
+
+    # Feedback
+    solicit_additional_feedback = models.BooleanField(default=False)
+    guessed_gen_method_correctly = models.BooleanField(null=True)
+    initial_submission_datetime = models.DateTimeField(null=True)
+    additional_submission_datetime = models.DateTimeField(null=True)
+    is_submitted = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Feedback for Question {self.question.question_id} by {self.player.user.name} ({self.player.user.user_id})"

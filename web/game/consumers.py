@@ -1,4 +1,5 @@
 import math
+from copy import deepcopy
 from typing import Dict
 from asgiref.sync import async_to_sync
 from django.core.exceptions import ValidationError
@@ -99,9 +100,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data['request_type'] == 'get_answer':
                 self.get_answer(room)
             elif data['request_type'] == 'get_current_question_feedback':
-                self.get_current_question_feedback(room, p)
-            # elif data['request_type'] == 'get_all_feedback':
-            #     self.get_all_feedback(p)
+                self.get_init_question_feedback(room, p)
             elif data['request_type'] == 'set_name':
                 self.set_name(room, p, data['content'])
             elif data['request_type'] == 'next':
@@ -110,6 +109,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.buzz_init(room, p)
             elif data['request_type'] == 'buzz_answer':
                 self.buzz_answer(room, p, data['content'])
+            elif data['request_type'] == 'submit_initial_feedback':
+                self.submit_initial_feedback(room, p, data['content'])
+            elif data['request_type'] == 'submit_additional_feedback':
+                self.submit_additional_feedback(room, p, data['content'])
             elif data['request_type'] == 'set_category':
                 self.set_category(room, p, data['content'])
             elif data['request_type'] == 'set_difficulty':
@@ -134,7 +137,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Receive ping
         """
 
-        p.last_seen = datetime.datetime.now().timestamp()
+        p.last_seen = timezone.now().timestamp()
         p.save()
 
         update_time_state(room)
@@ -236,12 +239,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             q = random.choice(questions)
 
             room.state = 'playing'
-            room.start_time = datetime.datetime.now().timestamp()
-            print("start time", room.start_time)
-            print("room speed", room.speed)
+            room.start_time = timezone.now().timestamp()
+            # print("start time", room.start_time)
+            # print("room speed", room.speed)
             room.end_time = room.start_time + (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
-            print("end time", room.end_time)
-            print("total time", room.end_time - room.start_time)
+            # print("end time", room.end_time)
+            # print("total time", room.end_time - room.start_time)
             room.current_question = q
 
             room.save()
@@ -275,7 +278,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             room.state = 'contest'
             room.buzz_player = p
-            room.buzz_start_time = datetime.datetime.now().timestamp()
+            room.buzz_start_time = timezone.now().timestamp()
             room.save()
 
             p.locked_out = True
@@ -347,7 +350,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     "locked_out": True,
                 })
 
-                buzz_duration = datetime.datetime.now().timestamp() - room.buzz_start_time
+                buzz_duration = timezone.now().timestamp() - room.buzz_start_time
                 room.start_time += buzz_duration
                 room.end_time += buzz_duration
                 room.save()
@@ -356,10 +359,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             try:
                 feedback = QuestionFeedback.objects.get(question=current_question, player=player)
             except QuestionFeedback.DoesNotExist:
-                print()
                 feedback = QuestionFeedback.objects.create(
                     question=current_question,
                     player=player,
+                    guessed_answer=cleaned_content,
                     guessed_generation_method='',
                     interestingness_rating=0,
                     submitted_clue_list=current_question.clue_list,
@@ -386,8 +389,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             )
 
         # Forfeit question if buzz time up
-        elif datetime.datetime.now().timestamp() >= room.buzz_start_time + GRACE_TIME:
-            buzz_duration = datetime.datetime.now().timestamp() - room.buzz_start_time
+        elif timezone.now().timestamp() >= room.buzz_start_time + GRACE_TIME:
+            buzz_duration = timezone.now().timestamp() - room.buzz_start_time
             room.state = 'playing'
             room.start_time += buzz_duration
             room.end_time += buzz_duration
@@ -407,6 +410,88 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     'data': get_room_response_json(room),
                 }
             )
+
+    def submit_initial_feedback(self, room: Room, player: Player, content):
+        if room.state == 'idle':
+            try:
+                current_question: Question = room.current_question
+                feedback = QuestionFeedback.objects.get(question=current_question, player=player)
+                if feedback.initial_submission_datetime is None:
+                    feedback.guessed_generation_method = content['guessed_generatation_method']
+                    feedback.interestingness_rating = content['interestingness_rating']
+                    feedback.initial_submission_datetime = timezone.now()
+                    feedback.is_submitted = True
+
+                    feedback.solicit_additional_feedback = (
+                        feedback.guessed_generation_method == Question.GenerationMethod.AI or
+                        not current_question.is_human_written
+                    )
+
+                    feedback.guessed_gen_method_correctly = (
+                        (current_question.is_human_written and feedback.guessed_generation_method == Question.GenerationMethod.HUMAN)
+                        or
+                        (not current_question.is_human_written and
+                        feedback.guessed_generation_method == Question.GenerationMethod.AI)
+                    )
+
+                    feedback.save()
+            except ValidationError as e:
+                print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
+            except KeyError as e:
+                print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
+                print(f"KeyError: {e}")
+            
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'update_room',
+                    'data': {
+                        "response_type": "get_question_feedback",
+                        "question_feedback": get_question_feedback_response_json(feedback),
+                    },
+                }
+            )
+    
+    def submit_additional_feedback(self, room: Room, player: Player, content):
+        if room.state == 'idle':
+            try:
+                current_question: Question = room.current_question
+                feedback = QuestionFeedback.objects.get(question=current_question, player=player)
+                if feedback.additional_submission_datetime is None:
+                    print(content['submitted_clue_order'])
+                    print([(i, type(i)) for i in content['submitted_clue_order']])
+                    feedback.submitted_clue_order = content['submitted_clue_order']
+                    feedback.submitted_factual_mask_list = content['submitted_factual_mask_list']
+
+                    # When counting inversions, we should ignore clues marked non-factual, since untrue things probably
+                    # shouldn't have a "difficulty"
+                    clue_order_for_factual_clues = list(filter(lambda i: feedback.submitted_factual_mask_list[i], feedback.submitted_clue_order))
+                    feedback.inversions = count_inversions(clue_order_for_factual_clues)
+                    feedback.submitted_clue_list = [current_question.clue_list[i] for i in feedback.submitted_clue_order]
+
+                    feedback.improved_question = content['improved_question']
+                    feedback.feedback_text = content['feedback_text']
+                    feedback.additional_submission_datetime = timezone.now()
+                    feedback.is_submitted = True
+
+                    feedback.save()
+            except ValidationError as e:
+                print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
+            except KeyError as e:
+                print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
+                print(f"KeyError: {e}")
+            
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'update_room',
+                    'data': {
+                        "response_type": "get_question_feedback",
+                        "question_feedback": get_question_feedback_response_json(feedback),
+                    },
+                }
+            )
+
 
     def get_answer(self, room):
         """Get answer for room question
@@ -440,7 +525,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     
     def compute_words_to_show(self, room: Room) -> int:
         """Computes the number of words to show based on the elapsed time in the game."""
-        current_time = datetime.datetime.now().timestamp()
+        current_time = timezone.now().timestamp()
         time_per_chunk = (60 / room.speed)
 
         if room.state == Room.GameState.IDLE:
@@ -475,7 +560,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             }
         )
 
-    def get_current_question_feedback(self, room: Room, player: Player) -> None:
+    def get_init_question_feedback(self, room: Room, player: Player) -> None:
         """After a question is completed (i.e. the room becomes idle),
         send a message containing the feedback regarding the question"""
 
@@ -488,21 +573,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         try:
             feedback = QuestionFeedback.objects.get(question=current_question, player=player)
         except QuestionFeedback.DoesNotExist:
-            print("fucl")
-            feedback = QuestionFeedback.objects.create(
-                question=current_question,
-                player=player,
-                guessed_generation_method='',
-                interestingness_rating=0,
-                submitted_clue_list=current_question.clue_list,
-                submitted_clue_order=list(range(current_question.length)),
-                submitted_factual_mask_list=[True] * current_question.length,
-                inversions=0,
-                feedback_text='',
-                improved_question='',
-                buzz_position_word=0,
-                buzz_position_norm=0.0,
-            )
             feedback = QuestionFeedback.objects.create(
                     question=current_question,
                     player=player,
@@ -680,10 +750,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 # === Helper methods ===
 
 def update_time_state(room):
+
     """Checks time and updates state
     """
     if not room.state == 'contest':
-        if datetime.datetime.now().timestamp() >= room.end_time + GRACE_TIME:
+        if timezone.now().timestamp() >= room.end_time + GRACE_TIME:
             room.state = 'idle'
             room.save()
 
@@ -695,7 +766,7 @@ def get_room_response_json(room):
     return {
         "response_type": "update",
         "game_state": room.state,
-        "current_time": datetime.datetime.now().timestamp(),
+        "current_time": timezone.now().timestamp(),
         "start_time": room.start_time,
         "end_time": room.end_time,
         "buzz_start_time": room.buzz_start_time,
@@ -714,8 +785,6 @@ def get_question_feedback_response_json(feedback: QuestionFeedback) -> Dict:
     
     # Convert serialized data to dictionary
     feedback_dict = json.loads(feedback_json)[0]['fields']
-    # print("feedback dict response")
-    # print(feedback_dict)
     
     return feedback_dict
 
@@ -728,3 +797,36 @@ def create_message(tag, p, content, room):
         m.save()
     except ValidationError as e:
         return
+
+def count_inversions(arr):
+    def merge(arr, left, mid, right):
+        temp = []
+        i = left
+        j = mid + 1
+        inv_count = 0
+        
+        while i <= mid and j <= right:
+            if arr[i] <= arr[j]:
+                temp.append(arr[i])
+                i += 1
+            else:
+                temp.append(arr[j])
+                j += 1
+                inv_count += mid - i + 1
+        
+        temp.extend(arr[i:mid + 1])
+        temp.extend(arr[j:right + 1])
+        arr[left:right + 1] = temp
+        
+        return inv_count
+
+    def merge_sort(arr, left, right):
+        inv_count = 0
+        if left < right:
+            mid = (left + right) // 2
+            inv_count += merge_sort(arr, left, mid)
+            inv_count += merge_sort(arr, mid + 1, right)
+            inv_count += merge(arr, left, mid, right)
+        return inv_count
+
+    return merge_sort(arr, 0, len(arr) - 1)
