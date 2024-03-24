@@ -74,7 +74,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         if len(User.objects.filter(user_id=data['user_id'])) <= 0:
             user = self.new_user(room)
             data['user_id'] = user.user_id
-            self.join(room, data)
 
         # Handle join
         if data['request_type'] == 'join':
@@ -104,7 +103,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data['request_type'] == 'set_name':
                 self.set_name(room, p, data['content'])
             elif data['request_type'] == 'next':
-                self.next(room)
+                self.next(room, p)
             elif data['request_type'] == 'buzz_init':
                 self.buzz_init(room, p)
             elif data['request_type'] == 'buzz_answer':
@@ -148,7 +147,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             'locked_out': p.locked_out,
         })
 
-    def join(self, room, data):
+    def join(self, room: Room, data):
         """Join room
         """
         user = User.objects.filter(user_id=data['user_id']).first()
@@ -157,20 +156,34 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         # Create player if doesn't exist
         p = user.players.filter(room=room).first()
-        if p == None:
-            p = Player.objects.create(room=room, user=user)
 
-        create_message("join", p, None, room)
-
-        self.send_json(get_room_response_json(room))
-
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
-            {
-                'type': 'update_room',
-                'data': get_room_response_json(room),
-            }
+        # Get the players in the room that have last been seen within 10 seconds ago, excluding the user trying to join
+        current_players = room.players.filter(
+            Q(last_seen__gte=timezone.now().timestamp() - 10) &
+            ~Q(user__user_id=data['user_id'])
         )
+
+        if p == None and len(current_players) < room.max_players:
+            p = Player.objects.create(room=room, user=user)
+        
+        if len(current_players) >= room.max_players:
+            self.too_many_players()
+        else:
+            create_message("join", p, None, room)
+
+            self.send_json(get_room_response_json(room))
+
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'update_room',
+                    'data': get_room_response_json(room),
+                }
+            )
+
+            if room.current_question:
+                self.get_shown_question(room=room)
+                self.get_answer(room=room)
 
     def leave(self, room, p):
         """Leave room
@@ -219,7 +232,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         except ValidationError as e:
             return
 
-    def next(self, room):
+    def next(self, room: Room, player: Player):
         """Next question
         """
 
@@ -232,6 +245,20 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 else Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty))
             )
 
+            if room.collects_feedback:
+                if room.current_question:
+                    current_feedback = QuestionFeedback.objects.get(player=player, question=room.current_question)
+                    
+                    # Do not execute next if not finished with feedback
+                    if not current_feedback.is_completed(): return
+
+                # Get the IDs of questions with feedback from the player
+                questions_ids_with_feedback = [feedback.question.question_id for feedback in player.feedback.all()]
+
+                # Exclude questions with feedback from the player
+                questions_without_feedback = Question.objects.exclude(question_id__in=questions_ids_with_feedback)
+                questions = questions_without_feedback if len(questions_without_feedback) > 0 else questions
+
             # Abort if no questions
             if len(questions) <= 0:
                 return
@@ -240,11 +267,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             room.state = 'playing'
             room.start_time = timezone.now().timestamp()
-            # print("start time", room.start_time)
-            # print("room speed", room.speed)
             room.end_time = room.start_time + (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
-            # print("end time", room.end_time)
-            # print("total time", room.end_time - room.start_time)
             room.current_question = q
 
             room.save()
@@ -458,8 +481,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 current_question: Question = room.current_question
                 feedback = QuestionFeedback.objects.get(question=current_question, player=player)
                 if feedback.additional_submission_datetime is None:
-                    print(content['submitted_clue_order'])
-                    print([(i, type(i)) for i in content['submitted_clue_order']])
                     feedback.submitted_clue_order = content['submitted_clue_order']
                     feedback.submitted_factual_mask_list = content['submitted_factual_mask_list']
 
@@ -662,7 +683,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def set_speed(self, room, p, content):
         """Set room speed
         """
-        print("RAN", int(clean_content(content)))
         # Abort if change locked
 
         try:
@@ -723,6 +743,17 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """
         self.send_json({
             "response_type": "kick",
+        })
+        async_to_sync(self.channel_layer.group_discard)(
+            self.room_name,
+            self.channel_name
+        )
+    
+    def too_many_players(self):
+        """Too many players in a room. Cannot join room.
+        """
+        self.send_json({
+            "response_type": "too_many_players",
         })
         async_to_sync(self.channel_layer.group_discard)(
             self.room_name,

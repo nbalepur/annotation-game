@@ -197,6 +197,10 @@ gamesock.onmessage = message => {
   } else if (data['response_type'] === "kick") {
     gamesock.close();
     banAlert.style = 'display: block;'
+  } else if (data['response_type'] === "too_many_players") {
+    gamesock.close();
+    alert("Sorry! You can't let you join that room since there are too many active players. Rooms meant for evaluation only allow 1 player.")
+    window.location.href = "/"
   }
 }
 
@@ -290,7 +294,6 @@ function answer() {
 
     sendRequest("buzz_answer", requestContentInput.value);
     getShownQuestion();
-    update();
   }
 }
 

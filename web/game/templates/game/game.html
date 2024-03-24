@@ -2,7 +2,12 @@
 {% load static %}
 
 {% block title %}
-<title>{{ room.label }} - Kuiperbowl</title>
+{% if room.collects_feedback %}
+  <title>Evaluation - Kuiperbowl</title>
+{% else %}
+  <title>{{ room.label }} - Kuiperbowl</title>
+{% endif %}
+
 {% endblock %}
 
 {% block content %}
@@ -77,9 +82,10 @@
             <div class="form-group mb-3">
               <label for="difficulty-select">Difficulty:</label>
               <select id="difficulty-select" class="form-control">
+                <!-- <option value="MS">MS</option> -->
                 <option value="HS">HS</option>
-                <option value="MS">MS</option>
-                <option value="College">College</option>
+                <!-- <option value="College">College</option>
+                <option value="Open">Open</option> -->
               </select>
             </div>
             <div class="form-group mb-3">
@@ -127,7 +133,9 @@
 
       <br>
 
-      {% include "game/feedback.html" %}
+      {% if room.collects_feedback %}
+          {% include "game/feedback.html" %}
+      {% endif %}
 
     </div>
     <div class="col-3">

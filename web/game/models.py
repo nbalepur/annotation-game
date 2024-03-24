@@ -3,8 +3,6 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
-import datetime
-from tzlocal import get_localzone
 
 import nltk
 # Download the punkt tokenizer models if not already downloaded
@@ -77,6 +75,8 @@ class Room(models.Model):
         CONTEST = 'contest', _('Contest')
 
     label = models.SlugField(unique=True)
+    collects_feedback = models.BooleanField(default=False)
+    max_players = models.IntegerField(default=20, validators=[MinValueValidator(0)])
     state = models.CharField(max_length=9, choices=GameState.choices, default=GameState.IDLE)
 
     current_question = models.ForeignKey(
@@ -149,7 +149,7 @@ class Room(models.Model):
         } for m in valid_messages.order_by('timestamp').reverse()[:50]]
 
         return chrono_messages
-
+    
 
 class User(models.Model):
     """Site user"""
@@ -257,6 +257,11 @@ class QuestionFeedback(models.Model):
     def __str__(self):
         return f"Feedback for Question {self.question.question_id} by {self.player.user.name} ({self.player.user.user_id})"
     
+    def is_completed(self) -> bool:
+        return ((self.additional_submission_datetime != None and self.solicit_additional_feedback)
+                or
+                (self.initial_submission_datetime != None and self.is_submitted and not self.solicit_additional_feedback))
+
     class Meta:
         # Indicate a composite key for player and question
         unique_together = (('question', 'player'),)

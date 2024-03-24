@@ -2,24 +2,26 @@
 {% load static %}
 
 {% block title %}
-<title>Qantabowl</title>
+<title>The Annotation Game</title>
 {% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="jumbotron">
 
-    <h1 class="display-4 text-center">Welcome to Qantabowl</h1>
+    <h1 class="display-4 text-center">Welcome to</h1>
+    <h1 class="display-1 text-center">The Annotation Game</h1>
 
     <p class="lead text-center">
-      Qantabowl is a real-time single-player trivia game used by researchers at the University of Maryland to better generate quizbowl questions using AI.
-      <br>
-      To play, please join one of the default rooms below, or you can make your own by typing in the field.
+      The Annotation Game is a trivia game used by researchers at the University of Maryland to generate better quizbowl questions using AI.
+    </br>
+      Please <b>allow cookies</b> to aid our collection of data.
     </p>
 
     <div class="container">
       <div style="margin-left: 20%; margin-right: 20%; text-align: center;">
-        <div class="mt-5">
+        <button id="evaluation-play-btn" type="button" class="btn btn-success btn-lg">Play</button>
+        <!-- <div class="mt-5">
           <a class="btn btn-secondary m-1" href="/game/evaluation">hs</a>
           <a class="btn btn-secondary m-1" href="/game/hs">hs</a>
           <a class="btn btn-secondary m-1" href="/game/ms">ms</a>
@@ -28,23 +30,23 @@
           <a class="btn btn-secondary m-1" href="/game/science">science</a>
           <a class="btn btn-secondary m-1" href="/game/literature">literature</a>
           <a class="btn btn-secondary m-1" href="/game/trash">trash</a>
-        </div>
+        </div> -->
 
-        <form id="landing-form" class="mt-5 needs-validation" novalidate>
+        <!-- <form id="landing-form" class="mt-5 needs-validation" novalidate>
           <div class="form-row">
             <div class="input-group">
               <input id="landing-content" type="text" class="form-control" placeholder="awesome-room">
               <div class="input-group-append">
                 <button id="landing-btn" class="btn btn-success rounded-right" type="button">Go!</button>
               </div>
-              <!-- invalid-feedback needs to be sibling of input -->
-              <!-- See: https://github.com/twbs/bootstrap/issues/23454 -->
+              invalid-feedback needs to be sibling of input
+              See: https://github.com/twbs/bootstrap/issues/23454
               <div class="invalid-feedback">
                 Please enter a valid room name. Only the characters 'a-z', '-', and '_' are valid.
               </div>
             </div>
           </div>
-        </form>
+        </form> -->
       </div>
     </div>
   </div>
