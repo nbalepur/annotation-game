@@ -9,16 +9,18 @@ Deployment instructions using Docker on AWS.
   - Launch Amazon Linux instance of your choosing
   - Add HTTP to Inbound Security Rules with CIDR block `0.0.0.0/0`
 
-### Install Git, Docker, and Docker Compose
+### Install Git, Docker, and Docker Compose ([Directions](https://gist.github.com/npearce/6f3c7826c7499587f00957fee62f8ee9))
 
     sudo yum update -y
 
     sudo yum install git docker -y
     sudo service docker start
 	
-    sudo curl -L "https://github.com/docker/compose/releases/download/1.29.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    \# Installs the latest version of docker-compose
+    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
     sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+    
 
 
 ### Set up repository
