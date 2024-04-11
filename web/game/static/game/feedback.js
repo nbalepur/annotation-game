@@ -193,7 +193,7 @@ function populateInitialQuestionFeedback(feedback) {
                 // Since interestingness star ratings have a dummy star.
                 // Default bootstrap form validation does not work because the dummy star is checked.
                 // So we show the invalid-feedback
-                console.log(!initialFeedback.checkValidity(), interestingnessRating == 0);
+                // console.log(!initialFeedback.checkValidity(), interestingnessRating == 0);
                 document.querySelector('.rating-group .invalid-feedback').style.display = 'block';
             } else {
                 document.querySelector('.rating-group .invalid-feedback').style.display = 'none';
@@ -208,7 +208,7 @@ function populateInitialQuestionFeedback(feedback) {
         }, false);
     }
 
-    console.log(feedback)
+    // console.log(feedback)
 }
 
 function populateAdditionalQuestionFeedback(feedback) {
@@ -433,8 +433,8 @@ function populatePyramidalityFactualAccuracyList(feedback) {
             set: function (sortable) {
                 clueOrder = sortable.toArray().map(i => parseInt(i));
                 setImprovedQuestionFromOrderedClues(clueOrder);
-                console.log(sortable);
-                console.log(clueOrder);
+                // console.log(sortable);
+                // console.log(clueOrder);
             }
         }
 
@@ -445,7 +445,7 @@ function populatePyramidalityFactualAccuracyList(feedback) {
         (e) => {
             clueOrder = sortable.toArray().map(i => parseInt(i));
             factualMaskList = clueOrder.toSorted().map((i) => document.getElementById('factual-toggle-'+i).checked)
-            console.log(factualMaskList);
+            // console.log(factualMaskList);
         });
 
     

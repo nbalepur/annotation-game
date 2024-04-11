@@ -164,7 +164,7 @@ gamesock.onmessage = message => {
 
   } else if (data['response_type'] === "get_question_feedback") {
 
-    console.log(data)
+    // console.log(data)
     
     enableFeedbackCollapseToggle();
     expandFeedback();
