@@ -8,14 +8,13 @@ services:
     environment:
       - DOMAIN
       - EMAIL
-    volumes:
-      - "web-static:/usr/src/app/static"
     ports:
       - "80:80"
       - "443:443"
     links:
       - "web:web"
     volumes:
+      - "web-static:/usr/src/app/static"
       - ./data/certbot/conf:/etc/letsencrypt:ro
       - ./data/certbot/www:/var/www/certbot:ro # mounting the folder to the nginx container
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
