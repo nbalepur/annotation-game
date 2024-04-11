@@ -35,7 +35,6 @@ services:
     depends_on:
       - redis
       - postgres
-      - nginx
 
   redis:
     image: redis:latest
@@ -55,23 +54,23 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data/
   
-  certbot:
-    container_name: certbot
-    image: certbot/certbot:latest
-    environment:
-      - EMAIL
-      - DOMAIN
-    restart: unless-stopped
-    depends_on:
-      - nginx
-    command: >-
-             certonly --reinstall --webroot --webroot-path=/var/www/certbot
-             --email ${EMAIL} --agree-tos --no-eff-email
-             -d ${DOMAIN}
-    volumes:
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+  # certbot:
+  #   container_name: certbot
+  #   image: certbot/certbot:latest
+  #   environment:
+  #     - EMAIL
+  #     - DOMAIN
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - nginx
+  #   command: >-
+  #            certonly --reinstall --webroot --webroot-path=/var/www/certbot
+  #            --email ${EMAIL} --agree-tos --no-eff-email
+  #            -d ${DOMAIN}
+  #   volumes:
+  #     - ./data/certbot/conf:/etc/letsencrypt
+  #     - ./data/certbot/www:/var/www/certbot
+  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
   web-static:
