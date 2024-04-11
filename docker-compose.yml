@@ -4,12 +4,21 @@ services:
 
   nginx:
     build: ./nginx
+    restart: unless-stopped
+    environment:
+      - DOMAIN
+      - EMAIL
     volumes:
       - "web-static:/usr/src/app/static"
     ports:
       - "80:80"
+      - "443:443"
     links:
       - "web:web"
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt:ro
+      - ./data/certbot/www:/var/www/certbot:ro # mounting the folder to the nginx container
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   web:
     build: ./web
@@ -24,6 +33,10 @@ services:
     command: bash -c "
       python manage.py collectstatic --noinput --clear &&
       daphne -b 0.0.0.0 -p 8000 quizbowl.asgi:application"
+    depends_on:
+      - redis
+      - postgres
+      - nginx
 
   redis:
     image: redis:latest
@@ -42,6 +55,24 @@ services:
       - POSTGRES_PASSWORD=${DB_PASS}
     volumes:
       - pgdata:/var/lib/postgresql/data/
+  
+  certbot:
+    container_name: certbot
+    image: certbot/certbot:latest
+    environment:
+      - EMAIL
+      - DOMAIN
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    command: >-
+             certonly --reinstall --webroot --webroot-path=/var/www/certbot
+             --email ${EMAIL} --agree-tos --no-eff-email
+             -d ${DOMAIN}
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
   web-static:
