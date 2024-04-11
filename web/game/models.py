@@ -55,6 +55,7 @@ class Question(models.Model):
     is_human_written = models.BooleanField()
     generation_method = models.CharField(default=GenerationMethod.HUMAN, max_length=30)
     clue_list = models.JSONField(null=True, blank=True)
+    wiki_sents = models.JSONField(null=True, blank=True)
     length = models.IntegerField(default=0, validators=[MinValueValidator(0)])
 
     def save(self, *args, **kwargs):
