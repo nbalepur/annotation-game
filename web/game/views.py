@@ -62,7 +62,7 @@ def leaderboard(request):
             'fp': fp,
             'fn': fn,
             'tn': tn,
-            'question_answered_correctly_rate': answered_correctly / (total)
+            'question_answered_correctly_rate': answered_correctly / (total) if total > 0 else 0
         })
 
     # Sort data by F1 score in descending order
