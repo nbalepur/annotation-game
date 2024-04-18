@@ -105,7 +105,12 @@
         <div class="card-header">Scoreboard</div>
         <div class="card-body">
           <label for="name">Handle:</label>
-          <input class="form-control mb-3" type="text" id="name" maxlength="20" />
+          <div class="input-group mb-2">
+              <div class="input-group-prepend">
+                  <span class="input-group-text">@</span>
+              </div>
+              <input type="text" class="form-control" id="name" maxlength="20" placeholder="Username">
+          </div>
           <table class="table">
             <thead>
               <tr>
