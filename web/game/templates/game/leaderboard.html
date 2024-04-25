@@ -16,16 +16,20 @@
                     <tr class="tr-class-1">
                         <th scope="col">#</th>
                         <th scope="col">Name</th>
-                        <th scope="col" sortable="true">F1 Score</th>
+                        <th scope="col" sortable="true"> 
+                            <div data-toggle="tooltip" title="Measures how well a user can differentiate AI-generated questions from human-written questions.">
+                                Turing Score 🤖
+                            </div>
+                        </th>
+                        <th scope="col" sortable="true"> 
+                            <div data-toggle="tooltip" title="Measures how good you were at answering questions correctly.">
+                                Knowledge Score 🧠
+                            </div>
+                        </th>
                         <!-- <th scope="col">Accuracy</th> -->
                         <!-- <th scope="col">Precision</th> -->
                         <!-- <th scope="col">Recall</th> -->
                         <th scope="col">Total Questions Seen</th>
-                        <th scope="col">Guessed AI ✅ (TP)</th>
-                        <th scope="col">Guessed Human ✅ (TN)</th>
-                        <th scope="col">Guessed AI ❌ (FP)</th>
-                        <th scope="col">Guessed Human ❌ (FN)</th>
-                        <th scope="col" sortable="true">Questions Answered ✅ (%)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -34,15 +38,8 @@
                         <th scope="row">{{ forloop.counter }}</th>
                         <td>{{ user.username }}</td>
                         <td>{{ user.f1|floatformat:2 }}</td>
-                        <!-- <td>{{ user.accuracy|floatformat:2 }}</td> -->
-                        <!-- <td>{{ user.precision|floatformat:2 }}</td> -->
-                        <!-- <td>{{ user.recall|floatformat:2 }}</td> -->
+                        <td>{{ user.expected_wins|floatformat:2 }}</td>
                         <td>{{ user.total }}</td>
-                        <td>{{ user.tp }}</td>
-                        <td>{{ user.tn }}</td>
-                        <td>{{ user.fp }}</td>
-                        <td>{{ user.fn }}</td>
-                        <td>{{ user.question_answered_correctly_rate|floatformat:2 }}</td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -55,5 +52,7 @@
         </div>
     </div>
 </div>
+
+    
 {% endblock %}
 
