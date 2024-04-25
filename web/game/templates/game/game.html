@@ -104,25 +104,37 @@
       <div class="card">
         <div class="card-header">Scoreboard</div>
         <div class="card-body">
-          <label for="name">Handle:</label>
-          <div class="input-group mb-2">
-              <div class="input-group-prepend">
-                  <span class="input-group-text">@</span>
-              </div>
-              <input type="text" class="form-control" id="name" maxlength="20" placeholder="Username">
-          </div>
-          <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Score</th>
-              </tr>
-            </thead>
-            <tbody id="scoreboard-body">
-            </tbody>
-          </table>
+            <label for="name">Handle:</label>
+            <div class="input-group mb-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">@</span>
+                </div>
+                <input type="text" class="form-control" id="name" maxlength="20" required placeholder="Username">
+                <div class="invalid-feedback">
+                  Please provide a username!
+                </div>
+            </div>
+            <!-- Adding the email field below -->
+            <label for="email">Email:</label>
+            <div class="input-group mb-3">
+                <input type="email" class="form-control" id="email" maxlength="320" required placeholder="Enter your email">
+                <div class="invalid-feedback">
+                  Please provide a valid email!
+                </div>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Score</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreboard-body">
+                </tbody>
+            </table>
         </div>
       </div>
+    
     </div>
 
     <div class="col-6">

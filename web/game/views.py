@@ -26,7 +26,7 @@ def leaderboard(request):
     # Get initial data grouped by player with their guessed_gen_method_correctly counts
     player_stats = (
         QuestionFeedback.objects
-        .values("player__user__name")
+        .values("player__user__id")
         .annotate(
             tp=Count('id', filter=Q(guessed_gen_method_correctly=True, guessed_generation_method=Question.GenerationMethod.AI)),
             fp=Count('id', filter=Q(guessed_gen_method_correctly=False, guessed_generation_method=Question.GenerationMethod.AI)),
@@ -51,8 +51,11 @@ def leaderboard(request):
         recall = tp / float(tp + fn) if (tp + fn) > 0 else 0
         f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
+        print(player)
+        print(player['player__user__id'])
+        print(User.objects.get(id=player['player__user__id']))
         leaderboard_data.append({
-            'username': player['player__user__name'],
+            'username': User.objects.get(id=player['player__user__id']).name,
             'accuracy': accuracy,
             'precision': precision,
             'recall': recall,
