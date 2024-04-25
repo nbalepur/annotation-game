@@ -100,8 +100,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.get_answer(room)
             elif data['request_type'] == 'get_current_question_feedback':
                 self.get_init_question_feedback(room, p)
-            elif data['request_type'] == 'set_name':
-                self.set_name(room, p, data['content'])
+            elif data['request_type'] == 'set_user_data':
+                self.set_user_data(room, p, data['content'])
             elif data['request_type'] == 'next':
                 self.next(room, p)
             elif data['request_type'] == 'buzz_init':
@@ -211,12 +211,15 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         return user
 
-    def set_name(self, room, p, content):
+    def set_user_data(self, room, p, content):
         """Update player name
         """
 
-        old_name = p.user.name
-        p.user.name = clean_content(content)
+
+        print(content)
+
+        p.user.name = clean_content(content["user_name"])
+        p.user.email = clean_content(content["user_email"])
         try:
             p.user.full_clean()
             p.user.save()

@@ -2,6 +2,7 @@
 // Listeners for events during game
 
 const nameInput = document.getElementById('name');
+const emailInput = document.getElementById('email');
 const requestContentInput = document.getElementById('request-content');
 const buzzProgress = document.getElementById('buzz-progress');
 const contentProgress = document.getElementById('content-progress');
@@ -33,7 +34,25 @@ window.setInterval(getShownQuestion, 50)
 
 window.onbeforeunload = leave;
 
-nameInput.addEventListener('input', debounce(setName, 100));
+nameInput.addEventListener('input', debounce(setUserData, 300));
+nameInput.addEventListener('input', function validateEmail() {
+  if (!this.value) {
+    this.classList.add('is-invalid');
+  } else {
+    this.classList.remove('is-invalid');
+    this.classList.add('is-valid');
+  }
+});
+emailInput.addEventListener('input', debounce(setUserData, 300));
+emailInput.addEventListener('input', function validateEmail() {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!this.value || !emailRegex.test(this.value)) {
+    this.classList.add('is-invalid');
+  } else {
+    this.classList.remove('is-invalid');
+    this.classList.add('is-valid');
+  }
+});
 
 document.addEventListener('keypress', (e) => {
   if (e.target.tagName != 'INPUT' && e.target.tagName != 'TEXTAREA') {

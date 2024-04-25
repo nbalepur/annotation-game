@@ -2,11 +2,12 @@
 // Plays client-side game
 
 const wsScheme = window.location.protocol == "https:" ? "wss" : "ws";
-console.log(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname)
+// console.log(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname)
 const gamesock = new WebSocket(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname);
 
-let username;
 let userID;
+let userName;
+let userEmail;
 let lockedOut;
 
 let gameState = 'idle'; // idle, playing, contest
@@ -43,7 +44,8 @@ gamesock.onopen = () => {
     join();
   }
 
-  nameInput.value = username;
+  nameInput.value = userName ? userName : "";
+  emailInput.value = userEmail ? userEmail : "";
 
   // set up current time if newly joined
   currentTime = buzzStartTime;
@@ -146,12 +148,15 @@ gamesock.onmessage = message => {
 
     setCookie('user_id', data['user_id']);
     setCookie('user_name', data['user_name']);
+    setCookie('user_email', data['user_email']);
     userID = data['user_id'];
-    username = data['user_name'];
+    userName = data['user_name'];
+    userEmail = data['user_email'];
     lockedOut = false;
 
     // Update name
-    nameInput.value = username;
+    nameInput.value = userName ? userName : "";
+    emailInput.value = userEmail ? userEmail : "";
     ping();
 
   } else if (data['response_type'] === "send_answer") {
@@ -271,9 +276,10 @@ function newUser() {
   sendRequest("new_user");
 }
 
-function setName() {
+function setUserData() {
   setCookie('user_name', nameInput.value);
-  sendRequest("set_name", nameInput.value);
+  setCookie('user_email', emailInput.value);
+  sendRequest("set_user_data", {'user_name': nameInput.value, 'user_email': emailInput.value});
 }
 
 function buzz() {
@@ -348,15 +354,19 @@ function sendChat() {
 }
 
 function next() {
-  if (gameState === 'idle' && completedFeedback) {
-    gameState = 'playing';
-    isFeedbackLoaded = false;
+  emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (userName && !userEmail && !emailRegex.test(userName)) {
+    if (gameState === 'idle' && completedFeedback) {
+      gameState = 'playing';
+      isFeedbackLoaded = false;
 
-    // Collapse feedback section
-    disableFeedbackCollapseToggle();
-    collapseFeedback();
-    sendRequest("next");
-  }
+      // Collapse feedback section
+      disableFeedbackCollapseToggle();
+      collapseFeedback();
+      sendRequest("next");
+    }
+  } else 
+    alert("Please input a valid username and email before continuing.");
 }
 
 function getAnswer() {

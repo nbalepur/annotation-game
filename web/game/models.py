@@ -157,6 +157,7 @@ class User(models.Model):
 
     user_id = models.CharField(max_length=100)
     name = models.CharField(max_length=20)
+    email = models.CharField(default="", max_length=320)
 
     def __str__(self):
         return str(self.name)
