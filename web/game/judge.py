@@ -1,12 +1,26 @@
 import re
+import os
 from fuzzywuzzy import fuzz
+from qa_metrics.prompt_llm import CloseLLM
+from qa_metrics.pedant import PEDANT
 
 major_matcher = re.compile(r'(?<={).*?(?=})')
+model = CloseLLM()
+model.set_openai_api_key(os.getenv("OPENAI_API_KEY"))
+pedant = PEDANT()
 
-def judge_answer(user_answer, question_answer):
-    """Judge answer response as correct or not
-    """
+def judge_answer_annotation_game(user_answer, question_answer, question, questionPedant):
+    """Judge answer response as correct - follows QA Metrics answer verification pipeline"""
+    correct = False
+    try:
+        prompt = f"question: {question}\nreference: {question_answer}\ncandidate: {user_answer}\nIs the candidate answer correct based on the question and reference answer? Please only output 'correct' or 'incorrect'."
+        correct = model.prompt_gpt(prompt=prompt, model_engine='gpt-3.5-turbo', temperature=0.1).lower() == "correct"
+    except:
+        correct = pedant.evaluate(question_answer, user_answer, questionPedant)
+    return correct
 
+def judge_answer_kuiperbowl(user_answer, question_answer):
+    """Judge answer response as correct - follows a fuzzywuzzy string matching approach"""
     user_answer = user_answer.lower()
     question_answer = question_answer.lower()
 
