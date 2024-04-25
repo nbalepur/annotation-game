@@ -31,6 +31,7 @@ MarkupPy==1.14
 msgpack==1.0.4
 nltk==3.8.1
 odfpy==1.4.1
+openai==1.23.6
 openpyxl==3.1.2
 packaging==21.3
 pip==22.1.2
@@ -47,6 +48,7 @@ pytest-django==4.5.2
 python-dotenv==0.20.0
 python-Levenshtein==0.12.2
 PyYAML==6.0.1
+qa-metrics==0.2.11
 regex==2023.12.25
 service-identity==21.1.0
 setuptools==61.2.0

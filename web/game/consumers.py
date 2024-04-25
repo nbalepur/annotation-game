@@ -11,7 +11,7 @@ from django.http import JsonResponse
 
 from .models import *
 from .utils import clean_content, generate_name, generate_id
-from .judge import judge_answer
+from .judge import judge_answer_kuiperbowl, judge_answer_annotation_game
 
 import json
 import datetime
@@ -336,7 +336,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         if player.player_id == room.buzz_player.player_id:
 
             cleaned_content = clean_content(content)
-            answered_correctly: bool = judge_answer(cleaned_content, room.current_question.answer)
+            answered_correctly: bool = judge_answer_annotation_game(cleaned_content,
+                                                                    room.current_question.answer, 
+                                                                    room.current_question.content,
+                                                                    room.current_question.clue_list[-1])
+            # answered_correctly: bool = judge_answer_kuiperbowl(cleaned_content, room.current_question.answer)
             words_to_show: int = self.compute_words_to_show(room)
 
             if answered_correctly:
