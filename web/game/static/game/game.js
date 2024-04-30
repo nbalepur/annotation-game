@@ -279,6 +279,8 @@ function newUser() {
 function setUserData() {
   setCookie('user_name', nameInput.value);
   setCookie('user_email', emailInput.value);
+  userName = nameInput.value;
+  userEmail = emailInput.value;
   sendRequest("set_user_data", {'user_name': nameInput.value, 'user_email': emailInput.value});
 }
 

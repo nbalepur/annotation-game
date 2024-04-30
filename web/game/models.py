@@ -300,4 +300,4 @@ class Message(models.Model):
     visible = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.player.user.name + "(" + self.tag + ")" ":" + self.content
+        return self.player.user.name + "(" + self.tag + ")"

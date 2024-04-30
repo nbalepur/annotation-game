@@ -35,7 +35,7 @@ window.setInterval(getShownQuestion, 50)
 window.onbeforeunload = leave;
 
 nameInput.addEventListener('input', debounce(setUserData, 300));
-nameInput.addEventListener('input', function validateEmail() {
+nameInput.addEventListener('input', function validateUserName() {
   if (!this.value) {
     this.classList.add('is-invalid');
   } else {
