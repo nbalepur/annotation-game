@@ -259,7 +259,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 questions_ids_with_feedback = [feedback.question.question_id for feedback in player.feedback.all()]
 
                 # Exclude questions with feedback from the player
-                questions_without_feedback = Question.objects.exclude(question_id__in=questions_ids_with_feedback)
+                questions_without_feedback = (
+                    Question.objects.exclude(question_id__in=questions_ids_with_feedback)
+                    .filter(Q(category=room.category) & Q(difficulty=room.difficulty))
+                )
                 questions = questions_without_feedback if len(questions_without_feedback) > 0 else questions
 
             # Abort if no questions
