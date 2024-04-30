@@ -355,7 +355,7 @@ function sendChat() {
 
 function next() {
   emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (userName && !userEmail && !emailRegex.test(userName)) {
+  if (userName && userEmail && emailRegex.test(userEmail)) {
     if (gameState === 'idle' && completedFeedback) {
       gameState = 'playing';
       isFeedbackLoaded = false;

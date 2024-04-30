@@ -46,13 +46,17 @@ nameInput.addEventListener('input', function validateEmail() {
 emailInput.addEventListener('input', debounce(setUserData, 300));
 emailInput.addEventListener('input', function validateEmail() {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
   if (!this.value || !emailRegex.test(this.value)) {
     this.classList.add('is-invalid');
+    nextBtn.disabled = true; // Disable the submit button
   } else {
     this.classList.remove('is-invalid');
     this.classList.add('is-valid');
+    nextBtn.disabled = false; // Enable the submit button
   }
 });
+
 
 document.addEventListener('keypress', (e) => {
   if (e.target.tagName != 'INPUT' && e.target.tagName != 'TEXTAREA') {

@@ -1,4 +1,4 @@
-FROM python:3.11.7-alpine
+FROM python:3.11.7-slim
 
 RUN apk update
 RUN apk add postgresql-dev postgresql-client gcc python3-dev musl-dev libffi-dev bash automake gcc g++ subversion 
