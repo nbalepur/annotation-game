@@ -363,14 +363,22 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     room,
                 )
             else:
-                room.state = Room.GameState.PLAYING
+
+                if room.max_players == 1:
+                    # Quick end question
+                    room.end_time = room.start_time
+                    room.state = Room.GameState.IDLE
+                else:
+                    room.state = Room.GameState.PLAYING
+
+                room.save()
 
                 # Question reading ended, do penalty
                 if room.end_time - room.buzz_start_time >= GRACE_TIME:
                     player.score -= 10
                     player.negs += 1
                     player.save()
-
+                
                 create_message(
                     "buzz_wrong",
                     player,

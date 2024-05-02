@@ -23,4 +23,6 @@ urlpatterns = [
     path('game/', include('game.urls')),
     path('', views.home, name='home'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
+    path('incentives/', views.incentives, name='incentives'),
+    path('resources/', views.resources, name='resources'),
 ]

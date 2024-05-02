@@ -19,34 +19,39 @@
     </p>
 
     <div class="container">
-      <div style="margin-left: 20%; margin-right: 20%; text-align: center;">
-        <button id="evaluation-play-btn" type="button" class="btn btn-success btn-lg">Play</button>
-        <!-- <div class="mt-5">
-          <a class="btn btn-secondary m-1" href="/game/evaluation">hs</a>
-          <a class="btn btn-secondary m-1" href="/game/hs">hs</a>
-          <a class="btn btn-secondary m-1" href="/game/ms">ms</a>
-          <a class="btn btn-secondary m-1" href="/game/college">college</a>
-          <a class="btn btn-secondary m-1" href="/game/history">history</a>
-          <a class="btn btn-secondary m-1" href="/game/science">science</a>
-          <a class="btn btn-secondary m-1" href="/game/literature">literature</a>
-          <a class="btn btn-secondary m-1" href="/game/trash">trash</a>
-        </div> -->
+      <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+          <div class="border p-3 overflow-auto mb-3" style="height: 300px;">
+            {% include "irb_consent.html" %}
+          </div>
+          <button id="evaluation-play-btn" type="button" class="btn btn-success btn-lg">Agree and Play</button>
+          <!-- <div class="mt-5">
+            <a class="btn btn-secondary m-1" href="/game/evaluation">hs</a>
+            <a class="btn btn-secondary m-1" href="/game/hs">hs</a>
+            <a class="btn btn-secondary m-1" href="/game/ms">ms</a>
+            <a class="btn btn-secondary m-1" href="/game/college">college</a>
+            <a class="btn btn-secondary m-1" href="/game/history">history</a>
+            <a class="btn btn-secondary m-1" href="/game/science">science</a>
+            <a class="btn btn-secondary m-1" href="/game/literature">literature</a>
+            <a class="btn btn-secondary m-1" href="/game/trash">trash</a>
+          </div> -->
 
-        <!-- <form id="landing-form" class="mt-5 needs-validation" novalidate>
-          <div class="form-row">
-            <div class="input-group">
-              <input id="landing-content" type="text" class="form-control" placeholder="awesome-room">
-              <div class="input-group-append">
-                <button id="landing-btn" class="btn btn-success rounded-right" type="button">Go!</button>
-              </div>
-              invalid-feedback needs to be sibling of input
-              See: https://github.com/twbs/bootstrap/issues/23454
-              <div class="invalid-feedback">
-                Please enter a valid room name. Only the characters 'a-z', '-', and '_' are valid.
+          <!-- <form id="landing-form" class="mt-5 needs-validation" novalidate>
+            <div class="form-row">
+              <div class="input-group">
+                <input id="landing-content" type="text" class="form-control" placeholder="awesome-room">
+                <div class="input-group-append">
+                  <button id="landing-btn" class="btn btn-success rounded-right" type="button">Go!</button>
+                </div>
+                invalid-feedback needs to be sibling of input
+                See: https://github.com/twbs/bootstrap/issues/23454
+                <div class="invalid-feedback">
+                  Please enter a valid room name. Only the characters 'a-z', '-', and '_' are valid.
+                </div>
               </div>
             </div>
-          </div>
-        </form> -->
+          </form> -->
+        </div>
       </div>
     </div>
   </div>

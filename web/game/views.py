@@ -23,6 +23,12 @@ def evaluation_game_room(request, label):
         "room":room,
     })
 
+def incentives(request):
+    return render(request, "incentives.html", {})
+
+def resources(request):
+    return render(request, "resources.html", {})
+
 class Square(Func):
     function = 'POW'
     template = '%(function)s(%(expressions)s, 2)'

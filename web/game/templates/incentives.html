@@ -1,0 +1,35 @@
+{% extends "game/base.html" %}
+
+{% block content %}
+<body>
+    <div class="container my-5">
+        <h1 class="mb-6">Study Incentive Structure</h1>
+        
+        <div class="card my-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-info-circle"></i> Eligibility Criteria</h5>
+                <p class="card-text">Participants must answer at least 100 trivia questions per round to be eligible for incentives.</p>
+            </div>
+        </div>
+
+        <div class="card my-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-trophy"></i> Rewards Per Round</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Top 5 in Knowledge Score 🧠:</strong> Each receives a $20 gift card.</li>
+                    <li class="list-group-item"><strong>Top 5 in Turing Score 🤖:</strong> Each receives a $20 gift card.</li>
+                    <li class="list-group-item">An additional <strong>10 participants</strong> who answered 100+ questions will randomly receive a $10 gift card in a raffle.</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer class="text-muted py-4">
+            <p>For more information, please contact us at <a href="mailto:annotationgameresearch@gmail.com">annotationgameresearch@gmail.com</a>.
+                If it is an urgent matter, contact the principal investigator, Prof. Jordan Boyd-Graber (<a href="mailto:jbg@umiacs.umd.edu">jbg@umiacs.umd.edu</a>).</p>
+        </footer>
+    </div>
+
+</body>
+
+{% endblock %}
+

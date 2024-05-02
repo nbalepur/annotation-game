@@ -14,7 +14,7 @@ def judge_answer_annotation_game(candidate_answer, reference_answer, question, l
     correct = False
     try:
         prompt = f"question: {question}\nreference: {reference_answer}\ncandidate: {candidate_answer}\nIs the candidate answer correct based on the question and reference answer? Please only output 'correct' or 'incorrect'."
-        correct = model.prompt_gpt(prompt=prompt, model_engine='gpt-3.5-turbo', temperature=0.1).lower() == "correct"
+        correct = model.prompt_gpt(prompt=prompt, model_engine='gpt-4-turbo', temperature=0.1).lower() == "correct"
     except:
         correct = pedant.evaluate(reference_answer, candidate_answer, last_clue)
     return correct

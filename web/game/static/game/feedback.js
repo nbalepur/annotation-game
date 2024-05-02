@@ -16,7 +16,7 @@ let completedFeedback = true;
 let ratingStars = document.querySelectorAll('input[name="rating3"]');
 function initializeRatingStars() {
     ratingStars = document.querySelectorAll('input[name="rating3"]');
-    
+
     function handleRatingChange() {
         ratingStars.forEach(input => {
             if (input.checked) {
@@ -27,7 +27,7 @@ function initializeRatingStars() {
 
     // Call the function initially to log the initial selected value
     handleRatingChange();
-    
+
     // Add event listener to each radio input
     ratingStars.forEach(input => {
         input.addEventListener("change", handleRatingChange);
@@ -184,11 +184,11 @@ function populateInitialQuestionFeedback(feedback) {
         guessedGenerationMethod = feedback.guessed_generation_method;
 
         initializeGenerationMethod();
-    
+
         humanWrittenRadio.check = (guessedGenerationMethod === humanWrittenRadio.value);
         aiGeneratedRadio.check = (guessedGenerationMethod === aiGeneratedRadio.value);
 
-        initialFeedback.addEventListener('submit', function(event) {
+        initialFeedback.addEventListener('submit', function (event) {
             if (!initialFeedback.checkValidity() || interestingnessRating == 0) {
                 // Since interestingness star ratings have a dummy star.
                 // Default bootstrap form validation does not work because the dummy star is checked.
@@ -199,12 +199,12 @@ function populateInitialQuestionFeedback(feedback) {
                 document.querySelector('.rating-group .invalid-feedback').style.display = 'none';
                 submitInitialFeedback();
             }
-            
+
             event.preventDefault();
             event.stopPropagation();
             initialFeedback.classList.add('was-validated')
 
-            
+
         }, false);
     }
 
@@ -227,7 +227,12 @@ function populateAdditionalQuestionFeedback(feedback) {
                 nextBtn.disabled = true;
                 additionalFeedback.innerHTML = `
                     <div class="card-body">
-                        <h5>Pyramidality and Factual Accuracy</h5>
+                        <h5>
+                            Pyramidality and Factual Accuracy
+                            <i class="fas fa-info-circle" data-bs-toggle="tooltip" data-bs-placement="right"
+                                title="Sometimes quizbowl writers will put clues in the wrong order. If that's the case in this question, sort the clues from easiest to hardest by dragging and dropping clues in what you believe is the correct 'pyramidal' order. Using the toggle, you should also mark any and all nonfactual clues as such.">
+                            </i>
+                        </h5>
                         <div class="pyramidality-factual-accuracy">
                             <ul id="pyramidality-factual-accuracy-list" class="list-group">
                             </ul>
@@ -236,14 +241,26 @@ function populateAdditionalQuestionFeedback(feedback) {
                     <div class="card-body">
                         <div class="row mb-3">
                             <div class="col">
-                                <label for="feedback-text" class="form-label">Feedback Text</label>
+                                <label for="feedback-text" class="form-label">
+                                    <h5>Feedback Text
+                                        <i class="fas fa-info-circle" data-bs-toggle="tooltip" data-bs-placement="right"
+                                            title="Provide feedback for how the question could be written better as if you were giving advice to a person.">
+                                        </i>
+                                    </h5>
+                                </label>
                                 <textarea class="form-control" id="feedback-text" maxlength="500" rows="3" required placeholder="Please describe what you would do to make the question better. Example: I would remove the third clue because it could mislead the player(s) to think the answer is X."></textarea>
                                 <div class="invalid-feedback">Please enter feedback for the question.</div>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col">
-                                <label for="improved-question" class="form-label">Improved Question</label>
+                                <label for="improved-question" class="form-label">
+                                    <h5>Improved Question
+                                        <i class="fas fa-info-circle" data-bs-toggle="tooltip" data-bs-placement="right"
+                                                title="Revise and rewrite the question to the best of your ability.">
+                                        </i>
+                                    </h5>
+                                </label>
                                 <textarea class="form-control" id="improved-question" maxlength="500" rows="6" required placeholder="Rewrite the question as you see fit here."></textarea>
                                 <div class="invalid-feedback">Please rewrite the question.</div>
                             </div>
@@ -253,24 +270,30 @@ function populateAdditionalQuestionFeedback(feedback) {
                                 <button type="submit" class="btn btn-primary" id="submit-btn">Submit</button>
                             </div>
                         </div>
-                    </div>`;
-    
-                additionalFeedback.addEventListener('submit', function(event) {
+                    </div>
+                    <script>
+                        const tooltipTriggerList = additionalFeedback.querySelectorAll('[data-bs-toggle="tooltip"]');
+                        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                    </script>`;
+
+                additionalFeedback.addEventListener('submit', function (event) {
                     if (!additionalFeedback.checkValidity()) {
                     } else {
                         submitAdditionalFeedback();
                     }
-                    
+
                     event.preventDefault();
                     event.stopPropagation();
                     additionalFeedback.classList.add('was-validated')
                 }, false);
-            
+
                 populatePyramidalityFactualAccuracyList(feedback)
-            
+
                 // Set values for feedback text and improved question
                 setFeedbackTextForm(feedback.feedback_text);
                 setImprovedQuestionFromOrderedClues(clueOrder);
+
+                
             } else {
                 additionalFeedback.innerHTML = 'No need for additional feedback. Click next to continue!';
                 completedFeedback = true;
@@ -288,10 +311,10 @@ function populateAdditionalQuestionFeedback(feedback) {
 
 // ============================== PYRAMIDALITY FACTUAL ACCURACY START ==============================
 let pyrFactClueList = document.getElementById('pyramidality-factual-accuracy-list');
-const setImprovedQuestionFromOrderedClues = (order) => 
-        setImprovedQuestionForm(
-            order.map((i) => factualMaskList[i] ? document.getElementById("clue-text-"+i).textContent : '').join(' ').trim()
-        );
+const setImprovedQuestionFromOrderedClues = (order) =>
+    setImprovedQuestionForm(
+        order.map((i) => factualMaskList[i] ? document.getElementById("clue-text-" + i).textContent : '').join(' ').trim()
+    );
 
 // Function to create a list item with text and a toggle switch
 function createListItem(index, text) {
@@ -299,7 +322,7 @@ function createListItem(index, text) {
     let listItem = document.createElement('li');
     listItem.setAttribute('data-id', `${index}`)
     listItem.className = 'list-group-item';
-    
+
     // Create a Bootstrap grid container
     let gridContainer = document.createElement('div');
     gridContainer.className = 'row align-items-center';
@@ -314,21 +337,21 @@ function createListItem(index, text) {
             <div class="col-1">${index}</div>
         </div>
     `;
-    
+
     // Create a column for the clue text
     let textColumn = document.createElement('div');
     textColumn.className = 'col-8';
     textColumn.id = 'clue-text-' + index
     textColumn.textContent = text;
-    
+
     // Create a column for the toggle switch
     let toggleColumn = document.createElement('div');
     toggleColumn.className = 'col-3 text-center';
-    
+
     // Create the toggle switch container
     let toggleContainer = document.createElement('div');
     toggleContainer.className = 'form-check form-switch';
-    
+
     // Create the toggle switch input
     let toggleInput = document.createElement('input');
     toggleInput.className = 'form-check-input';
@@ -336,7 +359,7 @@ function createListItem(index, text) {
     toggleInput.role = 'switch';
     toggleInput.id = 'factual-toggle-' + index;
     toggleInput.checked = true;
-    
+
     // Create the label for the toggle switch
     let toggleLabel = document.createElement('label');
     toggleLabel.className = 'form-check-label';
@@ -346,22 +369,22 @@ function createListItem(index, text) {
     // Set initial color for the label
     toggleLabel.classList.toggle('text-danger', !toggleInput.checked);
     toggleLabel.classList.toggle('text-success', toggleInput.checked);
-    
+
     // Append the toggle switch input and label to the container
     toggleContainer.appendChild(toggleInput);
     toggleContainer.appendChild(toggleLabel);
-    
+
     // Append the toggle container to the toggle column
     toggleColumn.appendChild(toggleContainer);
-    
+
     // Append the text and toggle columns to the grid container
     gridContainer.appendChild(clueNumberColumn);
     gridContainer.appendChild(textColumn);
     gridContainer.appendChild(toggleColumn);
-    
+
     // Append the grid container to the list item
     listItem.appendChild(gridContainer);
-    
+
     // Return the list item, toggle input, and toggle label for further use
     return [listItem, toggleInput, toggleLabel];
 }
@@ -377,7 +400,7 @@ function populatePyramidalityFactualAccuracyList(feedback) {
     }
 
     // Iterate through submitted clues
-    clueOrder.forEach(function(index) {
+    clueOrder.forEach(function (index) {
         // Generate text for the clue
         let text = feedback.submitted_clue_list[index];
         // Create a list item with a toggle switch and label
@@ -386,7 +409,7 @@ function populatePyramidalityFactualAccuracyList(feedback) {
         pyrFactClueList.appendChild(listItem);
 
         // Add event listener to toggle switch input
-        toggleInput.addEventListener('change', function() {
+        toggleInput.addEventListener('change', function () {
             // Update label text content based on toggle state
             toggleLabel.textContent = toggleInput.checked ? 'Factual' : 'Untrue';
 
@@ -404,7 +427,7 @@ function populatePyramidalityFactualAccuracyList(feedback) {
         });
     });
 
-    
+
 
     let sortable = Sortable.create(pyrFactClueList, {
         group: "PyramidalityFactualAccuracy",
@@ -421,11 +444,11 @@ function populatePyramidalityFactualAccuracyList(feedback) {
                     sortable.sort(clueOrder);
                     setImprovedQuestionFromOrderedClues(clueOrder);
                 }
-                
+
 
                 return clueOrder ? clueOrder : [];
             },
-    
+
             /**
              * Save the order of elements. Called onEnd (when the item is dropped).
              * @param {Sortable}  sortable
@@ -438,17 +461,17 @@ function populatePyramidalityFactualAccuracyList(feedback) {
             }
         }
 
-        
+
     });
 
-    document.getElementById('submit-btn').addEventListener('click', 
+    document.getElementById('submit-btn').addEventListener('click',
         (e) => {
             clueOrder = sortable.toArray().map(i => parseInt(i));
-            factualMaskList = clueOrder.toSorted().map((i) => document.getElementById('factual-toggle-'+i).checked)
+            factualMaskList = clueOrder.toSorted().map((i) => document.getElementById('factual-toggle-' + i).checked)
             // console.log(factualMaskList);
         });
 
-    
+
 }
 // ============================== PYRAMIDALITY FACTUAL ACCURACY END ==============================
 

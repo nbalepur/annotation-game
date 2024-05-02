@@ -23,7 +23,9 @@ const banAlert = document.getElementById('ban-alert');
 
 // Init tooltip and popover
 $(document).ready(() => {
-  $('[data-toggle="tooltip"]').tooltip();
+  // $('[data-bs-toggle="tooltip"]').tooltip();
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
   $('[data-toggle="popover"]').popover();
 });
 
