@@ -179,10 +179,11 @@ class Room(models.Model):
             if self.state == Room.GameState.CONTEST and player == self.buzz_player:
                 status = BuzzBadgeStatus.CURRENT
             elif player_feedback:
+                index = player_feedback.buzz_position_word
                 if player_feedback.answered_correctly:
                     status = BuzzBadgeStatus.CORRECT
-                    index = player_feedback.buzz_position_word
-                elif not player_feedback.answered_correctly: status = BuzzBadgeStatus.INCORRECT
+                elif not player_feedback.answered_correctly:
+                    status = BuzzBadgeStatus.INCORRECT
             else: pass
 
             buzzBadge = BuzzBadge(index=index, status=status)
