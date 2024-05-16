@@ -69,9 +69,9 @@ document.addEventListener('keypress', (e) => {
       buzz();
       e.preventDefault();
     }
-    else if (e.key == 'c') {
-      chatInit();
-    }
+    // else if (e.key == 'c') {
+    //   chatInit();
+    // }
   }
 });
 
@@ -80,9 +80,9 @@ requestContentInput.addEventListener('keypress', (e) => {
     if (currentAction == 'buzz') {
       answer();
     }
-    else if (currentAction == 'chat') {
-      sendChat();
-    }
+    // else if (currentAction == 'chat') {
+    //   sendChat();
+    // }
   }
 });
 
@@ -91,5 +91,5 @@ difficultySelect.addEventListener('change', setDifficulty);
 buzzBtn.addEventListener('click', buzz);
 nextBtn.addEventListener('click', next);
 resetBtn.addEventListener('click', resetScore);
-chatBtn.addEventListener('click', chatInit);
+// chatBtn.addEventListener('click', chatInit);
 speedSlider.addEventListener('change', setSpeed);

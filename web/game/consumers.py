@@ -1,6 +1,4 @@
-import math
-from copy import deepcopy
-from typing import Dict
+from typing import Dict, List
 from asgiref.sync import async_to_sync
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -305,7 +303,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         if not p.locked_out and room.state == 'playing':
 
-            room.state = 'contest'
+            room.state = Room.GameState.CONTEST
             room.buzz_player = p
             room.buzz_start_time = timezone.now().timestamp()
             room.save()
@@ -329,7 +327,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def buzz_answer(self, room: Room, player: Player, content):
 
         # Reject when not in contest
-        if room.state != 'contest':
+        if room.state != Room.GameState.CONTEST:
             return
 
         # Abort if no buzz player or current question
@@ -344,7 +342,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                                                                     room.current_question.content,
                                                                     room.current_question.clue_list[-1])
             # answered_correctly: bool = judge_answer_kuiperbowl(cleaned_content, room.current_question.answer)
-            words_to_show: int = self.compute_words_to_show(room)
+            words_to_show: int = room.compute_words_to_show()
 
             if answered_correctly:
                 player.score += 10 # TODO: do not hardcode points
@@ -353,6 +351,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
                 # Quick end question
                 room.end_time = room.start_time
+                room.buzz_player = None
                 room.state = Room.GameState.IDLE
                 room.save()
 
@@ -371,6 +370,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 else:
                     room.state = Room.GameState.PLAYING
 
+                room.buzz_player = None
                 room.save()
 
                 # Question reading ended, do penalty
@@ -404,18 +404,14 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     question=current_question,
                     player=player,
                     guessed_answer=cleaned_content,
-                    guessed_generation_method='',
-                    interestingness_rating=0,
                     submitted_clue_list=current_question.clue_list,
                     submitted_clue_order=list(range(current_question.length)),
                     submitted_factual_mask_list=[True] * current_question.length,
-                    inversions=0,
-                    feedback_text='',
-                    improved_question='',
                     answered_correctly=answered_correctly,
+                    buzzed=True,
                     buzz_position_word=words_to_show,
                     buzz_position_norm=words_to_show/len(current_question.content.split()),
-                    buzzed=True
+                    buzz_datetime=timezone.now()
                 )
                 feedback.save()
             except ValidationError as e:
@@ -562,39 +558,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 }
             )
     
-    def compute_words_to_show(self, room: Room) -> int:
-        """Computes the number of words to show based on the elapsed time in the game."""
-        current_time = timezone.now().timestamp()
-        time_per_chunk = (60 / room.speed)
-
-        if room.state == Room.GameState.IDLE:
-            return len(room.current_question.content.split())
-        elif room.state == Room.GameState.PLAYING:
-            time_elapsed = current_time - room.start_time
-        else:
-            time_elapsed = room.buzz_start_time - room.start_time
-
-        words_to_show = math.ceil(time_elapsed / time_per_chunk)
-        return min(words_to_show, len(room.current_question.content.split()))
-
     def get_shown_question(self, room: Room):
         """Computes the correct amount of the question to show, depending on the state of the game.
             Note, this value is not persisted because, updating is too expensive."""
-        shown_question = ""
-
-        if room.current_question and room.current_question.content:
-            full_question = room.current_question.content
-
-            words_to_show = self.compute_words_to_show(room)
-            shown_question = " ".join(full_question.split()[:words_to_show]) if (words_to_show > 0) else full_question
-        
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
                 'type': 'update_room',
                 'data': {
                     "response_type": "get_shown_question",
-                    "shown_question": shown_question,
+                    "shown_question": room.get_shown_question(),
                 },
             }
         )
@@ -615,14 +588,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             feedback = QuestionFeedback.objects.create(
                     question=current_question,
                     player=player,
-                    guessed_generation_method='',
-                    interestingness_rating=0,
                     submitted_clue_list=current_question.clue_list,
                     submitted_clue_order=list(range(current_question.length)),
                     submitted_factual_mask_list=[True] * current_question.length,
-                    inversions=0,
-                    feedback_text='',
-                    improved_question='',
                     answered_correctly=False,
                     buzz_position_word=len(current_question.content.split()),
                     buzz_position_norm=1
@@ -824,7 +792,7 @@ def get_room_response_json(room):
         "messages": room.get_messages(),
         "difficulty": room.difficulty,
         "speed": room.speed,
-        "players": room.get_players(),
+        "players": room.get_players_by_score(),
         "change_locked": room.change_locked,
     }
 

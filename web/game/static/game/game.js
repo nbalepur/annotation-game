@@ -191,7 +191,7 @@ gamesock.onmessage = message => {
 
     nextBtn.style.display = 'none';
     buzzBtn.style.display = 'none';
-    chatBtn.style.display = 'none';
+    // chatBtn.style.display = 'none';
 
     gameState = 'contest';
 
@@ -216,11 +216,15 @@ gamesock.onmessage = message => {
  */
 
 function setQuestion(question_text) {
+  question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
+  question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
+  question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
   questionSpace.innerHTML = question_text;
   question = question_text;
 }
 
 function setAnswer(answer) {
+  answer = answer.replace("{", "<u><b>").replace("}", "</b></u>");
   answerHeader.innerHTML = `Answer: ${answer}`;
 }
 
@@ -295,7 +299,7 @@ function answer() {
 
     nextBtn.style.display = '';
     buzzBtn.style.display = '';
-    chatBtn.style.display = '';
+    // chatBtn.style.display = '';
     requestContentInput.style.display = 'none';
     // gameState = 'playing';
     currentAction = 'idle';

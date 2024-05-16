@@ -1,10 +1,16 @@
+from datetime import timedelta
+from typing import List
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 import nltk
+from math import ceil
+
+from .badges import BuzzBadge, BuzzBadgeStatus
+
 # Download the punkt tokenizer models if not already downloaded
 try:
     nltk.data.find('tokenizers/punkt')
@@ -66,7 +72,6 @@ class Question(models.Model):
             self.length = len(sentences)
         super().save(*args, **kwargs)
 
-
 class Room(models.Model):
     """Room to play quizbowl"""
 
@@ -117,13 +122,15 @@ class Room(models.Model):
 
     def __str__(self):
         return self.label
+    
+    def get_valid_players(self):
+        return self.players.filter(
+                    Q(last_seen__gte=timezone.now().timestamp() - 3600) &
+                    Q(banned=False)
+                )
 
-    def get_players(self):
-
-        valid_players = self.players.filter(
-            Q(last_seen__gte=timezone.now().timestamp() - 3600) &
-            Q(banned=False)
-        )
+    def get_players_by_score(self):
+        valid_players = self.get_valid_players()
 
         player_list = [{
             'user_name': player.user.name,
@@ -137,6 +144,74 @@ class Room(models.Model):
 
         player_list.sort(key=lambda player: player['score'])
         return player_list
+    
+    def get_buzz_badges(self) -> List[BuzzBadge]:
+        """
+        Method to get the question feedbacks from players in the room.
+        """
+        players_in_room = self.get_valid_players()
+
+        # Initialize an empty list to store question feedbacks
+        buzz_badges: List[BuzzBadge] = []
+
+        # Iterate over each player
+        for player in players_in_room:
+            # Get the feedbacks given by the player for the current question
+            player_feedback: QuestionFeedback = player.feedback.filter(
+                    Q(buzz_datetime__gte=timezone.now() - timedelta(seconds=600)) &
+                    Q(question=self.current_question) &
+                    Q(buzzed=True)
+                ).order_by('-buzz_datetime').first()
+            
+            if (player_feedback is None and player != self.buzz_player): continue
+
+            # Extend the list of question feedbacks with player's feedbacks
+            status = None
+
+            if self.state == Room.GameState.CONTEST and player == self.buzz_player:
+                status = BuzzBadgeStatus.CURRENT
+            elif player_feedback.answered_correctly: status = BuzzBadgeStatus.CORRECT
+            elif not player_feedback.answered_correctly: status = BuzzBadgeStatus.INCORRECT
+            else: pass
+
+            index: int = 10**5 if status == BuzzBadgeStatus.CURRENT else player_feedback.buzz_position_word
+            buzzBadge = BuzzBadge(index=index, status=status)
+            buzz_badges.append(buzzBadge)
+
+        return sorted(buzz_badges, key=lambda b: -b.index)
+    
+    def compute_words_to_show(self) -> int:
+        """Computes the number of words to show based on the elapsed time in the game."""
+        current_time = timezone.now().timestamp()
+        time_per_chunk = (60 / self.speed)
+
+        if self.state == Room.GameState.IDLE:
+            return len(self.current_question.content.split())
+        elif self.state == Room.GameState.PLAYING:
+            time_elapsed = current_time - self.start_time
+        else:
+            time_elapsed = self.buzz_start_time - self.start_time
+
+        words_to_show = ceil(time_elapsed / time_per_chunk)
+        return min(words_to_show, len(self.current_question.content.split()))
+
+    def get_shown_question(self):
+        """Computes the correct amount of the question to show, depending on the state of the game.
+            Note, this value is not persisted because, updating is too expensive."""
+        word_list: List[str] = ""
+
+        if self.current_question and self.current_question.content:
+            full_question = self.current_question.content
+
+            words_to_show = self.compute_words_to_show()
+            word_list = full_question.split()[:words_to_show] if (words_to_show > 0) else full_question.split()
+        
+        buzz_badges = self.get_buzz_badges()
+
+        for bb in buzz_badges:
+            word_list.insert(bb.index, str(bb.status))
+
+        return " ".join(word_list)
 
     def get_messages(self):
 
@@ -150,7 +225,6 @@ class Room(models.Model):
         } for m in valid_messages.order_by('timestamp').reverse()[:50]]
 
         return chrono_messages
-    
 
 class User(models.Model):
     """Site user"""
@@ -223,7 +297,7 @@ class QuestionFeedback(models.Model):
     guessed_generation_method = models.CharField(choices=Question.GenerationMethod.choices, max_length=30)
 
     # Interestingness
-    interestingness_rating = models.IntegerField(choices=Rating.choices)
+    interestingness_rating = models.IntegerField(default=Rating.ONE_STAR, choices=Rating.choices)
 
     # Pyramidality
 
@@ -238,16 +312,17 @@ class QuestionFeedback(models.Model):
 
     # For each index i, the value of the below list is true if it is a factual clue
     submitted_factual_mask_list = models.JSONField(null=True, blank=True) 
-    inversions = models.IntegerField()
+    inversions = models.IntegerField(default=0)
 
     feedback_text = models.TextField(blank=True, max_length=500)
     improved_question = models.TextField(blank=False, max_length=500)
 
     # Play data
     answered_correctly = models.BooleanField()
+    buzzed = models.BooleanField(default=False)
     buzz_position_word = models.IntegerField(validators=[MinValueValidator(0)])
     buzz_position_norm = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
-    buzzed = models.BooleanField(default=False)
+    buzz_datetime = models.DateTimeField(null=True)
 
     # Feedback
     solicit_additional_feedback = models.BooleanField(default=False)
