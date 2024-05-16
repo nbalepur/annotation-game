@@ -3,6 +3,7 @@
 
 const nameInput = document.getElementById('name');
 const emailInput = document.getElementById('email');
+const optOutInput = document.getElementById('optOutCheck');
 const requestContentInput = document.getElementById('request-content');
 const buzzProgress = document.getElementById('buzz-progress');
 const contentProgress = document.getElementById('content-progress');
@@ -49,16 +50,31 @@ emailInput.addEventListener('input', debounce(setUserData, 300));
 emailInput.addEventListener('input', function validateEmail() {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   
-  if (!this.value || !emailRegex.test(this.value)) {
-    this.classList.add('is-invalid');
-    nextBtn.disabled = true; // Disable the submit button
-  } else {
+  if (optOutInput.checked || (this.value && emailRegex.test(this.value))) {
     this.classList.remove('is-invalid');
     this.classList.add('is-valid');
-    nextBtn.disabled = false; // Enable the submit button
+    nextBtn.disabled = false; // Enable the next button
+  } else {
+    this.classList.add('is-invalid');
+    nextBtn.disabled = true; // Disable the next button
   }
 });
 
+optOutInput.addEventListener('input', function optOut() {
+  if (optOutInput.checked) {
+    nextBtn.disabled = false; // Enable the next button
+    emailInput.value = ""
+    emailInput.disabled = true;
+    emailInput.classList.remove('is-invalid');
+    emailInput.classList.add('is-valid');
+    setUserData();
+  } else {
+    nextBtn.disabled = true; // Disable the next button
+    emailInput.disabled = false;
+    emailInput.classList.remove('is-valid');
+    if (!emailInput.value) emailInput.classList.add('is-invalid');
+  }
+});
 
 document.addEventListener('keypress', (e) => {
   if (e.target.tagName != 'INPUT' && e.target.tagName != 'TEXTAREA') {

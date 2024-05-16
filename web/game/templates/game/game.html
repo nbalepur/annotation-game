@@ -104,7 +104,7 @@
       <div class="card">
         <div class="card-header">Scoreboard</div>
         <div class="card-body">
-            <label for="name">Handle:</label>
+            <label for="name">Username:</label>
             <div class="input-group mb-2">
                 <div class="input-group-prepend">
                     <span class="input-group-text">@</span>
@@ -117,10 +117,12 @@
             <!-- Adding the email field below -->
             <label for="email">Email:</label>
             <div class="input-group mb-3">
-                <input type="email" class="form-control" id="email" maxlength="320" required placeholder="Enter your email">
-                <div class="invalid-feedback">
-                  Please provide a valid email!
-                </div>
+                <input type="email" class="form-control" id="email" maxlength="320" placeholder="Enter your email">
+                <div class="invalid-feedback">Please provide a valid email or check the box below to opt out!</div>
+            </div>
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="optOutCheck">
+                <label class="form-check-label" for="optOutCheck">I do not want to provide my email and receive prizing</label>
             </div>
             <table class="table">
                 <thead>

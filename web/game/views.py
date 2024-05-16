@@ -58,6 +58,7 @@ def leaderboard(request):
             )
         )
         .values("player__user__id")
+        .filter(~Q(player__user__email='') & Q(player__user__email__isnull=False))
         .annotate(
             tp=Count('id', filter=Q(guessed_gen_method_correctly=True, guessed_generation_method=Question.GenerationMethod.AI)),
             fp=Count('id', filter=Q(guessed_gen_method_correctly=False, guessed_generation_method=Question.GenerationMethod.AI)),
