@@ -220,7 +220,8 @@ class Room(models.Model):
         buzz_badges = self.get_buzz_badges()
 
         for bb in buzz_badges:
-            word_list.insert(bb.index, str(bb.status))
+            if bb.status and str(bb.status) is not None:
+                word_list.insert(bb.index, str(bb.status))
 
         return " ".join(word_list)
 
