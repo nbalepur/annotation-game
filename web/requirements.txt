@@ -47,7 +47,7 @@ pytest-django==4.5.2
 python-dotenv==0.20.0
 python-Levenshtein==0.12.2
 PyYAML==6.0.1
-qa-metrics==0.2.11
+qa-metrics==0.2.16
 regex==2023.12.25
 service-identity==21.1.0
 setuptools==61.2.0

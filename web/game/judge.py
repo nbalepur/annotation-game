@@ -23,21 +23,26 @@ def judge_answer_annotation_game(candidate_answer: str, question: Question):
     #     correct = model.prompt_gpt(prompt=prompt, model_engine='gpt-4-turbo', temperature=0.1).lower() == "correct"
     # except:
 
-    correct = []
-    incorrect = []
+    # correct = []
+    # incorrect = []
 
-    for ref_correct in question.answer_accept:
-        correct.append(pedant.evaluate(ref_correct, candidate_answer, last_clue))
+    # for ref_correct in question.answer_accept:
+    #     correct.append(pedant.evaluate(ref_correct, candidate_answer, last_clue))
     
-    for ref_reject in question.answer_reject:
-        incorrect.append(pedant.evaluate(ref_reject, candidate_answer, last_clue))
+    # for ref_reject in question.answer_reject:
+    #     incorrect.append(pedant.evaluate(ref_reject, candidate_answer, last_clue))
+
+    correct = pedant.evaluate(question.answer_accept, candidate_answer, last_clue)\
+                if question.answer_accept else False
+    incorrect = pedant.evaluate(question.answer_reject, candidate_answer, last_clue)\
+                if question.answer_reject else False
 
     # print(question.answer_accept)
     # print(correct)
     # print(question.answer_reject)
     # print(incorrect)
 
-    return sum(correct) > sum(incorrect)
+    return correct and not incorrect
 
 def judge_answer_kuiperbowl(user_answer, question_answer):
     """Judge answer response as correct - follows a fuzzywuzzy string matching approach"""
