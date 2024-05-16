@@ -174,14 +174,17 @@ class Room(models.Model):
 
             # Extend the list of question feedbacks with player's feedbacks
             status = None
+            index: int = 10**5
 
             if self.state == Room.GameState.CONTEST and player == self.buzz_player:
                 status = BuzzBadgeStatus.CURRENT
-            elif player_feedback.answered_correctly: status = BuzzBadgeStatus.CORRECT
-            elif not player_feedback.answered_correctly: status = BuzzBadgeStatus.INCORRECT
+            elif player_feedback:
+                if player_feedback.answered_correctly:
+                    status = BuzzBadgeStatus.CORRECT
+                    index = player_feedback.buzz_position_word
+                elif not player_feedback.answered_correctly: status = BuzzBadgeStatus.INCORRECT
             else: pass
 
-            index: int = 10**5 if status == BuzzBadgeStatus.CURRENT else player_feedback.buzz_position_word
             buzzBadge = BuzzBadge(index=index, status=status)
             buzz_badges.append(buzzBadge)
 
