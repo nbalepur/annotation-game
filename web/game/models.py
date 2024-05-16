@@ -55,7 +55,14 @@ class Question(models.Model):
     group_id = models.IntegerField()
     category = models.TextField(default=Category.EVERYTHING)
     content = models.TextField()
+
     answer = models.TextField()
+    answer_accept = models.JSONField(null=True, blank=True)
+    answer_reject = models.JSONField(null=True, blank=True)
+    answer_regular_prompt = models.JSONField(null=True, blank=True)
+    answer_antiprompt = models.JSONField(null=True, blank=True)
+    page_cleaned = models.TextField(default="")
+
     difficulty = models.TextField(default=Difficulty.HS)
     subdifficulty = models.TextField(default=Subdifficulty.REGULAR)
     is_human_written = models.BooleanField()

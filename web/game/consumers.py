@@ -337,10 +337,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         if player.player_id == room.buzz_player.player_id:
 
             cleaned_content = clean_content(content)
-            answered_correctly: bool = judge_answer_annotation_game(cleaned_content,
-                                                                    room.current_question.answer, 
-                                                                    room.current_question.content,
-                                                                    room.current_question.clue_list[-1])
+            answered_correctly: bool = \
+                judge_answer_annotation_game(cleaned_content, room.current_question)
             # answered_correctly: bool = judge_answer_kuiperbowl(cleaned_content, room.current_question.answer)
             words_to_show: int = room.compute_words_to_show()
 

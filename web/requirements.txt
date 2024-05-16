@@ -31,7 +31,6 @@ MarkupPy==1.14
 msgpack==1.0.4
 nltk==3.8.1
 odfpy==1.4.1
-openai==1.23.6
 openpyxl==3.1.2
 packaging==21.3
 pip==22.1.2

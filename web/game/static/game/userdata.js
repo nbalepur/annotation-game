@@ -7,6 +7,10 @@ function retrieveUserdata(){
   userName = prefs['user_name'];
   userID = prefs['user_id'];
   userEmail = prefs['user_email'];
+  // console.log(prefs['user_optOut']);
+  if (typeof prefs['user_optOut'] !== "undefined") {
+    optOutInput.checked = prefs['user_optOut'] === 'true';
+  }
   lockedOut = prefs['locked_out'] === 'true';
 }
 

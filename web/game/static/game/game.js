@@ -283,6 +283,7 @@ function newUser() {
 function setUserData() {
   setCookie('user_name', nameInput.value);
   setCookie('user_email', emailInput.value);
+  setCookie('user_optOut', optOutInput.checked);
   userName = nameInput.value;
   userEmail = emailInput.value;
   sendRequest("set_user_data", {'user_name': nameInput.value, 'user_email': emailInput.value});
@@ -361,7 +362,8 @@ function sendChat() {
 
 function next() {
   emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (userName && userEmail && emailRegex.test(userEmail)) {
+
+  if (userName && (optOutInput.checked || (userEmail && emailRegex.test(userEmail)))) {
     if (gameState === 'idle' && completedFeedback) {
       gameState = 'playing';
       isFeedbackLoaded = false;

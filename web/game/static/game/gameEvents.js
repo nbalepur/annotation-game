@@ -46,6 +46,7 @@ nameInput.addEventListener('input', function validateUserName() {
     this.classList.add('is-valid');
   }
 });
+
 emailInput.addEventListener('input', debounce(setUserData, 300));
 emailInput.addEventListener('input', function validateEmail() {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -60,20 +61,20 @@ emailInput.addEventListener('input', function validateEmail() {
   }
 });
 
-optOutInput.addEventListener('input', function optOut() {
+optOutInput.addEventListener('click', function optOut() {
   if (optOutInput.checked) {
     nextBtn.disabled = false; // Enable the next button
     emailInput.value = ""
     emailInput.disabled = true;
     emailInput.classList.remove('is-invalid');
     emailInput.classList.add('is-valid');
-    setUserData();
   } else {
     nextBtn.disabled = true; // Disable the next button
     emailInput.disabled = false;
     emailInput.classList.remove('is-valid');
     if (!emailInput.value) emailInput.classList.add('is-invalid');
   }
+  setUserData();
 });
 
 document.addEventListener('keypress', (e) => {
