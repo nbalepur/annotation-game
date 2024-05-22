@@ -18,6 +18,9 @@ from django.urls import path, include
 
 from game import views
 
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('game/', include('game.urls')),
@@ -25,4 +28,5 @@ urlpatterns = [
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('incentives/', views.incentives, name='incentives'),
     path('resources/', views.resources, name='resources'),
+    path('sentry-debug/', trigger_error),
 ]
