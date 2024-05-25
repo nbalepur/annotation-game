@@ -83,39 +83,39 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
             # Handle requests for joined players
             if data['request_type'] == 'ping':
-                await self.ping(room, p)
+                await to_async(self.ping)(room, p)
             elif data['request_type'] == 'leave':
-                await self.leave(room, p)
+                await to_async(self.leave)(room, p)
             elif data['request_type'] == 'get_shown_question':
-                await self.get_shown_question(room)
+                await to_async(self.get_shown_question)(room)
             elif data['request_type'] == 'get_answer':
-                await self.get_answer(room)
+                await to_async(self.get_answer)(room)
             elif data['request_type'] == 'get_current_question_feedback':
                 await to_async(self.get_init_question_feedback)(room, p)
             elif data['request_type'] == 'set_user_data':
-                await self.set_user_data(room, p, data['content'])
+                await to_async(self.set_user_data)(room, p, data['content'])
             elif data['request_type'] == 'next':
                 await to_async(self.next)(room, p)
             elif data['request_type'] == 'buzz_init':
-                await self.buzz_init(room, p)
+                await to_async(self.buzz_init)(room, p)
             elif data['request_type'] == 'buzz_answer':
-                await self.buzz_answer(room, p, data['content'])
+                await to_async(self.buzz_answer)(room, p, data['content'])
             elif data['request_type'] == 'submit_initial_feedback':
-                await self.submit_initial_feedback(room, p, data['content'])
+                await to_async(self.submit_initial_feedback)(room, p, data['content'])
             elif data['request_type'] == 'submit_additional_feedback':
-                await self.submit_additional_feedback(room, p, data['content'])
+                await to_async(self.submit_additional_feedback)(room, p, data['content'])
             elif data['request_type'] == 'set_category':
-                await self.set_category(room, p, data['content'])
+                await to_async(self.set_category)(room, p, data['content'])
             elif data['request_type'] == 'set_difficulty':
-                await self.set_difficulty(room, p, data['content'])
+                await to_async(self.set_difficulty)(room, p, data['content'])
             elif data['request_type'] == 'set_speed':
-                await self.set_speed(room, p, data['content'])
+                await to_async(self.set_speed)(room, p, data['content'])
             elif data['request_type'] == 'reset_score':
-                await self.reset_score(room, p)
+                await to_async(self.reset_score)(room, p)
             elif data['request_type'] == 'chat':
-                await self.chat(room, p, data['content'])
+                await to_async(self.chat)(room, p, data['content'])
             elif data['request_type'] == 'report_message':
-                await self.report_message(room, p, data['content'])
+                await to_async(self.report_message)(room, p, data['content'])
             else:
                 pass
 
@@ -123,15 +123,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         """Room update handler"""
         await self.send_json(event['data'])
 
-    async def ping(self, room, p):
+    def ping(self, room, p):
         """Receive ping"""
         p.last_seen = timezone.now().timestamp()
-        await to_async(p.save)()
+        p.save()
 
-        await update_time_state(room)
+        update_time_state(room)
 
-        await self.send_json(await to_async(get_room_response_json)(room))
-        await self.send_json({
+        self.send_json(get_room_response_json(room))
+        self.send_json({
             'response_type': 'lock_out',
             'locked_out': p.locked_out,
         })
@@ -176,14 +176,14 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 await self.get_shown_question(room=room)
                 await self.get_answer(room=room)
 
-    async def leave(self, room, p):
+    def leave(self, room, p):
         """Leave room"""
         # await create_message("leave", p, None, room)
-        await self.channel_layer.group_send(
+        self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'update_room',
-                'data': await to_async(get_room_response_json)(room),
+                'data': get_room_response_json(room),
             }
         )
 
@@ -201,19 +201,19 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         return user
 
-    async def set_user_data(self, room, p, content):
+    def set_user_data(self, room, p, content):
         """Update player name"""
         p.user.name = clean_content(content["user_name"])
         p.user.email = clean_content(content["user_email"])
         try:
-            await to_async(p.user.full_clean)()
-            await to_async(p.user.save)()
+            p.user.full_clean()
+            p.user.save()
 
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': await to_async(get_room_response_json)(room),
+                    'data': get_room_response_json(room),
                 }
             )
 
@@ -277,8 +277,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 }
             )
 
-    async def buzz_init(self, room, p):
-        """Initialize buzz"""
+    
+    def buzz_init(self, room, p):
+        """Initialize buzz
+        """
+
         # Reject when not in contest
         if room.state != Room.GameState.PLAYING:
             return
@@ -291,26 +294,26 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.state = Room.GameState.CONTEST
             room.buzz_player = p
             room.buzz_start_time = timezone.now().timestamp()
-            await to_async(room.save)()
+            room.save()
 
             p.locked_out = True
-            await to_async(p.save)()
+            p.save()
 
-            await to_async(create_message)("buzz_init", p, None, room)
+            create_message("buzz_init", p, None, room)
 
-            await self.send_json({
+            self.send_json({
                 'response_type': 'buzz_grant',
             })
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': await to_async(get_room_response_json)(room),
+                    'data': get_room_response_json(room),
                 }
             )
 
-    async def buzz_answer(self, room: Room, player: Player, content):
-        """Handle buzz answer"""
+    def buzz_answer(self, room: Room, player: Player, content):
+
         # Reject when not in contest
         if room.state != Room.GameState.CONTEST:
             return
@@ -328,15 +331,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             if answered_correctly:
                 player.score += 10  # TODO: do not hardcode points
                 player.correct += 1
-                await to_async(player.save)()
+                player.save()
 
                 # Quick end question
                 room.end_time = room.start_time
                 room.buzz_player = None
                 room.state = Room.GameState.IDLE
-                await to_async(room.save)()
+                room.save()
 
-                await to_async(create_message)(
+                create_message(
                     "buzz_correct",
                     player,
                     cleaned_content,
@@ -351,22 +354,22 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     room.state = Room.GameState.PLAYING
 
                 room.buzz_player = None
-                await to_async(room.save)()
+                room.save()
 
                 # Question reading ended, do penalty
                 if room.end_time - room.buzz_start_time >= GRACE_TIME:
                     player.score -= 10
                     player.negs += 1
-                    await to_async(player.save)()
-
-                await to_async(create_message)(
+                    player.save()
+                
+                create_message(
                     "buzz_wrong",
                     player,
                     cleaned_content,
                     room,
                 )
 
-                await self.send_json({
+                self.send_json({
                     "response_type": "lock_out",
                     "locked_out": True,
                 })
@@ -374,15 +377,13 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 buzz_duration = timezone.now().timestamp() - room.buzz_start_time
                 room.start_time += buzz_duration
                 room.end_time += buzz_duration
-                await to_async(room.save)()
+                room.save()
 
             current_question = room.current_question
             try:
-                feedback = await to_async(QuestionFeedback.objects.get)(
-                    question=current_question, player=player
-                )
+                feedback = QuestionFeedback.objects.get(question=current_question, player=player)
             except QuestionFeedback.DoesNotExist:
-                feedback = await to_async(QuestionFeedback.objects.create)(
+                feedback = QuestionFeedback.objects.create(
                     question=current_question,
                     player=player,
                     guessed_answer=cleaned_content,
@@ -395,49 +396,46 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     buzz_position_norm=words_to_show / len(current_question.content.split()),
                     buzz_datetime=timezone.now()
                 )
-                await to_async(feedback.save)()
-            except ValidationError:
+                feedback.save()
+            except ValidationError as e:
                 pass
 
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': await to_async(get_room_response_json)(room),
+                    'data': get_room_response_json(room),
                 }
             )
 
         # Forfeit question if buzz time up
         elif timezone.now().timestamp() >= room.buzz_start_time + GRACE_TIME:
             buzz_duration = timezone.now().timestamp() - room.buzz_start_time
-            room.state = Room.GameState.PLAYING
+            room.state = 'playing'
             room.start_time += buzz_duration
             room.end_time += buzz_duration
-            await to_async(room.save)()
+            room.save()
 
-            await to_async(create_message)(
+            create_message(
                 "buzz_forfeit",
                 room.buzz_player,
                 None,
                 room,
             )
 
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': await to_async(get_room_response_json)(room),
+                    'data': get_room_response_json(room),
                 }
             )
 
-    async def submit_initial_feedback(self, room: Room, player: Player, content):
-        """Submit initial feedback"""
+    def submit_initial_feedback(self, room: Room, player: Player, content):
         if room.state == 'idle':
             try:
-                current_question = room.current_question
-                feedback = await to_async(QuestionFeedback.objects.get)(
-                    question=current_question, player=player
-                )
+                current_question: Question = room.current_question
+                feedback = QuestionFeedback.objects.get(question=current_question, player=player)
                 if feedback.initial_submission_datetime is None:
                     feedback.guessed_generation_method = content['guessed_generatation_method']
                     feedback.interestingness_rating = content['interestingness_rating']
@@ -455,41 +453,36 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                         (not current_question.is_human_written and feedback.guessed_generation_method == Question.GenerationMethod.AI)
                     )
 
-                    await to_async(feedback.save)()
-            except ValidationError:
+                    feedback.save()
+            except ValidationError as e:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
             except KeyError as e:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
                 print(f"KeyError: {e}")
-
-            await self.channel_layer.group_send(
+            
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
                     'data': {
                         "response_type": "get_question_feedback",
-                        "question_feedback": await to_async(get_question_feedback_response_json)(feedback),
+                        "question_feedback": get_question_feedback_response_json(feedback),
                     },
                 }
             )
-
-    async def submit_additional_feedback(self, room: Room, player: Player, content):
-        """Submit additional feedback"""
+    
+    def submit_additional_feedback(self, room: Room, player: Player, content):
         if room.state == 'idle':
             try:
-                current_question = room.current_question
-                feedback = await to_async(QuestionFeedback.objects.get)(
-                    question=current_question, player=player
-                )
+                current_question: Question = room.current_question
+                feedback = QuestionFeedback.objects.get(question=current_question, player=player)
                 if feedback.additional_submission_datetime is None:
                     feedback.submitted_clue_order = content['submitted_clue_order']
                     feedback.submitted_factual_mask_list = content['submitted_factual_mask_list']
 
                     # When counting inversions, we should ignore clues marked non-factual, since untrue things probably
                     # shouldn't have a "difficulty"
-                    clue_order_for_factual_clues = list(
-                        filter(lambda i: feedback.submitted_factual_mask_list[i], feedback.submitted_clue_order)
-                    )
+                    clue_order_for_factual_clues = list(filter(lambda i: feedback.submitted_factual_mask_list[i], feedback.submitted_clue_order))
                     feedback.inversions = count_inversions(clue_order_for_factual_clues)
                     feedback.submitted_clue_list = [current_question.clue_list[i] for i in feedback.submitted_clue_order]
 
@@ -498,42 +491,45 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     feedback.additional_submission_datetime = timezone.now()
                     feedback.is_submitted = True
 
-                    await to_async(feedback.save)()
-            except ValidationError:
+                    feedback.save()
+            except ValidationError as e:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
             except KeyError as e:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
                 print(f"KeyError: {e}")
-
-            await self.channel_layer.group_send(
+            
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
                     'data': {
                         "response_type": "get_question_feedback",
-                        "question_feedback": await to_async(get_question_feedback_response_json)(feedback),
+                        "question_feedback": get_question_feedback_response_json(feedback),
                     },
                 }
             )
 
-    async def get_answer(self, room):
-        """Get answer for room question"""
+
+    def get_answer(self, room):
+        """Get answer for room question
+        """
+
         update_time_state(room)
 
         if room.state == 'idle':
             # Generate random question for now if empty
-            if room.current_question is None:
-                questions = await to_async(Question.objects.all)()
+            if room.current_question == None:
+                questions = Question.objects.all()
 
                 # Abort if no questions
-                if await to_async(questions.count)() <= 0:
+                if len(questions) <= 0:
                     return
 
                 q = random.choice(questions)
                 room.current_question = q
-                await to_async(room.save)()
+                room.save()
 
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
@@ -543,16 +539,17 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     },
                 }
             )
-
-    async def get_shown_question(self, room: Room):
-        """Computes the correct amount of the question to show, depending on the state of the game."""
-        await self.channel_layer.group_send(
+    
+    def get_shown_question(self, room: Room):
+        """Computes the correct amount of the question to show, depending on the state of the game.
+            Note, this value is not persisted because, updating is too expensive."""
+        self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'update_room',
                 'data': {
                     "response_type": "get_shown_question",
-                    "shown_question": await to_async(room.get_shown_question)(),
+                    "shown_question": room.get_shown_question(),
                 },
             }
         )
@@ -595,148 +592,159 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-    async def set_category(self, room, p, content):
-        """Set room category"""
+    def set_category(self, room, p, content):
+        """Set room category
+        """
         # Abort if change locked
         if room.change_locked:
             return
 
         try:
             room.category = clean_content(content)
-            await to_async(room.full_clean)()
-            await to_async(room.save)()
+            room.full_clean()
+            room.save()
 
-            await to_async(create_message)(
+            create_message(
                 "set_category",
                 p,
                 room.category,
                 room,
             )
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': await to_async(get_room_response_json)(room),
+                    'data': get_room_response_json(room),
                 }
             )
-        except ValidationError:
+        except ValidationError as e:
             pass
 
-    async def set_difficulty(self, room, p, content):
-        """Set room difficulty"""
+    def set_difficulty(self, room, p, content):
+        """Set room difficulty
+        """
         # Abort if change locked
         if room.change_locked:
             return
 
         try:
             room.difficulty = clean_content(content)
-            await to_async(room.full_clean)()
-            await to_async(room.save)()
+            room.full_clean()
+            room.save()
 
-            await to_async(create_message)(
+            create_message(
                 "set_difficulty",
                 p,
                 room.difficulty,
                 room,
             )
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': await to_async(get_room_response_json)(room),
+                    'data': get_room_response_json(room),
                 }
             )
-        except ValidationError:
+        except ValidationError as e:
             pass
 
-    async def set_speed(self, room, p, content):
-        """Set room speed"""
+    def set_speed(self, room, p, content):
+        """Set room speed
+        """
         # Abort if change locked
+
         try:
             room.speed = int(clean_content(content))
-            await to_async(room.full_clean)()
-            await to_async(room.save)()
+            room.full_clean()
+            room.save()
 
-            await to_async(create_message)(
+            create_message(
                 "set_speed",
                 p,
                 room.speed,
                 room,
             )
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': await to_async(get_room_response_json)(room),
+                    'data': get_room_response_json(room),
                 }
             )
         except ValidationError as e:
             print(e)
             pass
 
-    async def reset_score(self, room, p):
-        """Reset player score"""
-        p.score = 0
-        await to_async(p.save)()
+    def reset_score(self, room, p):
+        """Reset player score
+        """
 
-        await to_async(create_message)("reset_score", p, None, room)
-        await self.channel_layer.group_send(
+        p.score = 0
+        p.save()
+
+        create_message("reset_score", p, None, room)
+        self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'update_room',
-                'data': await to_async(get_room_response_json)(room),
+                'data': get_room_response_json(room),
             }
         )
 
-    async def chat(self, room, p, content):
-        """Send chat message"""
+    def chat(self, room, p, content):
+        """ Send chat message
+        """
+
         m = clean_content(content)
 
-        await to_async(create_message)("chat", p, m, room)
-        await self.channel_layer.group_send(
+        create_message("chat", p, m, room)
+        self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'update_room',
-                'data': await to_async(get_room_response_json)(room),
+                'data': get_room_response_json(room),
             }
         )
 
-    async def kick(self):
-        """Kick banned player"""
-        await self.send_json({
+    def kick(self):
+        """Kick banned player
+        """
+        self.send_json({
             "response_type": "kick",
         })
-        await self.channel_layer.group_discard(
+        self.channel_layer.group_discard(
             self.room_name,
             self.channel_name
         )
-
-    async def too_many_players(self):
-        """Too many players in a room. Cannot join room."""
-        await self.send_json({
+    
+    def too_many_players(self):
+        """Too many players in a room. Cannot join room.
+        """
+        self.send_json({
             "response_type": "too_many_players",
         })
-        await self.channel_layer.group_discard(
+        self.channel_layer.group_discard(
             self.room_name,
             self.channel_name
         )
 
-    async def report_message(self, room, p, message_id):
-        """Handle reporting messages"""
-        m = await to_async(room.messages.filter)(message_id=message_id).first()
-        if m is None:
+    def report_message(self, room, p, message_id):
+        """Handle reporting messages
+        """
+        m = room.messages.filter(message_id=message_id).first()
+        if m == None:
             return
 
         # Only report chat or buzz messages
         if m.tag == 'chat' or m.tag == 'buzz_correct' or m.tag == 'buzz_wrong':
             m.player.reported_by.add(p)
-            await to_async(m.save)()
+            m.save()
 
             # Ban if reported by 60% of players
             ratio = len(m.player.reported_by.all()) / len(room.players.all())
             if ratio > 0.6:
                 m.player.banned = True
-                await to_async(m.player.save)()
+                m.player.save()
 
 # === Helper methods ===
 
