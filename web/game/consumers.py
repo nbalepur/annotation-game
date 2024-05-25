@@ -7,16 +7,13 @@ from django.core.serializers import serialize
 
 from .models import *
 from .utils import clean_content, generate_name, generate_id
-from .judge import judge_answer_kuiperbowl, judge_answer_annotation_game
+from .judge import judge_answer_annotation_game
 
 import json
 import datetime
 import random
 import logging
 import threading
-
-# Adding lock for buzzing
-buzz_lock = threading.Lock()
 
 logger = logging.getLogger('django')
 
@@ -31,9 +28,6 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['label']
         self.room_group_name = f"game-{self.room_name}"
         
-        # Set current buzz flag to False
-        self.buzzing = False
-    
         # Join room
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -68,7 +62,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             return
 
         # Validate user
-        if len(await to_async(User.objects.filter)(user_id=data['user_id'])) <= 0:
+        users_with_same_id = await to_async(User.objects.filter)(user_id=data['user_id'])
+        if await to_async(users_with_same_id.count)() <= 0:
             user = await self.new_user(room)
             data['user_id'] = user.user_id
 
@@ -86,11 +81,6 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 await self.kick()
                 return
 
-            # Ignoring for now
-            # Don't process anything if currently buzzing
-            # if self.buzzing and data['request_type'] != 'buzz_init':
-            #     return
-
             # Handle requests for joined players
             if data['request_type'] == 'ping':
                 await self.ping(room, p)
@@ -101,11 +91,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             elif data['request_type'] == 'get_answer':
                 await self.get_answer(room)
             elif data['request_type'] == 'get_current_question_feedback':
-                await self.get_init_question_feedback(room, p)
+                await to_async(self.get_init_question_feedback)(room, p)
             elif data['request_type'] == 'set_user_data':
                 await self.set_user_data(room, p, data['content'])
             elif data['request_type'] == 'next':
-                await self.next(room, p)
+                await to_async(self.next)(room, p)
             elif data['request_type'] == 'buzz_init':
                 await self.buzz_init(room, p)
             elif data['request_type'] == 'buzz_answer':
@@ -138,9 +128,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         p.last_seen = timezone.now().timestamp()
         await to_async(p.save)()
 
-        await to_async(update_time_state)(room)
+        await update_time_state(room)
 
-        await self.send_json(get_room_response_json(room))
+        await self.send_json(await to_async(get_room_response_json)(room))
         await self.send_json({
             'response_type': 'lock_out',
             'locked_out': p.locked_out,
@@ -148,7 +138,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def join(self, room: Room, data):
         """Join room"""
-        user = await to_async(User.objects.filter)(user_id=data['user_id']).first()
+        def get_user(user_id):
+            return User.objects.filter(user_id=user_id).first()
+
+        user = await to_async(get_user)(data['user_id'])
         if user is None:
             return
 
@@ -156,26 +149,26 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         p = await to_async(user.players.filter(room=room).first)()
 
         # Get the players in the room that have last been seen within 10 seconds ago, excluding the user trying to join
-        current_players = await to_async(room.players.filter(
+        num_current_players = await to_async(room.players.filter(
             Q(last_seen__gte=timezone.now().timestamp() - 10) &
             ~Q(user__user_id=data['user_id'])
-        ).all)()
+        ).count)()
 
-        if p is None and len(current_players) < room.max_players:
+        if p is None and num_current_players < room.max_players:
             p = await to_async(Player.objects.create)(room=room, user=user)
         
-        if len(current_players) >= room.max_players:
+        if num_current_players >= room.max_players:
             await self.too_many_players()
         else:
-            await to_async(create_message)("join", p, None, room)
+            # await create_message("join", p, None, room)
 
-            await self.send_json(get_room_response_json(room))
+            await self.send_json(await to_async(get_room_response_json)(room))
 
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
 
@@ -185,12 +178,12 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def leave(self, room, p):
         """Leave room"""
-        await to_async(create_message)("leave", p, None, room)
+        # await create_message("leave", p, None, room)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'update_room',
-                'data': get_room_response_json(room),
+                'data': await to_async(get_room_response_json)(room),
             }
         )
 
@@ -220,29 +213,26 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
 
         except ValidationError:
             return
 
-    async def next(self, room: Room, player: Player):
+    def next(self, room: Room, player: Player):
         """Next question"""
-        await to_async(update_time_state)(room)
+        update_time_state(room)
 
         if room.state == 'idle':
-            questions = await to_async(
-                Question.objects.filter(difficulty=room.difficulty).all
-            )() if room.category == 'Everything' else await to_async(
-                Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty)).all
-            )()
+            questions = (
+                Question.objects.filter(difficulty=room.difficulty).all() 
+                    if room.category == 'Everything' else 
+                Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty)).all())
 
             if room.collects_feedback:
                 if room.current_question:
-                    current_feedback = await to_async(
-                        QuestionFeedback.objects.get
-                    )(player=player, question=room.current_question)
+                    current_feedback = QuestionFeedback.objects.get(player=player, question=room.current_question)
                     
                     # Do not execute next if not finished with feedback
                     if not current_feedback.is_completed():
@@ -250,15 +240,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
                 # Get the IDs of questions with feedback from the player
                 questions_ids_with_feedback = [
-                    feedback.question.question_id for feedback in player.feedback.all()
+                    feedback.question.question_id for feedback in 
+                    player.feedback.all()
                 ]
 
                 # Exclude questions with feedback from the player
-                questions_without_feedback = await to_async(
+                questions_without_feedback = (
                     Question.objects.exclude(question_id__in=questions_ids_with_feedback).filter(
                         Q(category=room.category) & Q(difficulty=room.difficulty)
-                    ).all
-                )()
+                    ).all())
                 questions = questions_without_feedback if len(questions_without_feedback) > 0 else questions
 
             # Abort if no questions
@@ -272,14 +262,14 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.end_time = room.start_time + (len(q.content.split()) - 1) / (room.speed / 60)  # start_time (sec since epoch) + words in question / (words/sec)
             room.current_question = q
 
-            await to_async(room.save)()
+            room.save()
 
             # Unlock all players
-            for p in await to_async(room.players.all)():
+            for p in room.players.all():
                 p.locked_out = False
-                await to_async(p.save)()
+                p.save()
 
-            await self.channel_layer.group_send(
+            self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
@@ -289,17 +279,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def buzz_init(self, room, p):
         """Initialize buzz"""
-        # with buzz_lock: # Not necessary for now
         # Reject when not in contest
-        if room.state != 'playing':
+        if room.state != Room.GameState.PLAYING:
             return
 
         # Abort if no current question
         if room.current_question is None:
             return
 
-        if not p.locked_out and room.state == 'playing':
-            self.buzzing = True
+        if not p.locked_out and room.state == Room.GameState.PLAYING:
             room.state = Room.GameState.CONTEST
             room.buzz_player = p
             room.buzz_start_time = timezone.now().timestamp()
@@ -317,10 +305,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
-            self.buzzing = False  # Done with buzzing, resetting the flag
 
     async def buzz_answer(self, room: Room, player: Player, content):
         """Handle buzz answer"""
@@ -416,14 +403,14 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
 
         # Forfeit question if buzz time up
         elif timezone.now().timestamp() >= room.buzz_start_time + GRACE_TIME:
             buzz_duration = timezone.now().timestamp() - room.buzz_start_time
-            room.state = 'playing'
+            room.state = Room.GameState.PLAYING
             room.start_time += buzz_duration
             room.end_time += buzz_duration
             await to_async(room.save)()
@@ -439,7 +426,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
 
@@ -471,7 +458,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     await to_async(feedback.save)()
             except ValidationError:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
-            except KeyError:
+            except KeyError as e:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
                 print(f"KeyError: {e}")
 
@@ -481,7 +468,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     'type': 'update_room',
                     'data': {
                         "response_type": "get_question_feedback",
-                        "question_feedback": get_question_feedback_response_json(feedback),
+                        "question_feedback": await to_async(get_question_feedback_response_json)(feedback),
                     },
                 }
             )
@@ -524,14 +511,14 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     'type': 'update_room',
                     'data': {
                         "response_type": "get_question_feedback",
-                        "question_feedback": get_question_feedback_response_json(feedback),
+                        "question_feedback": await to_async(get_question_feedback_response_json)(feedback),
                     },
                 }
             )
 
     async def get_answer(self, room):
         """Get answer for room question"""
-        await to_async(update_time_state)(room)
+        update_time_state(room)
 
         if room.state == 'idle':
             # Generate random question for now if empty
@@ -539,7 +526,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 questions = await to_async(Question.objects.all)()
 
                 # Abort if no questions
-                if len(questions) <= 0:
+                if await to_async(questions.count)() <= 0:
                     return
 
                 q = random.choice(questions)
@@ -565,12 +552,12 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 'type': 'update_room',
                 'data': {
                     "response_type": "get_shown_question",
-                    "shown_question": room.get_shown_question(),
+                    "shown_question": await to_async(room.get_shown_question)(),
                 },
             }
         )
 
-    async def get_init_question_feedback(self, room: Room, player: Player):
+    def get_init_question_feedback(self, room: Room, player: Player):
         """After a question is completed (i.e. the room becomes idle),
         send a message containing the feedback regarding the question"""
         if room.state is Room.GameState.IDLE:
@@ -579,11 +566,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         current_question = room.current_question
 
         try:
-            feedback = await to_async(QuestionFeedback.objects.get)(
+            feedback = QuestionFeedback.objects.get(
                 question=current_question, player=player
             )
         except QuestionFeedback.DoesNotExist:
-            feedback = await to_async(QuestionFeedback.objects.create)(
+            feedback = QuestionFeedback.objects.create(
                 question=current_question,
                 player=player,
                 submitted_clue_list=current_question.clue_list,
@@ -593,11 +580,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 buzz_position_word=len(current_question.content.split()),
                 buzz_position_norm=1
             )
-            await to_async(feedback.save)()
+            feedback.save()
         except ValidationError:
             pass
 
-        await self.channel_layer.group_send(
+        self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'update_room',
@@ -629,7 +616,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
         except ValidationError:
@@ -656,7 +643,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
         except ValidationError:
@@ -680,7 +667,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
         except ValidationError as e:
@@ -697,7 +684,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'update_room',
-                'data': get_room_response_json(room),
+                'data': await to_async(get_room_response_json)(room),
             }
         )
 
@@ -710,7 +697,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'update_room',
-                'data': get_room_response_json(room),
+                'data': await to_async(get_room_response_json)(room),
             }
         )
 
