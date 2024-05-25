@@ -1,6 +1,6 @@
 from typing import Dict
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from channels.db import database_sync_to_async
+from channels.db import database_sync_to_async as to_async
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.core.serializers import serialize
@@ -55,7 +55,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         if 'content' not in data or data['content'] is None:
             data['content'] = ''
 
-        room = await database_sync_to_async(Room.objects.get)(label=self.room_name)
+        room = await to_async(Room.objects.get)(label=self.room_name)
 
         # Handle new user and join room
         if data['request_type'] == 'new_user':
@@ -68,7 +68,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             return
 
         # Validate user
-        if len(await database_sync_to_async(User.objects.filter)(user_id=data['user_id'])) <= 0:
+        if len(await to_async(User.objects.filter)(user_id=data['user_id'])) <= 0:
             user = await self.new_user(room)
             data['user_id'] = user.user_id
 
@@ -78,7 +78,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             return
 
         # Get player
-        p = await database_sync_to_async(room.players.filter(user__user_id=data['user_id']).first)()
+        p = await to_async(room.players.filter(user__user_id=data['user_id']).first)()
         if p is not None:
 
             # Kick if banned user
@@ -136,9 +136,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
     async def ping(self, room, p):
         """Receive ping"""
         p.last_seen = timezone.now().timestamp()
-        await database_sync_to_async(p.save)()
+        await to_async(p.save)()
 
-        await database_sync_to_async(update_time_state)(room)
+        await to_async(update_time_state)(room)
 
         await self.send_json(get_room_response_json(room))
         await self.send_json({
@@ -148,26 +148,26 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def join(self, room: Room, data):
         """Join room"""
-        user = await database_sync_to_async(User.objects.filter)(user_id=data['user_id']).first()
+        user = await to_async(User.objects.filter)(user_id=data['user_id']).first()
         if user is None:
             return
 
         # Create player if doesn't exist
-        p = await database_sync_to_async(user.players.filter(room=room).first)()
+        p = await to_async(user.players.filter(room=room).first)()
 
         # Get the players in the room that have last been seen within 10 seconds ago, excluding the user trying to join
-        current_players = await database_sync_to_async(room.players.filter(
+        current_players = await to_async(room.players.filter(
             Q(last_seen__gte=timezone.now().timestamp() - 10) &
             ~Q(user__user_id=data['user_id'])
         ).all)()
 
         if p is None and len(current_players) < room.max_players:
-            p = await database_sync_to_async(Player.objects.create)(room=room, user=user)
+            p = await to_async(Player.objects.create)(room=room, user=user)
         
         if len(current_players) >= room.max_players:
             await self.too_many_players()
         else:
-            await database_sync_to_async(create_message)("join", p, None, room)
+            await to_async(create_message)("join", p, None, room)
 
             await self.send_json(get_room_response_json(room))
 
@@ -185,7 +185,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def leave(self, room, p):
         """Leave room"""
-        await database_sync_to_async(create_message)("leave", p, None, room)
+        await to_async(create_message)("leave", p, None, room)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -196,7 +196,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def new_user(self, room):
         """Create new user and player in room"""
-        user = await database_sync_to_async(User.objects.create)(
+        user = await to_async(User.objects.create)(
             user_id=generate_id(), name=generate_name()
         )
 
@@ -213,8 +213,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         p.user.name = clean_content(content["user_name"])
         p.user.email = clean_content(content["user_email"])
         try:
-            await database_sync_to_async(p.user.full_clean)()
-            await database_sync_to_async(p.user.save)()
+            await to_async(p.user.full_clean)()
+            await to_async(p.user.save)()
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -229,18 +229,18 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def next(self, room: Room, player: Player):
         """Next question"""
-        await database_sync_to_async(update_time_state)(room)
+        await to_async(update_time_state)(room)
 
         if room.state == 'idle':
-            questions = await database_sync_to_async(
+            questions = await to_async(
                 Question.objects.filter(difficulty=room.difficulty).all
-            )() if room.category == 'Everything' else await database_sync_to_async(
+            )() if room.category == 'Everything' else await to_async(
                 Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty)).all
             )()
 
             if room.collects_feedback:
                 if room.current_question:
-                    current_feedback = await database_sync_to_async(
+                    current_feedback = await to_async(
                         QuestionFeedback.objects.get
                     )(player=player, question=room.current_question)
                     
@@ -254,7 +254,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 ]
 
                 # Exclude questions with feedback from the player
-                questions_without_feedback = await database_sync_to_async(
+                questions_without_feedback = await to_async(
                     Question.objects.exclude(question_id__in=questions_ids_with_feedback).filter(
                         Q(category=room.category) & Q(difficulty=room.difficulty)
                     ).all
@@ -272,12 +272,12 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.end_time = room.start_time + (len(q.content.split()) - 1) / (room.speed / 60)  # start_time (sec since epoch) + words in question / (words/sec)
             room.current_question = q
 
-            await database_sync_to_async(room.save)()
+            await to_async(room.save)()
 
             # Unlock all players
-            for p in await database_sync_to_async(room.players.all)():
+            for p in await to_async(room.players.all)():
                 p.locked_out = False
-                await database_sync_to_async(p.save)()
+                await to_async(p.save)()
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -303,12 +303,12 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.state = Room.GameState.CONTEST
             room.buzz_player = p
             room.buzz_start_time = timezone.now().timestamp()
-            await database_sync_to_async(room.save)()
+            await to_async(room.save)()
 
             p.locked_out = True
-            await database_sync_to_async(p.save)()
+            await to_async(p.save)()
 
-            await database_sync_to_async(create_message)("buzz_init", p, None, room)
+            await to_async(create_message)("buzz_init", p, None, room)
 
             await self.send_json({
                 'response_type': 'buzz_grant',
@@ -341,15 +341,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             if answered_correctly:
                 player.score += 10  # TODO: do not hardcode points
                 player.correct += 1
-                await database_sync_to_async(player.save)()
+                await to_async(player.save)()
 
                 # Quick end question
                 room.end_time = room.start_time
                 room.buzz_player = None
                 room.state = Room.GameState.IDLE
-                await database_sync_to_async(room.save)()
+                await to_async(room.save)()
 
-                await database_sync_to_async(create_message)(
+                await to_async(create_message)(
                     "buzz_correct",
                     player,
                     cleaned_content,
@@ -364,15 +364,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     room.state = Room.GameState.PLAYING
 
                 room.buzz_player = None
-                await database_sync_to_async(room.save)()
+                await to_async(room.save)()
 
                 # Question reading ended, do penalty
                 if room.end_time - room.buzz_start_time >= GRACE_TIME:
                     player.score -= 10
                     player.negs += 1
-                    await database_sync_to_async(player.save)()
+                    await to_async(player.save)()
 
-                await database_sync_to_async(create_message)(
+                await to_async(create_message)(
                     "buzz_wrong",
                     player,
                     cleaned_content,
@@ -387,15 +387,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 buzz_duration = timezone.now().timestamp() - room.buzz_start_time
                 room.start_time += buzz_duration
                 room.end_time += buzz_duration
-                await database_sync_to_async(room.save)()
+                await to_async(room.save)()
 
             current_question = room.current_question
             try:
-                feedback = await database_sync_to_async(QuestionFeedback.objects.get)(
+                feedback = await to_async(QuestionFeedback.objects.get)(
                     question=current_question, player=player
                 )
             except QuestionFeedback.DoesNotExist:
-                feedback = await database_sync_to_async(QuestionFeedback.objects.create)(
+                feedback = await to_async(QuestionFeedback.objects.create)(
                     question=current_question,
                     player=player,
                     guessed_answer=cleaned_content,
@@ -408,7 +408,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     buzz_position_norm=words_to_show / len(current_question.content.split()),
                     buzz_datetime=timezone.now()
                 )
-                await database_sync_to_async(feedback.save)()
+                await to_async(feedback.save)()
             except ValidationError:
                 pass
 
@@ -426,9 +426,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.state = 'playing'
             room.start_time += buzz_duration
             room.end_time += buzz_duration
-            await database_sync_to_async(room.save)()
+            await to_async(room.save)()
 
-            await database_sync_to_async(create_message)(
+            await to_async(create_message)(
                 "buzz_forfeit",
                 room.buzz_player,
                 None,
@@ -448,7 +448,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         if room.state == 'idle':
             try:
                 current_question = room.current_question
-                feedback = await database_sync_to_async(QuestionFeedback.objects.get)(
+                feedback = await to_async(QuestionFeedback.objects.get)(
                     question=current_question, player=player
                 )
                 if feedback.initial_submission_datetime is None:
@@ -468,7 +468,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                         (not current_question.is_human_written and feedback.guessed_generation_method == Question.GenerationMethod.AI)
                     )
 
-                    await database_sync_to_async(feedback.save)()
+                    await to_async(feedback.save)()
             except ValidationError:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
             except KeyError:
@@ -491,7 +491,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         if room.state == 'idle':
             try:
                 current_question = room.current_question
-                feedback = await database_sync_to_async(QuestionFeedback.objects.get)(
+                feedback = await to_async(QuestionFeedback.objects.get)(
                     question=current_question, player=player
                 )
                 if feedback.additional_submission_datetime is None:
@@ -511,10 +511,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     feedback.additional_submission_datetime = timezone.now()
                     feedback.is_submitted = True
 
-                    await database_sync_to_async(feedback.save)()
+                    await to_async(feedback.save)()
             except ValidationError:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
-            except KeyError:
+            except KeyError as e:
                 print(f"Error: failed to save initial feedback for {player.user.user_id} for question {current_question.question_id}")
                 print(f"KeyError: {e}")
 
@@ -531,12 +531,12 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def get_answer(self, room):
         """Get answer for room question"""
-        await database_sync_to_async(update_time_state)(room)
+        await to_async(update_time_state)(room)
 
         if room.state == 'idle':
             # Generate random question for now if empty
             if room.current_question is None:
-                questions = await database_sync_to_async(Question.objects.all)()
+                questions = await to_async(Question.objects.all)()
 
                 # Abort if no questions
                 if len(questions) <= 0:
@@ -544,7 +544,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
                 q = random.choice(questions)
                 room.current_question = q
-                await database_sync_to_async(room.save)()
+                await to_async(room.save)()
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -579,11 +579,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         current_question = room.current_question
 
         try:
-            feedback = await database_sync_to_async(QuestionFeedback.objects.get)(
+            feedback = await to_async(QuestionFeedback.objects.get)(
                 question=current_question, player=player
             )
         except QuestionFeedback.DoesNotExist:
-            feedback = await database_sync_to_async(QuestionFeedback.objects.create)(
+            feedback = await to_async(QuestionFeedback.objects.create)(
                 question=current_question,
                 player=player,
                 submitted_clue_list=current_question.clue_list,
@@ -593,7 +593,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 buzz_position_word=len(current_question.content.split()),
                 buzz_position_norm=1
             )
-            await database_sync_to_async(feedback.save)()
+            await to_async(feedback.save)()
         except ValidationError:
             pass
 
@@ -616,10 +616,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         try:
             room.category = clean_content(content)
-            await database_sync_to_async(room.full_clean)()
-            await database_sync_to_async(room.save)()
+            await to_async(room.full_clean)()
+            await to_async(room.save)()
 
-            await database_sync_to_async(create_message)(
+            await to_async(create_message)(
                 "set_category",
                 p,
                 room.category,
@@ -643,10 +643,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         try:
             room.difficulty = clean_content(content)
-            await database_sync_to_async(room.full_clean)()
-            await database_sync_to_async(room.save)()
+            await to_async(room.full_clean)()
+            await to_async(room.save)()
 
-            await database_sync_to_async(create_message)(
+            await to_async(create_message)(
                 "set_difficulty",
                 p,
                 room.difficulty,
@@ -667,10 +667,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         # Abort if change locked
         try:
             room.speed = int(clean_content(content))
-            await database_sync_to_async(room.full_clean)()
-            await database_sync_to_async(room.save)()
+            await to_async(room.full_clean)()
+            await to_async(room.save)()
 
-            await database_sync_to_async(create_message)(
+            await to_async(create_message)(
                 "set_speed",
                 p,
                 room.speed,
@@ -690,9 +690,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
     async def reset_score(self, room, p):
         """Reset player score"""
         p.score = 0
-        await database_sync_to_async(p.save)()
+        await to_async(p.save)()
 
-        await database_sync_to_async(create_message)("reset_score", p, None, room)
+        await to_async(create_message)("reset_score", p, None, room)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -705,7 +705,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         """Send chat message"""
         m = clean_content(content)
 
-        await database_sync_to_async(create_message)("chat", p, m, room)
+        await to_async(create_message)("chat", p, m, room)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -736,20 +736,20 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def report_message(self, room, p, message_id):
         """Handle reporting messages"""
-        m = await database_sync_to_async(room.messages.filter)(message_id=message_id).first()
+        m = await to_async(room.messages.filter)(message_id=message_id).first()
         if m is None:
             return
 
         # Only report chat or buzz messages
         if m.tag == 'chat' or m.tag == 'buzz_correct' or m.tag == 'buzz_wrong':
             m.player.reported_by.add(p)
-            await database_sync_to_async(m.save)()
+            await to_async(m.save)()
 
             # Ban if reported by 60% of players
             ratio = len(m.player.reported_by.all()) / len(room.players.all())
             if ratio > 0.6:
                 m.player.banned = True
-                await database_sync_to_async(m.player.save)()
+                await to_async(m.player.save)()
 
 # === Helper methods ===
 
@@ -758,7 +758,7 @@ async def update_time_state(room):
     if not room.state == 'contest':
         if timezone.now().timestamp() >= room.end_time + GRACE_TIME:
             room.state = 'idle'
-            await database_sync_to_async(room.save)()
+            await to_async(room.save)()
 
 def get_room_response_json(room):
     """Generates JSON for update response"""
@@ -791,8 +791,8 @@ async def create_message(tag, p, content, room):
     """Adds a message to db"""
     try:
         m = Message(tag=tag, player=p, content=content, room=room)
-        await database_sync_to_async(m.full_clean)()
-        await database_sync_to_async(m.save)()
+        await to_async(m.full_clean)()
+        await to_async(m.save)()
     except ValidationError:
         return
 
