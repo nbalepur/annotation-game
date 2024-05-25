@@ -15,6 +15,10 @@ import json
 import datetime
 import random
 import logging
+import threading
+
+# Adding lock for buzzing
+buzz_lock = threading.Lock()
 
 logger = logging.getLogger('django')
 
@@ -32,6 +36,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """
         self.room_name = self.scope['url_route']['kwargs']['label']
         self.room_group_name = f"game-{self.room_name}"
+        
+        # Set current buzz flag to False
+        self.buzzing = False
     
         # Join room
         async_to_sync(self.channel_layer.group_add)(
@@ -85,6 +92,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             # Kick if banned user
             if p.banned:
                 self.kick()
+                return
+
+            # Don't process anything if currently buzzing
+            if self.buzzing and data['request_type'] != 'buzz_init':
                 return
 
             # Handle requests for joined players
@@ -293,36 +304,38 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Initialize buzz
         """
 
-        # Reject when not in contest
-        if room.state != 'playing':
-            return
+        with buzz_lock:
+            # Reject when not in contest
+            if room.state != 'playing':
+                return
 
-        # Abort if no current question
-        if room.current_question == None:
-            return
+            # Abort if no current question
+            if room.current_question == None:
+                return
 
-        if not p.locked_out and room.state == 'playing':
+            if not p.locked_out and room.state == 'playing':
+                self.buzzing = True
+                room.state = Room.GameState.CONTEST
+                room.buzz_player = p
+                room.buzz_start_time = timezone.now().timestamp()
+                room.save()
 
-            room.state = Room.GameState.CONTEST
-            room.buzz_player = p
-            room.buzz_start_time = timezone.now().timestamp()
-            room.save()
+                p.locked_out = True
+                p.save()
 
-            p.locked_out = True
-            p.save()
+                create_message("buzz_init", p, None, room)
 
-            create_message("buzz_init", p, None, room)
-
-            self.send_json({
-                'response_type': 'buzz_grant',
-            })
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    'type': 'update_room',
-                    'data': get_room_response_json(room),
-                }
-            )
+                self.send_json({
+                    'response_type': 'buzz_grant',
+                })
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'update_room',
+                        'data': get_room_response_json(room),
+                    }
+                )
+                self.buzzing = False # Done with buzzing, reseting the flag
 
     def buzz_answer(self, room: Room, player: Player, content):
 
