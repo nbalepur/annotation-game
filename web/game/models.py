@@ -5,6 +5,7 @@ from django.db.models import Q, Max
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
+from channels.db import database_sync_to_async
 
 import nltk
 from math import ceil
@@ -129,6 +130,19 @@ class Room(models.Model):
 
     def __str__(self):
         return self.label
+
+    @database_sync_to_async
+    def aget_current_question(self):
+        return self.current_question
+    
+    @database_sync_to_async
+    def aget_buzz_player(self):
+        return self.buzz_player
+    
+    @database_sync_to_async
+    def aget_player_by_id(self, user_id=str):
+        player: Player = self.players.filter(user__user_id=user_id).first()
+        return player
     
     def get_valid_players(self):
         return self.players.filter(
@@ -280,6 +294,14 @@ class Player(models.Model):
 
     def __str__(self):
         return self.user.name + ":" + self.room.label
+    
+    @database_sync_to_async
+    def aget_user(self):
+        return self.user
+
+    @database_sync_to_async
+    def aget_room(self):
+        return self.room
 
 class QuestionFeedback(models.Model):
     """Feedback for quizbowl questions"""
@@ -351,6 +373,16 @@ class QuestionFeedback(models.Model):
                 or
                 (self.initial_submission_datetime != None and self.is_submitted and not self.solicit_additional_feedback))
 
+    
+    @database_sync_to_async
+    def aget_question(self):
+        return self.question
+
+    @database_sync_to_async
+    def aget_player(self):
+        return self.playere
+
+
     class Meta:
         # Indicate a composite key for player and question
         unique_together = (('question', 'player'),)
@@ -388,3 +420,13 @@ class Message(models.Model):
 
     def __str__(self):
         return self.player.user.name + "(" + self.tag + ")"
+    
+    
+    @database_sync_to_async
+    def aget_room(self):
+        return self.room
+
+    @database_sync_to_async
+    def aget_player(self):
+        return self.player
+
