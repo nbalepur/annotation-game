@@ -7,8 +7,6 @@ RUN apt-get install -y \
     postgresql-server-dev-all \
     gcc \
     python3-dev \
-    libmusl-dev \
-    libffi-dev \
     bash \
     automake \
     g++ \
