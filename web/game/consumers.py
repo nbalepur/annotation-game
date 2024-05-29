@@ -286,8 +286,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     'data': await to_async(get_room_response_json)(room),
                 }
             )
-
-            await self.send_next_question(room=room, interval=60 / room.speed)
+            timeout = (len(room.current_question.content.split()) / room.speed * 60) + 50 # Adding a 5 second buffer
+            await asyncio.wait_for(self.send_next_question(room=room, interval=60 / room.speed),  timeout)
     
     async def send_next_question(self, room: Room, interval: float):
         while room.state == Room.GameState.PLAYING:
