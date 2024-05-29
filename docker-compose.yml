@@ -1,5 +1,3 @@
-version: '3'
-
 services:
 
   nginx:
@@ -24,6 +22,7 @@ services:
       - web-static:/usr/src/app/static
     env_file: .env
     command: bash -c "
+      celery -A quizbowl worker --loglevel=ERROR &
       python manage.py collectstatic --noinput --clear &&
       daphne -b 0.0.0.0 -p 8000 quizbowl.asgi:application"
     depends_on:
@@ -36,6 +35,18 @@ services:
       - 6379
     volumes:
       - "redisdata:/data"
+
+  # celery:
+  #   build:
+  #     context: .
+  #     dockerfile: ./web/Dockerfile.celery
+  #   container_name: celery
+  #   command: celery -A quizbowl worker -q
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     - web
+  #     - redis
 
   # Commented out because using an AWS RDS Database instead of a container
   # postgres:

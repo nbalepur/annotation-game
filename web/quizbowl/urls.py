@@ -28,5 +28,4 @@ urlpatterns = [
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('incentives/', views.incentives, name='incentives'),
     path('resources/', views.resources, name='resources'),
-    path('sentry-debug/', trigger_error),
 ]

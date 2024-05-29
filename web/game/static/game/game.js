@@ -3,7 +3,11 @@
 
 const wsScheme = window.location.protocol == "https:" ? "wss" : "ws";
 // console.log(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname)
-const gamesock = new WebSocket(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname);
+const options = {
+  connectionTimeout: 1000,
+  maxRetries: 10,
+};
+const gamesock = new ReconnectingWebSocket(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname, [], options);
 
 let userID;
 let userName;

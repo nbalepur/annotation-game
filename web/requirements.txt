@@ -5,6 +5,7 @@ atomicwrites==1.4.1
 attrs==22.1.0
 autobahn==22.6.1
 Automat==20.2.0
+celery==5.4.0
 certifi==2022.6.15
 cffi==1.15.1
 channels==3.0.5
@@ -48,8 +49,8 @@ python-dotenv==0.20.0
 python-Levenshtein==0.12.2
 PyYAML==6.0.1
 qa-metrics==0.2.16
+redis==5.0.4
 regex==2023.12.25
-sentry-sdk[django]==2.2.1
 service-identity==21.1.0
 setuptools==61.2.0
 six==1.16.0
@@ -59,7 +60,7 @@ Twisted==22.4.0
 twisted-iocpsupport==1.0.2; sys_platform == 'windows'
 txaio==22.2.1
 typing_extensions==4.7.0
-tzdata==2022.1
+tzdata>=2022.7
 wheel==0.37.1
 wincertstore==0.2
 xlrd==2.0.1
