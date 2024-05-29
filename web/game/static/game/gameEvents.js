@@ -33,7 +33,7 @@ $(document).ready(() => {
 // Timed events (ms)
 window.setInterval(ping, 5000);
 window.setInterval(update, 100);
-window.setInterval(getShownQuestion, 150)
+// window.setInterval(getShownQuestion, 150)
 
 window.onbeforeunload = leave;
 

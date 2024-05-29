@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async as to_async
@@ -86,8 +87,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 await self.ping(room, p)
             elif data['request_type'] == 'leave':
                 await self.leave(room, p)
-            elif data['request_type'] == 'get_shown_question':
-                await self.get_shown_question(room)
+            # elif data['request_type'] == 'get_shown_question':
+            #     await self.get_shown_question(room)
             elif data['request_type'] == 'get_answer':
                 await self.get_answer(room)
             elif data['request_type'] == 'get_current_question_feedback':
@@ -96,6 +97,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 await self.set_user_data(room, p, data['content'])
             elif data['request_type'] == 'next':
                 await self.next(room, p)
+                # await self.send_question(room, 60 / room.speed)
             elif data['request_type'] == 'buzz_init':
                 await self.buzz_init(room, p)
             elif data['request_type'] == 'buzz_answer':
@@ -201,10 +203,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         return user
 
-    async def set_user_data(self, room, p, content):
+    async def set_user_data(self, room, p: Player, content):
         """Update player name"""
-        p.user.name = clean_content(content["user_name"])
-        p.user.email = clean_content(content["user_email"])
+        user = await p.aget_user()
+        user.name = clean_content(content["user_name"])
+        user.email = clean_content(content["user_email"])
         try:
             await to_async(p.user.full_clean)()
             await to_async(p.user.save)()
@@ -220,36 +223,42 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         except ValidationError:
             return
 
-    @to_async
-    def next(self, room: Room, player: Player):
+    async def next(self, room: Room, player: Player):
         """Next question"""
         update_time_state(room)
 
         if room.state == 'idle':
             questions = (
-                Question.objects.filter(difficulty=room.difficulty).all() 
+                await to_async(list)(Question.objects.filter(difficulty=room.difficulty).all())
                     if room.category == 'Everything' else 
-                Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty)).all())
+                await to_async(list)(Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty)).all())
+            )
 
             if room.collects_feedback:
-                if room.current_question:
-                    current_feedback = QuestionFeedback.objects.get(player=player, question=room.current_question)
+                current_question = await room.aget_current_question()
+                if current_question:
+                    current_feedback = await to_async(QuestionFeedback.objects.get)(player=player, question=current_question)
                     
                     # Do not execute next if not finished with feedback
-                    if not current_feedback.is_completed():
+                    if not await to_async(current_feedback.is_completed)():
                         return
 
                 # Get the IDs of questions with feedback from the player
                 questions_ids_with_feedback = [
-                    feedback.question.question_id for feedback in 
-                    player.feedback.all()
+                    (await feedback.aget_question()).question_id async for feedback in 
+                    await to_async(player.feedback.all)()
                 ]
 
                 # Exclude questions with feedback from the player
                 questions_without_feedback = (
-                    Question.objects.exclude(question_id__in=questions_ids_with_feedback).filter(
-                        Q(category=room.category) & Q(difficulty=room.difficulty)
-                    ).all())
+                    await to_async(list)(
+                        Question.objects.exclude(question_id__in=questions_ids_with_feedback).filter(
+                            Q(category=room.category) & Q(difficulty=room.difficulty)
+                        )
+                        .all()
+                    )
+                )
+
                 questions = questions_without_feedback if len(questions_without_feedback) > 0 else questions
 
             # Abort if no questions
@@ -263,20 +272,27 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.end_time = room.start_time + (len(q.content.split()) - 1) / (room.speed / 60)  # start_time (sec since epoch) + words in question / (words/sec)
             room.current_question = q
 
-            room.save()
+            await to_async(room.save)()
 
             # Unlock all players
-            for p in room.players.all():
+            for p in await to_async(list)(room.players.all()):
                 p.locked_out = False
-                p.save()
+                await to_async(p.save)()
 
-            self.channel_layer.group_send(
+            await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'update_room',
-                    'data': get_room_response_json(room),
+                    'data': await to_async(get_room_response_json)(room),
                 }
             )
+
+            await self.send_next_question(room=room, interval=60 / room.speed)
+    
+    async def send_next_question(self, room: Room, interval: float):
+        while room.state == Room.GameState.PLAYING:
+            await self.get_shown_question(room=room)
+            await asyncio.sleep(interval)
 
     async def buzz_init(self, room, p):
         """Initialize buzz"""
@@ -753,7 +769,7 @@ async def update_time_state(room):
             room.state = 'idle'
             await to_async(room.save)()
 
-def get_room_response_json(room):
+def get_room_response_json(room: Room):
     """Generates JSON for update response"""
     return {
         "response_type": "update",
