@@ -331,7 +331,7 @@ class QuestionFeedback(models.Model):
     guessed_generation_method = models.CharField(choices=Question.GenerationMethod.choices, max_length=30)
 
     # Interestingness
-    interestingness_rating = models.IntegerField(default=Rating.ONE_STAR, choices=Rating.choices)
+    interestingness_rating = models.IntegerField(default=0, choices=Rating.choices)
 
     # Pyramidality
 

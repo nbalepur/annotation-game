@@ -1,4 +1,3 @@
-import asyncio
 from typing import Dict
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async as to_async
@@ -9,12 +8,11 @@ from django.core.serializers import serialize
 from .models import *
 from .utils import clean_content, generate_name, generate_id
 from .judge import judge_answer_annotation_game
+from .tasks import send_next_question
 
 import json
-import datetime
 import random
 import logging
-import threading
 
 logger = logging.getLogger('django')
 
@@ -286,13 +284,13 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     'data': await to_async(get_room_response_json)(room),
                 }
             )
-            timeout = (len(room.current_question.content.split()) / room.speed * 60) + 50 # Adding a 5 second buffer
-            await asyncio.wait_for(self.send_next_question(room=room, interval=60 / room.speed),  timeout)
-    
-    async def send_next_question(self, room: Room, interval: float):
-        while room.state == Room.GameState.PLAYING:
-            await self.get_shown_question(room=room)
-            await asyncio.sleep(interval)
+
+            send_next_question.delay(self.room_name, self.room_group_name, interval=60 / room.speed)
+
+    # async def send_next_question(self, room: Room, interval: float):
+    #     while room.state == Room.GameState.PLAYING:
+    #         await self.get_shown_question(room=room)
+    #         await asyncio.sleep(interval)
 
     async def buzz_init(self, room, p):
         """Initialize buzz"""
@@ -567,13 +565,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def get_shown_question(self, room: Room):
         """Computes the correct amount of the question to show, depending on the state of the game."""
+        question = await to_async(room.get_shown_question)()
+
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'update_room',
                 'data': {
                     "response_type": "get_shown_question",
-                    "shown_question": await to_async(room.get_shown_question)(),
+                    "shown_question": question,
                 },
             }
         )
