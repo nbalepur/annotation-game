@@ -1,119 +1,91 @@
-<div class="container my-5">
-    <h1 class="text-center mb-4">IRB Consent Form</h1>
-    <h2>Project Title: Generating Quizbowl Questions using LLMs</h2>
-    <h3>Purpose of the Study:</h3>
-    <p>This research is being conducted by Jordan Boyd-Graber at the University of Maryland, College Park. We are
-        inviting you to participate in this research project because you are interested in answering quizbowl questions.
-        The purpose of this research project is to use your responses to further improve the models we use to generate
-        the questions.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizbowl Question Generation (IRB)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        p {
+            margin-bottom: 1em;
+        }
+        .section {
+            margin-bottom: 2em;
+        }
+    </style>
+</head>
+<body>
 
-    <h3>Procedures:</h3>
-    <p> Users who partake in the study will have the ability to choose specific categories of questions they wish
-        to study. Users will then study facts through the application for a flexible number of minutes each day,
-        likely ranging between 10 and 60 minutes, until the end of the study of August 2024.</p>
-    <p> During our study, we estimate that you will spend between 5 and 100 hours. Participating in this research
-        is a requirement for using our application but there is no minimum required time commitment for using
-        the application.</p>
-    <p> To start, the user will incrementally be shown a question to answer. Each time a question is answered,
-        information including the user’s answer, correctness of the answer, whether the user attempted to
-        answer, the position in the question where the user attempted to answer, and the user id will be stored
-        in the database. Next, a user will be directly prompted to provide feedback about the previous question
-        in a questionnaire format (see supporting documents). Each time a user submits feedback about a
-        question, the feedback will be stored in a database. This includes: the guessed generation method (AI or
-        human), the interestingness rating, the submitted clue order (and the number of inversions), and a list
-        of (un)factual clues. The only identifying information tied to these user ids are the emails and
-        usernames of users in this study. Once a user answers a question and provides feedback, the question
-        will not be shown to them again.</p>
-    <p> We will conduct two rounds of study between May 2024 and August 2024, each lasting roughly one month. Please
-        ensure your feedback is constructive and directly related to the questions posed.</p>
-    <p> A leaderboard will show all users who have completed over 20 questions as well as their corresponding username,
-        “knowledge score,” and “Turing score.” The knowledge score reflects the participants ability to answer the
-        trivia/quizbowl questions correctly. The Turing score measures their ability to discern whether it was written
-        by an AI or a human.</p>
-    <p>We will have multiple rounds of study to iterate and improve our AI-generated questions. Throughout these
-        rounds, we will be gathering user feedback to help improve suggestions. In round two of the study
-        onwards, users will be tested on different human-written questions and newly AI-generated questions. All
-        other aspects of the website, including the feedback mechanism (questionnaire) will remain the same.</p>
+    <h1>Project Title : Quizbowl Question Generation (IRB)</h1>
 
+    <div class="section">
+        <h2>Purpose of the Study</h2>
+        <p>This research is being conducted by Jordan Boyd-Graber at the University of Maryland, College Park. We are inviting you to participate in this research project because you are interested in answering quizbowl questions and are 18 years of age or older. The purpose of this research project is to use your responses to further improve the models we use to generate the questions.</p>
+    </div>
 
-    <h3>Potential Risks and Discomforts:</h3>
-    <p>The main known risk to participants of this study is in confidentiality of study participation and data
-        collected while using the website. This risk will be mitigated through the procedures described in the
-        following Confidentiality section.</p>
+    <div class="section">
+        <h2>Procedures</h2>
+        <p>You will have the ability to choose specific categories of questions you wish to study. You will then study facts through the application for a flexible number of minutes each day, likely ranging between 10 and 60 minutes until the end of the study in August 2024. You will choose a username which will be made public, so you must choose your username carefully to remain anonymous. During our study, we estimate that you will spend between 5 and 100 hours participating. Participating in this research is a requirement for using our application, but there is no minimum required time commitment for using the application. To start, you will incrementally be shown a question to answer. Each time a question is answered, information including your answer, correctness of the answer, whether you attempted to answer, the position in the question where you attempted to answer, and your user ID will be stored in the database. Next, you will be directly prompted to provide feedback about the previous question in a questionnaire format (see supporting documents). Each time you submit feedback about a question, the feedback will be stored in a database. This includes the guessed generation method (AI or human), the interestingness rating, the submitted clue order (and the number of inversions), and a list of (un)factual clues. The only identifying information tied to your user ID is your email and username. Once you answer a question and provide feedback, the question will not be shown to you again. We will conduct two rounds of study between May 2024 and August 2024, each lasting roughly one month. Please ensure your feedback is constructive and directly related to the questions posed.</p>
+        <p>A leaderboard will show all users who have completed over 20 questions, as well as their corresponding username, “knowledge score,” and “Turing score.” The knowledge score reflects your ability to answer the trivia/quizbowl questions correctly. The Turing score measures your ability to discern whether a question was written by an AI (artificial intelligence) or a human. We will have multiple rounds of study to iterate and improve our AI-generated questions. Throughout these rounds, we will be gathering your feedback to help improve suggestions. In round two of the study onwards, you will be tested on different human-written questions and newly AI-generated questions. All other aspects of the website, including the feedback mechanism (questionnaire), will remain the same.</p>
+    </div>
 
-    <h3>Potential Benefits:</h3>
-    <p>The benefits to participants include the ability to practice trivia online using new questions, but there
-        are no other direct benefits. However, this study aims to use techniques in machine learning and natural
-        language processing to generate quizbowl questions about new topics without the need for a human writer.
-        Participants in this study may therefore benefit from being able to better study specific topics with
-        few existing quizbowl questions written about them. This could benefit participants studying for
-        quizbowl and other academic competitions.</p>
+    <div class="section">
+        <h2>Potential Risks and Discomforts</h2>
+        <p>The only known risk to you is in the confidentiality of your study participation and data from answering questions with the app. This risk will be mitigated through the procedures described in the following Confidentiality section.</p>
+    </div>
 
-    <h3>Confidentiality:</h3>
-    <p>Data collected in this study will be securely stored in a database hosted on password protected
-        webservers and cloud-based file storage. Only researchers will have access to users’ emails and no other
-        identifying information will be collected in the app. While users who have completed 20 or more
-        questions will be shown on the <a href="/leaderboard">public leaderboard</a>, only their chosen
-        username will be displayed on the leaderboard. Therefore, users will be able to remain anonymous on the
-        leaderboard if they desire. Since emails are PII, they will not be included on the public leaderboard.
-        After the end of the experiment, data will be anonymized and released publicly. User ids are used
-        throughout the experiment to serve questions to the users, collect feedback, and produce statistical
-        leaderboards. The collected usernames and emails and links to public statistics pages will be destroyed
-        after the completion of this study. To maintain linkage in study data, a new randomized user id will be
-        generated in replacement of the identification keys in use during the study.</p>
+    <div class="section">
+        <h2>Potential Benefits</h2>
+        <p>The benefits to you include the ability to practice trivia online using new questions, but there are no other direct benefits. However, this study aims to use techniques in machine learning and natural language processing to generate quizbowl questions about new topics without the need for a human writer. You may therefore benefit from being able to better study specific topics with few existing quizbowl questions written about them. This could benefit you in studying for quizbowl and other academic competitions.</p>
+    </div>
 
-    <h3>Compensation:</h3>
-    <p>We will conduct two rounds of study between May 2024 and August 2024, each lasting roughly one month. At
-        the end of each round, a $20 gift card will be given to ten (10) users who answered more than 100
-        questions: the five (5) users who were best at answering the questions as measured by expected wins
-        (“Knowledge score” on the site) as well as the five (5) users who were best at differentiating
-        human-written questions from AI-generated questions as measured by F1 score (“Turing score” on the
-        site). Other users who answer over 100 questions will be randomly selected to receive one of ten gift
-        cards, $10 each. Providing blatantly nonsensical or irrelevant feedback may deem users ineligible for
-        prizing. Please ensure your feedback is constructive and directly related to the questions posed. Gift
-        cards will be distributed over email.</p>
+    <div class="section">
+        <h2>Confidentiality</h2>
+        <p>Data collected in this study will be securely stored in a database hosted on password-protected web servers and cloud-based file storage. Only researchers will have access to your email, and no other identifying information will be collected in the app. While users who have completed 20 or more questions will be shown on the public leaderboard (annotationgame.com/leaderboard), only your chosen username will be displayed on the leaderboard. Therefore, you will be able to remain anonymous on the leaderboard if you desire. Since emails are classified as PII (personally identifiable information), they will not be included on the public leaderboard. After the end of the experiment, data will be anonymized and released publicly. User IDs are used throughout the experiment to serve questions to you, collect feedback, and produce statistical leaderboards. The collected usernames, emails, and links to public statistics pages will be destroyed after the completion of this study. To maintain linkage in study data, a new randomized user ID will be generated in replacement of the identification keys used during the study. We also use cookies to store certain user data, which is also present in our database. The cookies are stored on your browser and can be deleted by you at any time.</p>
+    </div>
 
-    <h3>Right to Withdraw and Questions:</h3>
-    <p>Your participation in this research is completely voluntary. You may
-        choose not to take part at all. If you decide to participate in this
-        research, you may stop participating at any time. If you decide not to
-        participate in this study or if you stop participating at any time, you
-        will not be penalized or lose any benefits to which you otherwise
-        qualify.
-        If you decide to stop taking part in the study, if you have questions,
-        concerns, or complaints, or if you need to report an injury related to the research, please contact the
-        investigator:</p>
-    <p class="container text-center">
-        Jordan Boyd-Graber</br>
-        4146 Iribe University of Maryland</br>
-        College Park, Maryland, 20742</br>
-        Email: <a href="mailto:jbg@umiacs.umd.edu">jbg@umiacs.umd.edu</a></br>
-        Telephone: (301) 405-6766</p>
+    <div class="section">
+        <h2>Compensation</h2>
+        <p>At the end of each round, a $20 gift card will be given to ten (10) users who answered more than 100 questions: the five (5) users who were best at answering the questions as measured by expected wins (“Knowledge score” on the site) as well as the five (5) users who were best at differentiating human-written questions from AI-generated questions as measured by F1 score (“Turing score” on the site). Other users who answer over 100 questions will be randomly selected to receive one of ten gift cards, $10 each. Providing blatantly nonsensical or irrelevant feedback may deem you ineligible for prizing. Gift cards will be distributed over email. While we expect between 200-10,000 entrants, we will allow up to 500,000 entrants. From the total number of entrants, 10 will win $20 while another 10 will win $10 from the raffle.</p>
+    </div>
 
-    <h3>Participant Rights:</h3>
-    <p>If you have questions about your rights as a research participant or wish to report a research-related
-        injury, please contact:
+    <div class="section">
+        <h2>Right to Withdraw and Questions</h2>
+        <p>Your participation in this research is completely voluntary. You may choose not to take part at all. If you decide to participate in this research, you may stop participating at any time. If you decide not to participate in this study or if you stop participating at any time, you will not be penalized or lose any benefits to which you otherwise qualify.</p>
+        <p>If you decide to stop taking part in the study, if you have questions, concerns, or complaints, or if you need to report an injury related to the research, please contact the investigator:</p>
+        <p>Jordan Boyd-Graber<br>
+            4146 Iribe University of Maryland<br>
+            College Park, Maryland, 20742<br>
+            E-mail: <a href="mailto:jbg@umiacs.umd.edu">jbg@umiacs.umd.edu</a><br>
+            Telephone: (301) 405-6766</p>
+    </div>
 
-    <p class="container text-center">
-        University of Maryland College Park</br>
-        Institutional Review Board Office</br>
-        1204 Marie Mount Hall</br>
-        College Park, Maryland, 20742</br>
-        E-mail: <a href="mailto:irb@umd.edu">irb@umd.edu</a></br>
-        Telephone: 301-405-0678
-    </p>
-    <p>
-        For more information regarding participant rights, please visit:
-        <a href="mailto:https://research.umd.edu/irb-research-participants">
-            https://research.umd.edu/irb-research-participants</a>
-        This research has been reviewed according to the University of
-        Maryland, College Park IRB procedures for research involving
-        human subjects.
-    </p>
+    <div class="section">
+        <h2>Participant Rights</h2>
+        <p>If you have questions about your rights as a research participant or wish to report a research-related injury, please contact:</p>
+        <p>University of Maryland College Park<br>
+            Institutional Review Board Office<br>
+            1204 Marie Mount Hall<br>
+            College Park, Maryland, 20742<br>
+            E-mail: <a href="mailto:irb@umd.edu">irb@umd.edu</a><br>
+            Telephone: 301-405-0678</p>
+        <p>For more information regarding participant rights, please visit:<br>
+            <a href="https://research.umd.edu/research-resources/research-compliance/institutional-review-board-irb/research-participants">Participant Rights Information</a></p>
+        <p>This research has been reviewed according to the University of Maryland, College Park IRB procedures for research involving human subjects.</p>
+    </div>
 
-    <h3>Statement of Consent</h3>
-    <p>By clicking “Agree and Play”, you indicate that you are at least 18 years of age; you have read this consent form
-        or have had it read to you; your questions have been answered to your satisfaction, and you voluntarily
-        agree to participate in this research study.</p>
+    <div class="section">
+        <h2>Statement of Consent</h2>
+        <p>By proceeding and clicking the "Agree And Play" you are indicating that you are at least 18 years of age; you have read this consent form or have had it read to you; your questions have been answered to your satisfaction and you voluntarily agree to participate in this research study.</p>
+    </div>
 
-</div>
+</body>
+<footer>Approved as IRBNet Package: 2191160-1</footer>
+</html>
