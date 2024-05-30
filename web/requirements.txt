@@ -22,6 +22,7 @@ django-import-export==3.3.7
 et-xmlfile==1.1.0
 fontawesomefree==6.5.1
 fuzzywuzzy==0.18.0
+gevent==24.2.1
 hiredis==2.0.0
 hyperlink==21.0.0
 idna==3.3
