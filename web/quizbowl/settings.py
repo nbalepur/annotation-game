@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 from dotenv import load_dotenv
+from kombu import Queue
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -161,3 +162,11 @@ LOGGING = {
 
 CELERY_BROKER_URL = f"redis://{os.getenv('REDIS_SERVICE', '127.0.0.1')}:{os.getenv('REDIS_PORT', '6379')}/0"
 CELERY_RESULT_BACKEND = f"redis://{os.getenv('REDIS_SERVICE', '127.0.0.1')}:{os.getenv('REDIS_PORT', '6379')}/0"
+
+# Define a single queue named 'default'
+CELERY_TASK_QUEUES = (
+    Queue('default', routing_key='default.#'),
+)
+
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+CELERY_TASK_DEFAULT_ROUTING_KEY = 'default.#'
