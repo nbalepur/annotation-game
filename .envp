@@ -1,0 +1,17 @@
+# Environment variables - Reconfigure for production
+
+SECRET_KEY="7g?aDqf_Z#j%dVWate5k@n/[n+#0.P6z#fHr@,/JTFyKVr{8{A"
+
+DOMAIN=annotationgame.com # ex. annotationgame.com
+EMAIL=rocky1oo.zhang@gmail.com # for certbot
+
+REDIS_SERVICE=redis
+REDIS_PORT=6379
+
+DB_NAME=annotationgame
+DB_USER=postgres
+DB_PASS=qantaGen!
+DB_SERVICE=annotationgame-database.c3w04okis99l.us-east-2.rds.amazonaws.com
+DB_PORT=5432
+
+DEBUG=False
