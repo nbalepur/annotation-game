@@ -162,11 +162,3 @@ LOGGING = {
 
 CELERY_BROKER_URL = f"redis://{os.getenv('REDIS_SERVICE', '127.0.0.1')}:{os.getenv('REDIS_PORT', '6379')}/0"
 CELERY_RESULT_BACKEND = f"redis://{os.getenv('REDIS_SERVICE', '127.0.0.1')}:{os.getenv('REDIS_PORT', '6379')}/0"
-
-# Define a single queue named 'default'
-CELERY_TASK_QUEUES = (
-    Queue('default', routing_key='default.#'),
-)
-
-CELERY_TASK_DEFAULT_QUEUE = 'default'
-CELERY_TASK_DEFAULT_ROUTING_KEY = 'default.#'

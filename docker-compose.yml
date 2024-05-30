@@ -22,11 +22,7 @@ services:
       - web-static:/usr/src/app/static
     env_file: .env
     command: bash -c "
-      celery -A quizbowl worker -n worker1@%h -Q default -c 1 --loglevel=ERROR &
-      celery -A quizbowl worker -n worker2@%h -Q default -c 1 --loglevel=ERROR &
-      celery -A quizbowl worker -n worker3@%h -Q default -c 1 --loglevel=ERROR &
-      celery -A quizbowl worker -n worker4@%h -Q default -c 1 --loglevel=ERROR &
-      celery -A quizbowl worker -n worker5@%h -Q default -c 1 --loglevel=ERROR &
+      celery -A quizbowl worker --loglevel=ERROR &
       python manage.py collectstatic --noinput --clear &&
       daphne -b 0.0.0.0 -p 8000 quizbowl.asgi:application"
     depends_on:

@@ -5,12 +5,10 @@ from django.db.models import Q
 from channels.generic.websocket import JsonWebsocketConsumer
 
 from django.core.serializers import serialize
-from django.http import JsonResponse
 
 from .models import *
 from .utils import clean_content, generate_name, generate_id
 from .judge import judge_answer_annotation_game
-from .tasks import send_next_question
 
 import json
 import datetime
@@ -93,8 +91,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.ping(room, p)
             elif data['request_type'] == 'leave':
                 self.leave(room, p)
-            # elif data['request_type'] == 'get_shown_question':
-            #     self.get_shown_question(room)
             elif data['request_type'] == 'get_answer':
                 self.get_answer(room)
             elif data['request_type'] == 'get_current_question_feedback':
@@ -103,7 +99,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.set_user_data(room, p, data['content'])
             elif data['request_type'] == 'next':
                 self.next(room, p)
-                send_next_question.delay(self.room_name, self.room_group_name, interval=60 / room.speed)
             elif data['request_type'] == 'buzz_init':
                 self.buzz_init(room, p)
             elif data['request_type'] == 'buzz_answer':
