@@ -80,16 +80,16 @@ function updateMessages() {
       leftSide.append(msg);
 
       const messageID = messages[i]['message_id'];
-      const reportBtn = document.createElement('div');
-      reportBtn.title = 'Flag as inappropriate'
-      reportBtn.className = 'btn btn-sm';
-      reportBtn.innerHTML = `<i class="fas fa-flag" style="color: gray;"></i>`;
-      reportBtn.onclick = () => {
-        const res = confirm('Report the player that wrote this message?');
-        if (res) {
-          reportMessage(messageID);
-        }
-      }
+      // const reportBtn = document.createElement('div');
+      // reportBtn.title = 'Flag as inappropriate'
+      // reportBtn.className = 'btn btn-sm';
+      // reportBtn.innerHTML = `<i class="fas fa-flag" style="color: gray;"></i>`;
+      // reportBtn.onclick = () => {
+      //   const res = confirm('Report the player that wrote this message?');
+      //   if (res) {
+      //     reportMessage(messageID);
+      //   }
+      // }
 
       const li = document.createElement('li');
       li.classList.add('list-group-item');
@@ -101,7 +101,7 @@ function updateMessages() {
       if (messages[i]['tag'] === 'chat' ||
         messages[i]['tag'] === 'buzz_correct' ||
         messages[i]['tag'] === 'buzz_wrong') {
-        li.append(reportBtn);
+        // li.append(reportBtn);
       }
 
       messageSpace.append(li);
