@@ -741,7 +741,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             self.channel_name
         )
 
-    def report_message(self, room, p, message_id):
+    def report_message(self, room: Room, p: Player, message_id):
         """Handle reporting messages
         """
         m = room.messages.filter(message_id=message_id).first()
@@ -754,8 +754,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             m.save()
 
             # Ban if reported by 60% of players
-            ratio = len(m.player.reported_by.all()) / len(room.players.all())
-            if ratio > 0.6:
+            num_players_in_room = len(room.get_valid_players())
+            ratio = len(m.player.reported_by.all()) / num_players_in_room
+            if ratio > 0.6 and num_players_in_room > 1:
                 m.player.banned = True
                 m.player.save()
 
