@@ -131,19 +131,6 @@ class Room(models.Model):
     def __str__(self):
         return self.label
 
-    @database_sync_to_async
-    def aget_current_question(self):
-        return self.current_question
-    
-    @database_sync_to_async
-    def aget_buzz_player(self):
-        return self.buzz_player
-    
-    @database_sync_to_async
-    def aget_player_by_id(self, user_id=str):
-        player: Player = self.players.filter(user__user_id=user_id).first()
-        return player
-    
     def get_valid_players(self):
         return self.players.filter(
                     Q(last_seen__gte=timezone.now().timestamp() - 3600) &
@@ -248,7 +235,7 @@ class Room(models.Model):
             'tag': m.tag,
             'user_name': m.player.user.name,
             'content': m.content
-        } for m in valid_messages.order_by('timestamp').reverse()[:50]]
+        } for m in valid_messages.order_by('timestamp').reverse()[:30]]
 
         return chrono_messages
 
@@ -294,14 +281,6 @@ class Player(models.Model):
 
     def __str__(self):
         return self.user.name + ":" + self.room.label
-    
-    @database_sync_to_async
-    def aget_user(self):
-        return self.user
-
-    @database_sync_to_async
-    def aget_room(self):
-        return self.room
 
 class QuestionFeedback(models.Model):
     """Feedback for quizbowl questions"""
@@ -344,7 +323,8 @@ class QuestionFeedback(models.Model):
     # For example, [1, 0, 2, 3], means the 1st clue was easier than the 0th
     submitted_clue_order = models.JSONField(null=True, blank=True)
 
-    # For each index i, the value of the below list is true if it is a factual clue
+    # For each index i, the value of the below list is between 0 and 1 (1, 0.75, 0.5, 0.25, 0.0)
+    # 'Factual': 1.0, 'Seems true': 0.75, 'Not sure': 0.5, 'Seems fishy': 0.25, 'Untrue': 0.0
     submitted_factual_mask_list = models.JSONField(null=True, blank=True) 
     inversions = models.IntegerField(default=0)
 
@@ -354,6 +334,7 @@ class QuestionFeedback(models.Model):
     # Play data
     answered_correctly = models.BooleanField()
     buzzed = models.BooleanField(default=False)
+    skipped = models.BooleanField(default=False)
     buzz_position_word = models.IntegerField(validators=[MinValueValidator(0)])
     buzz_position_norm = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
     buzz_datetime = models.DateTimeField(null=True)
@@ -369,15 +350,12 @@ class QuestionFeedback(models.Model):
         return f"Feedback for Question {self.question.question_id} by {self.player.user.name} ({self.player.user.user_id})"
     
     def is_completed(self) -> bool:
-        return ((self.additional_submission_datetime != None and self.solicit_additional_feedback)
+        return (not self.buzzed or
+                (self.additional_submission_datetime != None and self.solicit_additional_feedback)
                 or
                 (self.initial_submission_datetime != None and self.is_submitted and not self.solicit_additional_feedback))
 
     
-    @database_sync_to_async
-    def aget_question(self):
-        return self.question
-
     @database_sync_to_async
     def aget_player(self):
         return self.playere
@@ -421,12 +399,3 @@ class Message(models.Model):
     def __str__(self):
         return self.player.user.name + "(" + self.tag + ")"
     
-    
-    @database_sync_to_async
-    def aget_room(self):
-        return self.room
-
-    @database_sync_to_async
-    def aget_player(self):
-        return self.player
-

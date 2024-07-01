@@ -136,6 +136,8 @@ gamesock.onmessage = message => {
     categorySelect.disabled = changeLocked;
     difficultySelect.disabled = changeLocked;
 
+    showButtons();
+
     // Update scoreboard
     // TODO: Make it so we don't have to redo popover??
     updateScoreboard();
@@ -193,9 +195,7 @@ gamesock.onmessage = message => {
     requestContentInput.style.display = '';
     buzzPassedTime = 0;
 
-    nextBtn.style.display = 'none';
-    buzzBtn.style.display = 'none';
-    // chatBtn.style.display = 'none';
+    hideButtons();
 
     gameState = 'contest';
 
@@ -232,7 +232,44 @@ function setAnswer(answer) {
   answerHeader.innerHTML = `Answer: ${answer}`;
 }
 
+function hideButtons() {
+  skipBtn.style.display = 'none';
+  nextBtn.style.display = 'none';
+  buzzBtn.style.display = 'none';
+  // chatBtn.style.display = 'none';
+}
 
+function showButtons() {
+
+  if (currentAction == 'idle') {
+    switch (gameState) {
+      case 'playing':
+        skipBtn.style.display = '';
+        nextBtn.style.display = 'none';
+        buzzBtn.style.display = '';
+        // chatBtn.style.display = '';
+        break;
+      case 'idle':
+        skipBtn.style.display = 'none';
+        nextBtn.style.display = '';
+        buzzBtn.style.display = 'none';
+        // chatBtn.style.display = '';
+        break;
+      case 'contest':
+        skipBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        buzzBtn.style.display = 'none';
+        // chatBtn.style.display = 'none';
+        break;
+    }
+  } else {
+    skipBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    buzzBtn.style.display = 'none';
+    // chatBtn.style.display = 'none';
+  }
+
+}
 /**
  * ==================================================
  * END OF FUNCTIONS THAT CHANGE FRONTEND
@@ -302,9 +339,7 @@ function buzz() {
 function answer() {
   if (gameState === 'contest') {
 
-    nextBtn.style.display = '';
-    buzzBtn.style.display = '';
-    // chatBtn.style.display = '';
+    showButtons();
     requestContentInput.style.display = 'none';
     // gameState = 'playing';
     currentAction = 'idle';
@@ -361,6 +396,13 @@ function sendChat() {
     currentAction = 'idle';
 
     if (requestContentInput.value !== "") sendRequest("chat", requestContentInput.value);
+  }
+}
+
+function skip() {
+  if (gameState === 'playing') {
+    isFeedbackLoaded = false;
+    sendRequest("skip");
   }
 }
 

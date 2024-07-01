@@ -43,8 +43,8 @@ def leaderboard(request):
         .annotate(
             win_probability=ExpressionWrapper(
                 Case(
-                    When(answered_correctly=True, then=Value(1.0)),
-                    When(answered_correctly=False, then=Value(0.0)),
+                    When(answered_correctly=True, buzzed=True, then=Value(1.0)),
+                    When(answered_correctly=False, buzzed=True, then=Value(0.0)),
                     default=Value(0),
                     output_field=FloatField()
                 )
@@ -58,7 +58,7 @@ def leaderboard(request):
             )
         )
         .values("player__user__id")
-        .filter(~Q(player__user__email='') & Q(player__user__email__isnull=False))
+        .filter(Q(player__user__email='') & Q(player__user__email__isnull=False))
         .annotate(
             tp=Count('id', filter=Q(guessed_gen_method_correctly=True, guessed_generation_method=Question.GenerationMethod.AI)),
             fp=Count('id', filter=Q(guessed_gen_method_correctly=False, guessed_generation_method=Question.GenerationMethod.AI)),

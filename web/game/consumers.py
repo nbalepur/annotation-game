@@ -99,6 +99,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.set_user_data(room, p, data['content'])
             elif data['request_type'] == 'next':
                 self.next(room, p)
+            elif data['request_type'] == 'skip':
+                self.skip(room, p)
             elif data['request_type'] == 'buzz_init':
                 self.buzz_init(room, p)
             elif data['request_type'] == 'buzz_answer':
@@ -286,7 +288,30 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 }
             )
 
-    def buzz_init(self, room, p):
+    def skip(self, room: Room, player: Player):
+        """Skip question while it's playing.
+        """
+        current_question = room.current_question
+
+        if room.state != Room.GameState.PLAYING or current_question == None:
+            return
+        
+        if not player.locked_out and room.state == Room.GameState.PLAYING:
+            # Quick end question
+            room.end_time = room.start_time
+            room.buzz_player = None
+            room.state = Room.GameState.IDLE
+            room.save()
+
+            try:
+                feedback = QuestionFeedback.objects.get(question=current_question, player=player)
+            except QuestionFeedback.DoesNotExist:
+                feedback = createFeedbackNoBuzz(room=room, player=player, skipped=True)
+                feedback.save()
+            except ValidationError as e:
+                pass
+
+    def buzz_init(self, room: Room, p: Player):
         """Initialize buzz
         """
 
@@ -401,7 +426,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     guessed_answer=cleaned_content,
                     submitted_clue_list=current_question.clue_list,
                     submitted_clue_order=list(range(current_question.length)),
-                    submitted_factual_mask_list=[True] * current_question.length,
+                    submitted_factual_mask_list=[0.5] * current_question.length,
                     answered_correctly=answered_correctly,
                     buzzed=True,
                     buzz_position_word=words_to_show,
@@ -411,6 +436,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 feedback.save()
             except ValidationError as e:
                 pass
+
+            self.get_shown_question(room=room)
 
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -495,7 +522,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
                     # When counting inversions, we should ignore clues marked non-factual, since untrue things probably
                     # shouldn't have a "difficulty"
-                    clue_order_for_factual_clues = list(filter(lambda i: feedback.submitted_factual_mask_list[i], feedback.submitted_clue_order))
+                    clue_order_for_factual_clues = list(filter(lambda i: feedback.submitted_factual_mask_list[i] >= 0.5, feedback.submitted_clue_order))
                     feedback.inversions = count_inversions(clue_order_for_factual_clues)
                     feedback.submitted_clue_list = [current_question.clue_list[i] for i in feedback.submitted_clue_order]
 
@@ -580,16 +607,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         try:
             feedback = QuestionFeedback.objects.get(question=current_question, player=player)
         except QuestionFeedback.DoesNotExist:
-            feedback = QuestionFeedback.objects.create(
-                    question=current_question,
-                    player=player,
-                    submitted_clue_list=current_question.clue_list,
-                    submitted_clue_order=list(range(current_question.length)),
-                    submitted_factual_mask_list=[True] * current_question.length,
-                    answered_correctly=False,
-                    buzz_position_word=len(current_question.content.split()),
-                    buzz_position_norm=1
-                )
+            feedback = createFeedbackNoBuzz(room=room, player=player)
             feedback.save()
         except ValidationError as e:
             pass
@@ -810,6 +828,20 @@ def create_message(tag, p, content, room):
         m.save()
     except ValidationError as e:
         return
+
+def createFeedbackNoBuzz(room: Room, player: Player, skipped=False) -> QuestionFeedback:
+    feedback = QuestionFeedback.objects.create(
+        question=room.current_question,
+        player=player,
+        answered_correctly=False,
+        skipped=skipped,
+        buzzed=False,
+        buzz_position_word=len(room.current_question.content.split()),
+        buzz_position_norm=1,
+        is_submitted = True,
+        initial_submission_datetime=timezone.now()
+    )
+    return feedback
 
 def count_inversions(arr):
     def merge(arr, left, mid, right):

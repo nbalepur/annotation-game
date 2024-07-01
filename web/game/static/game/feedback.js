@@ -94,7 +94,10 @@ function handleGameStateChange() {
 
 // ============================== POPULATES ALL FEEDBACK FIELDS START ==============================
 function populateInitialQuestionFeedback(feedback) {
-    if (feedback.is_submitted) {
+    if (!feedback.buzzed) {
+        completedFeedback = true;
+        initialFeedback.innerHTML = 'The question was skipped or there was no buzz. No need for any feedback. Click next to continue!';
+    } else if (feedback.is_submitted) {
         initialFeedback.innerHTML = '';
 
         if (feedback.guessed_gen_method_correctly) {
@@ -215,7 +218,9 @@ function populateAdditionalQuestionFeedback(feedback) {
     // Select the feedback-space element
     let additionalFeedback = document.getElementById("additional-feedback");
 
-    if (!feedback.is_submitted) {
+    if (!feedback.buzzed) {
+        additionalFeedback.innerHTML = '';
+    } else if (!feedback.is_submitted) {
         // Initial feedback is not submitted yet. Show nothing yet
         additionalFeedback.innerHTML = '';
     } else {
@@ -230,7 +235,7 @@ function populateAdditionalQuestionFeedback(feedback) {
                         <h5>
                             Pyramidality and Factual Accuracy
                             <i class="fas fa-info-circle" data-bs-toggle="tooltip" data-bs-placement="right"
-                                title="Sometimes quizbowl writers will put clues in the wrong order. If that's the case in this question, sort the clues from easiest to hardest by dragging and dropping clues in what you believe is the correct 'pyramidal' order. Using the toggle, you should also mark any and all nonfactual clues as such.">
+                                title="Sometimes quizbowl writers will put clues in the wrong order. If that's the case in this question, sort the clues from easiest to hardest by dragging and dropping clues in what you believe is the correct 'pyramidal' order. Using the dropdown, you should also mark any and all nonfactual clues as such.">
                             </i>
                         </h5>
                         <div class="pyramidality-factual-accuracy">
@@ -310,23 +315,40 @@ function populateAdditionalQuestionFeedback(feedback) {
 
 
 // ============================== PYRAMIDALITY FACTUAL ACCURACY START ==============================
-let pyrFactClueList = document.getElementById('pyramidality-factual-accuracy-list');
-const setImprovedQuestionFromOrderedClues = (order) =>
-    setImprovedQuestionForm(
-        order.map((i) => factualMaskList[i] ? document.getElementById("clue-text-" + i).textContent : '').join(' ').trim()
-    );
+const factualityOptions = ['Factual', 'Seems true', 'Not sure', 'Seems fishy', 'Untrue'];
+const factualityStrToFloat = {'Factual': 1.0, 'Seems true': 0.75, 'Not sure': 0.5, 'Seems fishy': 0.25, 'Untrue': 0.0};
+const factualityFloatToStr = {1.0: 'Factual', 0.75: 'Seems true', 0.5: 'Not sure', 0.25: 'Seems fishy', 0.0: 'Untrue'};
+function getColorByFactualityFloat(factualityFloat) {
+    if (factualityFloat === 1) {
+        return 'green';
+    } else if (factualityFloat >= 0.75) {
+        return 'yellowgreen';
+    } else if (factualityFloat >= 0.5) {
+        return 'navajowhite';
+    } else if (factualityFloat >= 0.25) {
+        return 'coral';
+    } else {
+        return 'tomato';
+    }
+}
 
-// Function to create a list item with text and a toggle switch
+let pyrFactClueList = document.getElementById('pyramidality-factual-accuracy-list');
+const setImprovedQuestionFromOrderedClues = (order) => {
+    setImprovedQuestionForm(
+        order.map((i) => (factualMaskList[i] >= 0.5) ? document.getElementById("clue-text-" + i).textContent : '').join(' ').trim()
+    );
+}
+
+// Function to create a list item with text and a dropdown
 function createListItem(index, text) {
     // Create a new list item
     let listItem = document.createElement('li');
-    listItem.setAttribute('data-id', `${index}`)
+    listItem.setAttribute('data-id', `${index}`);
     listItem.className = 'list-group-item';
 
     // Create a Bootstrap grid container
     let gridContainer = document.createElement('div');
     gridContainer.className = 'row align-items-center';
-
 
     // Create a column for the clue number
     let clueNumberColumn = document.createElement('div');
@@ -341,55 +363,75 @@ function createListItem(index, text) {
     // Create a column for the clue text
     let textColumn = document.createElement('div');
     textColumn.className = 'col-8';
-    textColumn.id = 'clue-text-' + index
+    textColumn.id = 'clue-text-' + index;
     textColumn.textContent = text;
 
-    // Create a column for the toggle switch
-    let toggleColumn = document.createElement('div');
-    toggleColumn.className = 'col-3 text-center';
+    // Create a column for the dropdown menu
+    let dropdownColumn = document.createElement('div');
+    dropdownColumn.className = 'col-3 text-center';
 
-    // Create the toggle switch container
-    let toggleContainer = document.createElement('div');
-    toggleContainer.className = 'form-check form-switch';
+    // Create the dropdown menu container
+    let dropdownContainer = document.createElement('div');
+    dropdownContainer.className = 'dropdown';
 
-    // Create the toggle switch input
-    let toggleInput = document.createElement('input');
-    toggleInput.className = 'form-check-input';
-    toggleInput.type = 'checkbox';
-    toggleInput.role = 'switch';
-    toggleInput.id = 'factual-toggle-' + index;
-    toggleInput.checked = true;
+    // Create the dropdown button
+    let dropdownButton = document.createElement('button');
+    dropdownButton.className = 'btn btn-secondary dropdown-toggle';
+    dropdownButton.type = 'button';
+    dropdownButton.id = 'factual-dropdown-' + index;
+    dropdownButton.setAttribute('data-bs-toggle', 'dropdown');
+    dropdownButton.setAttribute('aria-expanded', 'false');
+    dropdownButton.textContent = 'Not sure';
+    dropdownButton.style.color = 'black';
+    dropdownButton.style.backgroundColor = 'navajowhite';
 
-    // Create the label for the toggle switch
-    let toggleLabel = document.createElement('label');
-    toggleLabel.className = 'form-check-label';
-    toggleLabel.setAttribute('for', 'factual-toggle-' + index);
-    // Set initial text content for the label
-    toggleLabel.textContent = toggleInput.checked ? 'Factual' : 'Untrue';
-    // Set initial color for the label
-    toggleLabel.classList.toggle('text-danger', !toggleInput.checked);
-    toggleLabel.classList.toggle('text-success', toggleInput.checked);
+    // Create the dropdown menu
+    let dropdownMenu = document.createElement('ul');
+    dropdownMenu.className = 'dropdown-menu';
+    dropdownMenu.setAttribute('aria-labelledby', 'factual-dropdown-' + index);
 
-    // Append the toggle switch input and label to the container
-    toggleContainer.appendChild(toggleInput);
-    toggleContainer.appendChild(toggleLabel);
+    // Dropdown options
+    factualityOptions.forEach(option => {
+        let dropdownItem = document.createElement('li');
+        let dropdownLink = document.createElement('a');
+        dropdownLink.className = 'dropdown-item';
+        dropdownLink.textContent = option;
+        dropdownLink.addEventListener('click', function () {
+            dropdownButton.textContent = option;
+            dropdownButton.style.backgroundColor = getColorByFactualityFloat(factualityStrToFloat[option]);
 
-    // Append the toggle container to the toggle column
-    toggleColumn.appendChild(toggleContainer);
+            // Update factualMask based on selected option
+            let match = dropdownButton.id.match(/factual-dropdown-(\d+)/);
+            if (match) {
+                let clueIndex = parseInt(match[1]);
+                factualMaskList[clueIndex] = factualityStrToFloat[option];
+                setImprovedQuestionFromOrderedClues(clueOrder);
+            }
+        });
+        dropdownItem.appendChild(dropdownLink);
+        dropdownMenu.appendChild(dropdownItem);
+    });
 
-    // Append the text and toggle columns to the grid container
+    // Append the dropdown button and menu to the container
+    dropdownContainer.appendChild(dropdownButton);
+    dropdownContainer.appendChild(dropdownMenu);
+
+    // Append the dropdown container to the dropdown column
+    dropdownColumn.appendChild(dropdownContainer);
+
+    // Append the text and dropdown columns to the grid container
     gridContainer.appendChild(clueNumberColumn);
     gridContainer.appendChild(textColumn);
-    gridContainer.appendChild(toggleColumn);
+    gridContainer.appendChild(dropdownColumn);
 
     // Append the grid container to the list item
     listItem.appendChild(gridContainer);
 
-    // Return the list item, toggle input, and toggle label for further use
-    return [listItem, toggleInput, toggleLabel];
+    // Return the list item and dropdown button for further use
+    return [listItem, dropdownButton];
 }
 
-// Function to populate the list with submitted clues and toggle switches
+// Function to populate the list with submitted clues and dropdowns
 function populatePyramidalityFactualAccuracyList(feedback) {
     pyrFactClueList = document.getElementById('pyramidality-factual-accuracy-list');
     clueOrder = feedback.submitted_clue_order;
@@ -403,31 +445,11 @@ function populatePyramidalityFactualAccuracyList(feedback) {
     clueOrder.forEach(function (index) {
         // Generate text for the clue
         let text = feedback.submitted_clue_list[index];
-        // Create a list item with a toggle switch and label
-        let [listItem, toggleInput, toggleLabel] = createListItem(index, text);
+        // Create a list item with a dropdown menu
+        let [listItem, dropdownButton] = createListItem(index, text);
         // Append the list item to the list
         pyrFactClueList.appendChild(listItem);
-
-        // Add event listener to toggle switch input
-        toggleInput.addEventListener('change', function () {
-            // Update label text content based on toggle state
-            toggleLabel.textContent = toggleInput.checked ? 'Factual' : 'Untrue';
-
-            // Update label color based on toggle state
-            toggleLabel.classList.toggle('text-danger', !toggleInput.checked);
-            toggleLabel.classList.toggle('text-success', toggleInput.checked);
-
-            // update factualMask
-            let match = toggleInput.id.match(/factual-toggle-(\d+)/);
-            if (match) {
-                let clueIndex = parseInt(match[1]);
-                factualMaskList[clueIndex] = toggleInput.checked;
-                setImprovedQuestionFromOrderedClues(clueOrder);
-            }
-        });
     });
-
-
 
     let sortable = Sortable.create(pyrFactClueList, {
         group: "PyramidalityFactualAccuracy",
@@ -445,7 +467,6 @@ function populatePyramidalityFactualAccuracyList(feedback) {
                     setImprovedQuestionFromOrderedClues(clueOrder);
                 }
 
-
                 return clueOrder ? clueOrder : [];
             },
 
@@ -456,22 +477,17 @@ function populatePyramidalityFactualAccuracyList(feedback) {
             set: function (sortable) {
                 clueOrder = sortable.toArray().map(i => parseInt(i));
                 setImprovedQuestionFromOrderedClues(clueOrder);
-                // console.log(sortable);
-                // console.log(clueOrder);
             }
         }
-
-
     });
 
-    document.getElementById('submit-btn').addEventListener('click',
-        (e) => {
-            clueOrder = sortable.toArray().map(i => parseInt(i));
-            factualMaskList = clueOrder.toSorted().map((i) => document.getElementById('factual-toggle-' + i).checked)
-            // console.log(factualMaskList);
-        });
-
-
+    document.getElementById('submit-btn').addEventListener('click', (e) => {
+        clueOrder = sortable.toArray().map(i => parseInt(i));
+        factualMaskList = clueOrder.toSorted().map(
+            factualityStrToFloat[(i) => document.getElementById('factual-dropdown-' + i).textContent]
+        );
+    });
 }
+
 // ============================== PYRAMIDALITY FACTUAL ACCURACY END ==============================
 

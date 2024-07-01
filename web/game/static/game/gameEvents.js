@@ -15,6 +15,7 @@ const categoryHeader = document.getElementById('category-header');
 const categorySelect = document.getElementById('category-select');
 const difficultySelect = document.getElementById('difficulty-select');
 const speedSlider = document.getElementById('speed-slider');
+const skipBtn = document.getElementById('skip-btn');
 const nextBtn = document.getElementById('next-btn');
 const buzzBtn = document.getElementById('buzz-btn');
 const chatBtn = document.getElementById('chat-btn');
@@ -81,8 +82,9 @@ document.addEventListener('keypress', (e) => {
   if (e.target.tagName != 'INPUT' && e.target.tagName != 'TEXTAREA') {
     if (e.key == 'n') {
       next();
-    }
-    else if (e.key == ' ') {
+    } else if (e.key == 's') {
+      skip();
+    } else if (e.key == ' ') {
       buzz();
       e.preventDefault();
     }
@@ -106,6 +108,7 @@ requestContentInput.addEventListener('keypress', (e) => {
 categorySelect.addEventListener('change', setCategory);
 difficultySelect.addEventListener('change', setDifficulty);
 buzzBtn.addEventListener('click', buzz);
+skipBtn.addEventListener('click', skip);
 nextBtn.addEventListener('click', next);
 resetBtn.addEventListener('click', resetScore);
 // chatBtn.addEventListener('click', chatInit);
