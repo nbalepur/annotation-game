@@ -56,7 +56,7 @@ class PlayerAdmin(ImportExportModelAdmin, ExportActionMixin):
 
 @admin.register(QuestionFeedback)
 class QuestionFeedbackAdmin(ImportExportModelAdmin, ExportActionMixin):
-    list_display = ['question', 'player', 'guessed_answer', 'guessed_generation_method', 'interestingness_rating', 'submitted_clue_order', 'submitted_factual_mask_list', 'inversions', 'feedback_text', 'answered_correctly', 'buzz_position_word', 'buzz_position_norm', 'buzzed', 'solicit_additional_feedback', 'guessed_gen_method_correctly', 'initial_submission_datetime', 'additional_submission_datetime', 'is_submitted']
+    list_display = ['question', 'player', 'guessed_answer', 'guessed_generation_method', 'interestingness_rating', 'submitted_clue_order', 'submitted_factual_mask_list', 'inversions', 'feedback_text', 'answered_correctly', 'buzz_position_word', 'buzz_position_norm', 'buzzed', 'skipped', 'solicit_additional_feedback', 'guessed_gen_method_correctly', 'initial_submission_datetime', 'additional_submission_datetime', 'is_submitted']
     actions = ['export_as_csv', unban_players]
     resource_class = QuestionFeedbackResource
 
