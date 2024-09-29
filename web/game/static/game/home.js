@@ -7,29 +7,48 @@ function uuidv4() {
   );
 }
 
-function setAndGetEvalRoomCookie() {
-  let cookies = cookieToDict(document.cookie);
-
-  let eval_room = cookies['evaluation_room'];
-  if (eval_room === undefined) {
-    eval_room = uuidv4();
-    setCookie("evaluation_room", eval_room);
-  }
-
-  return eval_room
+function getRandomElement(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function setAndGetEvalRoomCookie(roomName) {
+  // let cookies = cookieToDict(document.cookie);
+
+  // let eval_room = cookies['evaluation_room'];
+  // if (eval_room === undefined) {
+  //   eval_room = uuidv4();
+  //   setCookie("evaluation_room", eval_room);
+  // }
+
+  if (roomName !== "") {
+    return roomName.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
+  }
+
+  const adjectives = ["wift", "Clever", "Brave", "Bold", "Happy", "Curious", "Witty"];
+  const nouns = ["Tiger", "Phoenix", "Eagle", "Shark", "Panther", "Falcon", "Lion"];
+  const colors = ["Red", "Blue", "Green", "Yellow", "Purple", "Black", "White"];
+
+  const randomAdjective = getRandomElement(adjectives);
+  const randomNoun = getRandomElement(nouns);
+  const randomColor = getRandomElement(colors);
+  const randomRoom = `${randomAdjective}${randomColor}${randomNoun}`;
+  return randomRoom.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
+}
+
+function sleep(ms = 0) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 document.getElementById('evaluation-play-btn').addEventListener('click', function(event) {
-  event.preventDefault(); // Prevent default link behavior
-
-  // Get the evaluation_room cookie value
-  const evaluationRoom = setAndGetEvalRoomCookie('evaluation_room');
-
-  // If evaluation_room cookie exists, redirect to the corresponding URL
+  console.log('hi');
+  event.preventDefault();
+  const roomName = document.getElementById('new-room-name').value;
+  const evaluationRoom = setAndGetEvalRoomCookie(roomName);
   if (evaluationRoom) {
     window.location.href = `/game/evaluation/${evaluationRoom}`;
   } else {
-    alert('Cookie not found! Please allow cookies and refresh the page!');
+    alert('Please enter a valid room name!');
   }
 });
 

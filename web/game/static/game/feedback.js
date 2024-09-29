@@ -73,7 +73,7 @@ const setImprovedQuestionForm = (text) => {
 const feedbackHeader = document.getElementById('feedback-header');
 const feedbackCollapse = document.getElementById('feedback-collapse');
 
-feedbackHeader.addEventListener('click', handleGameStateChange);
+//feedbackHeader.addEventListener('click', handleGameStateChange);
 
 const disableFeedbackCollapseToggle = () => feedbackHeader.removeAttribute('data-bs-toggle', 'collapse');
 const enableFeedbackCollapseToggle = () => feedbackHeader.setAttribute('data-bs-toggle', 'collapse');

@@ -50,10 +50,10 @@ class Question(models.Model):
 
     class GenerationMethod(models.TextChoices):
         HUMAN = "human", _("Human-written")
-        AI = "ai", _("AI-generated")
+        AI = "ai", _("AI-generated") 
 
     question_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField()
+    group_id = models.IntegerField(null=True)
     category = models.TextField(default=Category.EVERYTHING)
     content = models.TextField()
 
@@ -64,9 +64,12 @@ class Question(models.Model):
     answer_antiprompt = models.JSONField(null=True, blank=True)
     page_cleaned = models.TextField(default="")
 
+    instructions_a = models.JSONField(null=True, blank=True)
+    instructions_b = models.JSONField(null=True, blank=True)
+
     difficulty = models.TextField(default=Difficulty.HS)
     subdifficulty = models.TextField(default=Subdifficulty.REGULAR)
-    is_human_written = models.BooleanField()
+    is_human_written = models.BooleanField(default=False)
     generation_method = models.CharField(default=GenerationMethod.HUMAN, max_length=30)
     clue_list = models.JSONField(null=True, blank=True)
     wiki_sents = models.JSONField(null=True, blank=True)
@@ -87,9 +90,11 @@ class Room(models.Model):
         IDLE = 'idle', _('Idle')
         PLAYING = 'playing', _('Playing')
         CONTEST = 'contest', _('Contest')
+        INSTRUCTION_READING = 'instruct', _('Instruct')
 
     label = models.SlugField(unique=True)
     collects_feedback = models.BooleanField(default=False)
+    uses_instructions = models.BooleanField(default=False)
     max_players = models.IntegerField(default=20, validators=[MinValueValidator(0)])
     state = models.CharField(max_length=9, choices=GameState.choices, default=GameState.IDLE)
 
@@ -102,6 +107,8 @@ class Room(models.Model):
     )
     start_time = models.FloatField(default=0)
     end_time = models.FloatField(default=1)
+
+    player_map = models.JSONField(null=True, blank=True)
 
     buzz_player = models.OneToOneField(
         'Player',
@@ -208,6 +215,11 @@ class Room(models.Model):
         return min(words_to_show, len(self.current_question.content.split()))
 
     def get_shown_question(self):
+        if self.current_question and self.current_question.content:
+            return self.current_question.content
+        return ""
+    
+    def get_shown_question_incremental(self):
         """Computes the correct amount of the question to show, depending on the state of the game.
             Note, this value is not persisted because, updating is too expensive."""
         word_list: List[str] = ""
@@ -271,6 +283,8 @@ class Player(models.Model):
     banned = models.BooleanField(default=False)
     reported_by = models.ManyToManyField('Player')
     last_seen = models.FloatField(default=0)
+    channel_name = models.CharField(default="", blank=True, max_length=320)
+    curr_room = models.CharField(default="", blank=True, max_length=320)
 
     def unban(self):
         """Unban player
@@ -281,6 +295,7 @@ class Player(models.Model):
 
     def __str__(self):
         return self.user.name + ":" + self.room.label
+
 
 class QuestionFeedback(models.Model):
     """Feedback for quizbowl questions"""

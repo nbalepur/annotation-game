@@ -17,8 +17,7 @@ def game_room(request, label):
     })
 
 def evaluation_game_room(request, label):
-    room, created = Room.objects.get_or_create(label=label, collects_feedback=True, defaults={"max_players": 1})
-
+    room, created = Room.objects.get_or_create(label=label, collects_feedback=True, uses_instructions=True, defaults={"max_players": 2})
     return render(request, "game/game.html",{
         "room":room,
     })

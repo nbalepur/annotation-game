@@ -43,7 +43,7 @@
     "pk": 3,
     "fields": {
       "category": "Science",
-      "difficulty": "MS",
+      "difficulty": "HS",
       "content": "This number is feared by a fictional gunslinger from a long-running Japanese comic series. The photography club at the University of Maryland has this many members, and this is also the number of steps in the Carnot cycle. Polynomials of this degree are called quartic, and a tetrahedron has this number of vertices. Considered an unlucky number in Asia, what square comes after 3?",
       "clue_list": 
         [
@@ -62,7 +62,7 @@
     "pk": 4,
     "fields": {
       "category": "Science",
-      "difficulty": "College",
+      "difficulty": "HS",
       "content": "Pencil and paper ready. What is the airspeed velocity of an unladen swallow?",
       "clue_list": 
         [

@@ -25,7 +25,7 @@
           <div class="border p-3 overflow-auto mb-3" style="height: 300px;">
             {% include "irb_consent.html" %}
           </div>
-          <button id="evaluation-play-btn" type="button" class="btn btn-success btn-lg">Agree and Play</button>
+          </div>
           <!-- <div class="mt-5">
             <a class="btn btn-secondary m-1" href="/game/evaluation">hs</a>
             <a class="btn btn-secondary m-1" href="/game/hs">hs</a>
@@ -53,7 +53,19 @@
             </div>
           </form> -->
         </div>
-      </div>
+
+        <div class="row justify-content-center">
+          <div class="col-md-7 text-center mb-3">
+
+            <div class="input-group input-group-lg">
+              <input type="text" class="form-control form-control-lg" id="new-room-name" placeholder="Type in the room name...">
+              <div class="input-group-append">
+                <button id="evaluation-play-btn" type="button" class="btn btn-success btn-lg">Create/Join Room</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
     </div>
   </div>
 </div>

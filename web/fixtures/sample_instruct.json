@@ -1,0 +1,136 @@
+[
+    {
+      "model": "game.question",
+      "pk": 1,
+      "fields": {
+        "category": "Fine Arts",
+        "difficulty": "HS",
+        "content": "The creator of this work was initially opposed to moving it around on foot, insisting that exposure to outside heat would melt the paint. Upon its initial reveal, this work sparked debate among animal-rights activists around the ethics of feeding animals hot beverages. This work depicts an indoor scene with several humanoid mammals and an overcast sky and burger joint can be seen from a large window on the right in this work. Inspired by a café frequented by its creator, name this work by a Korean Jew that features an ursine espresso drinker.",
+        "clue_list": [
+          "The creator of this work was initially opposed to moving it around on foot, insisting that exposure to outside heat would melt the paint.",
+          "Upon its initial reveal, this work sparked debate among animal-rights activists around the ethics of feeding animals hot beverages.",
+          "This work depicts an indoor scene with several humanoid mammals and an overcast sky and burger joint can be seen from a large window on the right in this work.",
+          "Inspired by a café frequented by its creator, name this work by a Korean Jew that features an ursine espresso drinker."
+        ],
+        "length": 4,
+        "answer": "{Coffee bear}",
+        "generation_method": "human",
+        "instructions_a": {
+          "steps": [
+            "Step 1a: Do 47",
+            "Step 2a: Do 23",
+            "Step 3a: Do 15",
+            "Step 4a: Do 89"
+          ]
+        },
+        "instructions_b": {
+          "steps": [
+            "Step 1b: Do 71",
+            "Step 2b: Do 39",
+            "Step 3b: Do 10",
+            "Step 4b: Do 52"
+          ]
+        }
+      }
+    },
+    {
+      "model": "game.question",
+      "pk": 2,
+      "fields": {
+        "category": "Trash",
+        "difficulty": "HS",
+        "content": "Early versions of this website were susceptible to Javascript XSS injections, and another bug in this site permanently prevented players from gaining points. In 2019, this site went down when the creator almost wiped all the files for it on the server. This site serves a real-time game using a method for displacing time called the “King Crimson technique”. The logo of this site features a purple comet with blue tail-streaks, and the name of this site refers to an area of outer space. For 10 points, name this real-time, multiplayer quizbowl web app created by a University of Maryland undergraduate student.",
+        "clue_list": [
+          "Early versions of this website were susceptible to Javascript XSS injections, and another bug in this site permanently prevented players from gaining points.",
+          "In 2019, this site went down when the creator almost wiped all the files for it on the server.",
+          "This site serves a real-time game using a method for displacing time called the “King Crimson technique”.",
+          "The logo of this site features a purple comet with blue tail-streaks, and the name of this site refers to an area of outer space.",
+          "For 10 points, name this real-time, multiplayer quizbowl web app created by a University of Maryland undergraduate student."
+        ],
+        "length": 5,
+        "answer": "{Kuiperbowl}",
+        "generation_method": "human",
+        "instructions_a": {
+          "steps": [
+            "Step 1a: Do 22",
+            "Step 2a: Do 91",
+            "Step 3a: Do 77",
+            "Step 4a: Do 36",
+            "Step 5a: Do 48"
+          ]
+        },
+        "instructions_b": {
+          "steps": [
+            "Step 1b: Do 19",
+            "Step 2b: Do 85",
+            "Step 3b: Do 64",
+            "Step 4b: Do 41",
+            "Step 5b: Do 96"
+          ]
+        }
+      }
+    },
+    {
+      "model": "game.question",
+      "pk": 3,
+      "fields": {
+        "category": "Science",
+        "difficulty": "HS",
+        "content": "This number is feared by a fictional gunslinger from a long-running Japanese comic series. The photography club at the University of Maryland has this many members, and this is also the number of steps in the Carnot cycle. Polynomials of this degree are called quartic, and a tetrahedron has this number of vertices. Considered an unlucky number in Asia, what square comes after 3?",
+        "clue_list": [
+          "This number is feared by a fictional gunslinger from a long-running Japanese comic series.",
+          "The photography club at the University of Maryland has this many members, and this is also the number of steps in the Carnot cycle.",
+          "Polynomials of this degree are called quartic, and a tetrahedron has this number of vertices.",
+          "Considered an unlucky number in Asia, what square comes after 3?"
+        ],
+        "length": 4,
+        "answer": "{4} or {four}",
+        "generation_method": "human",
+        "instructions_a": {
+          "steps": [
+            "Step 1a: Do 56",
+            "Step 2a: Do 20",
+            "Step 3a: Do 91",
+            "Step 4a: Do 13"
+          ]
+        },
+        "instructions_b": {
+          "steps": [
+            "Step 1b: Do 34",
+            "Step 2b: Do 78",
+            "Step 3b: Do 45",
+            "Step 4b: Do 89"
+          ]
+        }
+      }
+    },
+    {
+      "model": "game.question",
+      "pk": 4,
+      "fields": {
+        "category": "Science",
+        "difficulty": "HS",
+        "content": "Pencil and paper ready. What is the airspeed velocity of an unladen swallow?",
+        "clue_list": [
+          "Pencil and paper ready.",
+          "What is the airspeed velocity of an unladen swallow?"
+        ],
+        "length": 2,
+        "answer": "{25} lodalwaddles per schaferwafer",
+        "generation_method": "human",
+        "instructions_a": {
+          "steps": [
+            "Step 1a: Do 49",
+            "Step 2a: Do 37"
+          ]
+        },
+        "instructions_b": {
+          "steps": [
+            "Step 1b: Do 53",
+            "Step 2b: Do 92"
+          ]
+        }
+      }
+    }
+  ]
+  

@@ -12,8 +12,6 @@ channel_layer = get_channel_layer()
 from .models import Room
 from asgiref.sync import async_to_sync
 
-
-
 @shared_task
 def send_next_question():
     while True:

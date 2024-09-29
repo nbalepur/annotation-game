@@ -25,6 +25,11 @@ let buzzPassedTime = 0;
 let graceTime = 3;
 let buzzTime = 8;
 
+let readingTime = 10;
+let readingPassedTime = 0;
+
+let questionTime = 10;
+
 let question;
 let category;
 let players;
@@ -71,7 +76,8 @@ function update() {
 
     case 'idle':
       lockedOut = false;
-
+      readingPassedTime = 0;
+      
       if (answerHeader.innerHTML === '') {
         getAnswer();
       }
@@ -83,6 +89,25 @@ function update() {
       contentProgress.style.width = '0%';
       break;
 
+    case 'instruct':
+      // Update if game is going
+      width = Math.round(100 * (1.05 * timePassed / duration));
+      instructionProgress.style.width = width + '%';
+
+      currentTime += 0.1;
+
+      instructionProgress.style.display = '';
+      buzzProgress.style.display = 'none';
+      contentProgress.style.display = 'none'
+      answerHeader.innerHTML = '';
+
+      if (readingPassedTime >= readingTime) {
+        sendRequest('next');
+        instructionProgress.style.width = '0%';
+      }
+      readingPassedTime += 0.1;
+      break;
+      
     case 'playing':
 
       // Update if game is going
@@ -93,6 +118,7 @@ function update() {
 
       contentProgress.style.display = '';
       buzzProgress.style.display = 'none';
+      instructionProgress.style.display = 'none'
       answerHeader.innerHTML = '';
       break;
 
@@ -100,6 +126,7 @@ function update() {
       timePassed = buzzStartTime - startTime;
 
       buzzProgress.style.width = Math.round(100 * (1.05 * buzzPassedTime / buzzTime)) + '%';
+      instructionProgress.style.display = 'none'
       contentProgress.style.display = 'none';
       buzzProgress.style.display = '';
 
@@ -145,7 +172,7 @@ gamesock.onmessage = message => {
     // Update messages
     updateMessages();
 
-    categoryHeader.innerHTML = `Category: ${category}`;
+    categoryHeader.innerHTML = `Question Type: ${category}`;
     categorySelect.value = data['room_category'];
     difficultySelect.value = data['difficulty'];
     speedSlider.value = data['speed'];
@@ -170,10 +197,14 @@ gamesock.onmessage = message => {
     setAnswer(data['answer']);
 
   } else if (data['response_type'] === "get_shown_question") {
+    setQuestion(data['shown_question'], data['state']);
 
-    setQuestion(data['shown_question']);
-
-  } else if (data['response_type'] === "get_question_feedback") {
+  } else if (data['response_type'] === "get_instructions") {
+    console.log('got instructions!')
+    populateInstructions(data['instructions']);
+  }
+  
+  else if (data['response_type'] === "get_question_feedback") {
 
     // console.log(data)
     
@@ -206,9 +237,12 @@ gamesock.onmessage = message => {
   } else if (data['response_type'] === "kick") {
     gamesock.close();
     banAlert.style = 'display: block;'
-  } else if (data['response_type'] === "too_many_players") {
+  } else if (data['response_type'] == "not_enough_players") {
+    alert("Sorry! We can only begin playing once you have an opponent (two players are necessary).")
+  }
+  else if (data['response_type'] === "too_many_players") {
     gamesock.close();
-    alert("Sorry! You can't let you join that room since there are too many active players. Rooms meant for evaluation only allow 1 player.")
+    alert("Sorry! You can't let you join that room since there are too many active players. Rooms meant for evaluation only allow 2 players.")
     window.location.href = "/"
   }
 }
@@ -219,24 +253,28 @@ gamesock.onmessage = message => {
  * ==================================================
  */
 
-function setQuestion(question_text) {
-  question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
-  question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
-  question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
+function setQuestion(question_text, state) {
+  if (state == 'instruct') {
+    question_text = 'Read the instructions above!'
+  } else {
+    question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
+    question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
+    question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
+  }
   questionSpace.innerHTML = question_text;
   question = question_text;
 }
 
 function setAnswer(answer) {
   answer = answer.replace("{", "<u><b>").replace("}", "</b></u>");
-  answerHeader.innerHTML = `Answer: ${answer}`;
+  answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : '';
 }
 
 function hideButtons() {
   skipBtn.style.display = 'none';
   nextBtn.style.display = 'none';
   buzzBtn.style.display = 'none';
-  // chatBtn.style.display = 'none';
+  //chatBtn.style.display = 'none';
 }
 
 function showButtons() {
@@ -247,19 +285,25 @@ function showButtons() {
         skipBtn.style.display = '';
         nextBtn.style.display = 'none';
         buzzBtn.style.display = '';
-        // chatBtn.style.display = '';
+        //chatBtn.style.display = '';
         break;
       case 'idle':
         skipBtn.style.display = 'none';
         nextBtn.style.display = '';
         buzzBtn.style.display = 'none';
-        // chatBtn.style.display = '';
+        //chatBtn.style.display = '';
         break;
       case 'contest':
         skipBtn.style.display = 'none';
         nextBtn.style.display = 'none';
         buzzBtn.style.display = 'none';
-        // chatBtn.style.display = 'none';
+        //chatBtn.style.display = 'none';
+        break;
+      case 'instruct':
+        skipBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        buzzBtn.style.display = 'none';
+        //chatBtn.style.display = 'none';
         break;
     }
   } else {
@@ -415,8 +459,8 @@ function next() {
       isFeedbackLoaded = false;
 
       // Collapse feedback section
-      disableFeedbackCollapseToggle();
-      collapseFeedback();
+      // disableFeedbackCollapseToggle();
+      // collapseFeedback();
       sendRequest("next");
     }
   } else 

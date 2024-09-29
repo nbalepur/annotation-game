@@ -18,9 +18,8 @@ import logging
 logger = logging.getLogger('django')
 
 GRACE_TIME = 3
-
-# TODO: Use channels authentication?
-
+INSTRUCTION_READING_TIME = 10
+QUESTION_TIME = 10
 
 class QuizbowlConsumer(JsonWebsocketConsumer):
     """Websocket consumer for quizbowl game
@@ -49,6 +48,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
     def receive(self, text_data):
+        #print('receiving!', self.channel_layer)
         """Websocket receive
         """
         data = json.loads(text_data)
@@ -79,8 +79,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         # Get player
         p: Player = room.players.filter(user__user_id=data['user_id']).first()
-        if p != None:
+        # Update connection if it's new
+        if p.channel_name != self.channel_name:
+            p.channel_name = self.channel_name
+            p.save()
 
+        if p != None:
             # Kick if banned user
             if p.banned:
                 self.kick()
@@ -93,8 +97,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.leave(room, p)
             elif data['request_type'] == 'get_answer':
                 self.get_answer(room)
-            elif data['request_type'] == 'get_current_question_feedback':
-                self.get_init_question_feedback(room, p)
+            # elif data['request_type'] == 'get_current_question_feedback':
+            #     self.get_init_question_feedback(room, p)
             elif data['request_type'] == 'set_user_data':
                 self.set_user_data(room, p, data['content'])
             elif data['request_type'] == 'next':
@@ -177,15 +181,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     'data': get_room_response_json(room),
                 }
             )
+            # print(room.current_question)
+            #if room.current_question:
+            self.get_shown_question(room=room)
+            self.get_answer(room=room)
+            # else:
+            #     self.handle_not_enough_players(room=room, send_alert=False)
 
-            if room.current_question:
-                self.get_shown_question(room=room)
-                self.get_answer(room=room)
+            p.last_room = self.room_name
 
     def leave(self, room, p):
         """Leave room
         """
-
         create_message("leave", p, None, room)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
@@ -212,9 +219,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Update player name
         """
 
-
-        print(content)
-
         p.user.name = clean_content(content["user_name"])
         p.user.email = clean_content(content["user_email"])
         try:
@@ -232,45 +236,106 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         except ValidationError as e:
             return
 
+    def handle_not_enough_players(self, room: Room, send_alert: bool):
+        
+        # fetch a random question for a new room
+        q = room.current_question
+        if q == None:
+            all_questions = Question.objects.all()
+            if len(all_questions) <= 0:
+                return
+            q = random.choice(all_questions)
+
+        q.content = 'Two players are needed to begin!'
+        q.answer = ''
+        room.current_question = q
+        room.save()
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                'type': 'update_room',
+                'data': get_room_response_json(room),
+            }
+        )
+        if send_alert:
+            self.send_json({
+                "response_type": "not_enough_players",
+            })
+        self.get_shown_question(room=room)
+
     def next(self, room: Room, player: Player):
         """Next question
         """
 
         update_time_state(room)
 
+        # transition so the user has time to read the instructions
         if room.state == Room.GameState.IDLE:
+            players = room.get_players_by_score()
+            num_players_in_room = len(players)
+
+            # we need two players for a pairwise comparison
+            if num_players_in_room != 2:
+                self.handle_not_enough_players(room=room, send_alert=True)
+                return
+
+            # randomize player mappings
+            p1, p2 = players
+            if random.random() > 0.5:
+                p1, p2 = p2, p1
+            room.player_map = {str(p1['player_id']): 'A', str(p2['player_id']): 'B'}
+
+            room.state = Room.GameState.INSTRUCTION_READING
+            room.start_time = timezone.now().timestamp()
+            room.end_time = room.start_time + INSTRUCTION_READING_TIME # (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
+            room.save()
+
+            print('yo')
+            self.get_init_model_instructions(room=room)
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'update_room',
+                    'data': get_room_response_json(room),
+                }
+            )
+            self.get_shown_question(room=room)
+
+        elif room.state == Room.GameState.INSTRUCTION_READING:
+
             questions = (
                 Question.objects.filter(difficulty=room.difficulty)
                 if room.category == 'Everything'
                 else Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty))
             )
 
-            if room.collects_feedback:
-                if room.current_question:
-                    current_feedback = QuestionFeedback.objects.get(player=player, question=room.current_question)
+            # if room.collects_feedback:
+            #     if room.current_question:
+            #         current_feedback = QuestionFeedback.objects.get(player=player, question=room.current_question)
                     
-                    # Do not execute next if not finished with feedback
-                    if not current_feedback.is_completed(): return
+            #         # Do not execute next if not finished with feedback
+            #         #if not current_feedback.is_completed(): return
 
-                # Get the IDs of questions with feedback from the player
-                questions_ids_with_feedback = [feedback.question.question_id for feedback in player.feedback.all()]
+            #     # Get the IDs of questions with feedback from the player
+            #     questions_ids_with_feedback = [feedback.question.question_id for feedback in player.feedback.all()]
 
-                # Exclude questions with feedback from the player
-                questions_without_feedback = (
-                    Question.objects.exclude(question_id__in=questions_ids_with_feedback)
-                    .filter(Q(category=room.category) & Q(difficulty=room.difficulty))
-                )
-                questions = questions_without_feedback if len(questions_without_feedback) > 0 else questions
+            #     # Exclude questions with feedback from the player
+            #     questions_without_feedback = (
+            #         Question.objects.exclude(question_id__in=questions_ids_with_feedback)
+            #         .filter(Q(category=room.category) & Q(difficulty=room.difficulty))
+            #     )
+            #     questions = questions_without_feedback if len(questions_without_feedback) > 0 else questions
 
             # Abort if no questions
             if len(questions) <= 0:
                 return
-
+            
             q = random.choice(questions)
 
             room.state = Room.GameState.PLAYING
             room.start_time = timezone.now().timestamp()
-            room.end_time = room.start_time + (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
+            print('time:', (len(q.content.split())-1) / (room.speed / 60))
+            room.end_time = room.start_time + QUESTION_TIME # (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
             room.current_question = q
 
             room.save()
@@ -287,6 +352,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     'data': get_room_response_json(room),
                 }
             )
+            self.get_shown_question(room=room)
 
     def skip(self, room: Room, player: Player):
         """Skip question while it's playing.
@@ -303,13 +369,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             room.state = Room.GameState.IDLE
             room.save()
 
-            try:
-                feedback = QuestionFeedback.objects.get(question=current_question, player=player)
-            except QuestionFeedback.DoesNotExist:
-                feedback = createFeedbackNoBuzz(room=room, player=player, skipped=True)
-                feedback.save()
-            except ValidationError as e:
-                pass
+            # try:
+            #     feedback = QuestionFeedback.objects.get(question=current_question, player=player)
+            # except QuestionFeedback.DoesNotExist:
+            #     feedback = createFeedbackNoBuzz(room=room, player=player, skipped=True)
+            #     feedback.save()
+            # except ValidationError as e:
+            #     pass
 
     def buzz_init(self, room: Room, p: Player):
         """Initialize buzz
@@ -579,7 +645,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     },
                 }
             )
-    
+
     def get_shown_question(self, room: Room):
         """Computes the correct amount of the question to show, depending on the state of the game.
             Note, this value is not persisted because, updating is too expensive."""
@@ -590,9 +656,54 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 'data': {
                     "response_type": "get_shown_question",
                     "shown_question": room.get_shown_question(),
+                    'state': room.state,
                 },
             }
         )
+
+    def get_init_model_instructions(self, room: Room) -> None:
+        """After the players are ready for the next question, show them the right instructions"""
+
+        if room.state != Room.GameState.INSTRUCTION_READING:
+            return
+        
+        instruction_map = {'A': room.current_question.instructions_a, 'B': room.current_question.instructions_b}
+
+        for player in room.get_valid_players():
+            instruction_label = room.player_map[str(player.player_id)]
+            print(instruction_label)
+            instructions = instruction_map[instruction_label]         
+
+            # Send instructions only to the player's WebSocket
+            async_to_sync(self.channel_layer.send)(
+                player.channel_name,  # Each player has their unique channel_name
+                {
+                    'type': 'update_room',
+                    'data': {
+                        'response_type': 'get_instructions',
+                        'instructions': instructions,
+                    }
+                }
+            )
+
+        # # Cannot request during playing or contesting
+        # if room.state != Room.GameState.IDLE:
+        #     return
+        
+        # instr_a, instr_b = room.current_question.instructions_a, room.current_question.instructions_b
+
+        # instr_a = get_instructions_response_json(instr_a)
+
+        # async_to_sync(self.channel_layer.group_send)(
+        #         self.room_group_name,
+        #         {
+        #             'type': 'update_room',
+        #             'data': {
+        #                 "response_type": "get_instructions",
+        #                 "instructions": instr_a,
+        #             },
+        #         }
+        #     )
 
     def get_init_question_feedback(self, room: Room, player: Player) -> None:
         """After a question is completed (i.e. the room becomes idle),
@@ -785,10 +896,9 @@ def update_time_state(room):
     """Checks time and updates state
     """
     if not room.state == Room.GameState.CONTEST:
-        if timezone.now().timestamp() >= room.end_time + GRACE_TIME:
+        if timezone.now().timestamp() >= room.end_time:
             room.state = Room.GameState.IDLE
             room.save()
-
 
 def get_room_response_json(room):
     """Generates JSON for update response
@@ -807,8 +917,12 @@ def get_room_response_json(room):
         "difficulty": room.difficulty,
         "speed": room.speed,
         "players": room.get_players_by_score(),
+        "player_map": room.player_map,
         "change_locked": room.change_locked,
     }
+
+def get_instructions_response_json(instructions: json) -> Dict:
+    return dict(instructions)
 
 def get_question_feedback_response_json(feedback: QuestionFeedback) -> Dict:
     # Serialize the feedback object to JSON
