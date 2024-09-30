@@ -11,9 +11,17 @@ from .utils import clean_content, generate_name, generate_id
 from .judge import judge_answer_annotation_game
 
 import json
+import os
 import datetime
+import requests
+from dotenv import load_dotenv
+import math
 import random
 import logging
+import justext
+from bs4 import BeautifulSoup
+
+load_dotenv()
 
 logger = logging.getLogger('django')
 
@@ -51,6 +59,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         #print('receiving!', self.channel_layer)
         """Websocket receive
         """
+
         data = json.loads(text_data)
         if 'content' not in data or data['content'] == None:
             data['content'] = ''
@@ -125,6 +134,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.chat(room, p, data['content'])
             elif data['request_type'] == 'report_message':
                 self.report_message(room, p, data['content'])
+            elif data['request_type'] =='calculate':
+                self.calculate(room, p, data['content'])
+            elif data['request_type'] == 'web_search':
+                self.web_search(room, p, data['content'])
+            elif data['request_type'] == 'content_select':
+                self.select_content(room, p, data['content'])
             else:
                 pass
 
@@ -290,7 +305,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             room.end_time = room.start_time + INSTRUCTION_READING_TIME # (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
             room.save()
 
-            print('yo')
             self.get_init_model_instructions(room=room)
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -334,7 +348,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             room.state = Room.GameState.PLAYING
             room.start_time = timezone.now().timestamp()
-            print('time:', (len(q.content.split())-1) / (room.speed / 60))
             room.end_time = room.start_time + QUESTION_TIME # (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
             room.current_question = q
 
@@ -671,7 +684,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         for player in room.get_valid_players():
             instruction_label = room.player_map[str(player.player_id)]
-            print(instruction_label)
             instructions = instruction_map[instruction_label]         
 
             # Send instructions only to the player's WebSocket
@@ -685,25 +697,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     }
                 }
             )
-
-        # # Cannot request during playing or contesting
-        # if room.state != Room.GameState.IDLE:
-        #     return
-        
-        # instr_a, instr_b = room.current_question.instructions_a, room.current_question.instructions_b
-
-        # instr_a = get_instructions_response_json(instr_a)
-
-        # async_to_sync(self.channel_layer.group_send)(
-        #         self.room_group_name,
-        #         {
-        #             'type': 'update_room',
-        #             'data': {
-        #                 "response_type": "get_instructions",
-        #                 "instructions": instr_a,
-        #             },
-        #         }
-        #     )
 
     def get_init_question_feedback(self, room: Room, player: Player) -> None:
         """After a question is completed (i.e. the room becomes idle),
@@ -814,7 +807,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 }
             )
         except ValidationError as e:
-            print(e)
             pass
 
     def reset_score(self, room, p):
@@ -888,6 +880,119 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             if ratio > 0.6 and num_players_in_room > 1:
                 m.player.banned = True
                 m.player.save()
+
+    def send_web_error(self, error=""):
+        self.send(text_data=json.dumps({
+            'response_type': 'web_search_result',
+            'result': f"<p>No results found: {error}\nTry another search query!</p>"
+        }))
+
+    def web_search(self, room: Room, p: Player, query):
+
+        api_key = os.getenv('GOOGLE_API_KEY')
+        search_engine_id = os.getenv('GOOGLE_CSE_ID')
+        google_search_url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            "key": api_key,
+            "cx": search_engine_id,
+            "q": query,
+            "num": 5,
+        }
+
+        search_results = None
+        try:
+            # return early if there are no web pages
+            response = requests.get(google_search_url, params=params)
+            response_data = response.json()
+            search_results = response_data.get('items', [])
+            if not search_results:
+                self.send_web_error()
+                return
+        except Exception as e:
+            self.send_web_error(str(e))
+
+        # get all text from the top-5 web pages
+        cand_paras = []
+        for search_res in search_results:
+            curr_link = search_res.get('link')
+            curr_title = search_res.get('title')
+            try:
+                page_response = requests.get(curr_link, timeout=2)
+            except Exception as e:
+                cand_paras.append(('', []))
+                continue
+            if page_response.status_code != 200:
+                cand_paras.append(('', []))
+            else:
+                paragraphs = justext.justext(page_response.content, justext.get_stoplist("English"))
+                paragraphs = [p for p in paragraphs if not p.is_boilerplate]
+                cand_paras.append((curr_title, paragraphs))
+
+        # get the best web page (longest for now #TODO)
+        title, paragraphs = max(cand_paras, key=lambda item: len(item[1]))
+        print(cand_paras)
+        print(paragraphs)
+        if len(paragraphs) == 0:
+            self.send_web_error()
+            return 
+
+        ALLOWED_TAGS = {'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}
+
+        result_string = f"<b>{title}</b> <hr />"
+        for paragraph in paragraphs:
+            if not paragraph.is_boilerplate:
+
+                tag = paragraph.xpath.split('/')[-1]
+                try:
+                    tag = tag[:tag.index('[')]
+                except ValueError:
+                    pass
+                if tag not in ALLOWED_TAGS:
+                    tag = 'div'
+
+                result_string += f'<{tag}>{paragraph.text}</{tag}>'
+
+        print('Result:', result_string)
+
+        # Send the extracted content back to the frontend
+        self.send(text_data=json.dumps({
+            'response_type': 'web_search_result',
+            'result': result_string
+        }))
+
+    def select_content(self, room: Room, p: Player, equation):
+        """Executes the content selection tool"""
+        self.send(text_data=json.dumps({
+            'response_type': 'content_selection_result',
+            'result': 'Here is your selected content.'
+        }))
+
+
+    def calculate(self, room: Room, p: Player, equation):
+        """Executes the calculator tool"""
+        allowed_functions = {name: obj for name, obj in math.__dict__.items() if callable(obj)}
+
+        allowed_functions.update({
+            'abs': abs,
+            'round': round,
+        })
+
+        try:
+            result = eval(equation, {"__builtins__": None}, allowed_functions)
+
+            self.send(text_data=json.dumps({
+                'response_type': 'calculation_result',  # Identify the message type
+                'result': result               # Send the calculated result
+            }))
+        
+        except Exception as e:
+
+            self.send(text_data=json.dumps({
+                'response_type': 'calculation_result',  # Identify the message type
+                'result': 'Invalid equation :('             # Send the calculated result
+            }))
+
+
 
 # === Helper methods ===
 

@@ -146,6 +146,8 @@ gamesock.onmessage = message => {
 
   const data = JSON.parse(message.data);
 
+  console.log(data);
+
   if (data['response_type'] === "update") {
 
     // sync client with server
@@ -175,7 +177,7 @@ gamesock.onmessage = message => {
     categoryHeader.innerHTML = `Question Type: ${category}`;
     categorySelect.value = data['room_category'];
     difficultySelect.value = data['difficulty'];
-    speedSlider.value = data['speed'];
+    //speedSlider.value = data['speed'];
 
   } else if (data['response_type'] === "new_user") {
 
@@ -200,7 +202,6 @@ gamesock.onmessage = message => {
     setQuestion(data['shown_question'], data['state']);
 
   } else if (data['response_type'] === "get_instructions") {
-    console.log('got instructions!')
     populateInstructions(data['instructions']);
   }
   
@@ -245,6 +246,19 @@ gamesock.onmessage = message => {
     alert("Sorry! You can't let you join that room since there are too many active players. Rooms meant for evaluation only allow 2 players.")
     window.location.href = "/"
   }
+  /* for tool use */
+  else if (data['response_type'] === 'calculation_result') {
+    calc_result = data['result']
+    setCalculation(calc_result)
+  }
+  else if (data['response_type'] === 'web_search_result') {
+    search_result = data['result']
+    setWebSearch(search_result)
+  }
+  else if (data['response_type'] === 'content_selection_result') {
+    select_result = data['result']
+    setContentSelectionResult(select_result)
+  }
 }
 
 /**
@@ -255,7 +269,7 @@ gamesock.onmessage = message => {
 
 function setQuestion(question_text, state) {
   if (state == 'instruct') {
-    question_text = 'Read the instructions above!'
+    question_text = 'Read the instructions!'
   } else {
     question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
     question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
@@ -269,6 +283,33 @@ function setAnswer(answer) {
   answer = answer.replace("{", "<u><b>").replace("}", "</b></u>");
   answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : '';
 }
+
+function setCalculation(res) {
+  document.getElementById('calc-result').textContent = res;
+}
+
+function setWebSearch(res) {
+  srcdoc = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
+  </head>
+  <body>`
+  srcdoc += res
+  srcdoc += '\n</body>'
+  document.getElementById('view-page-collapse').srcdoc = srcdoc
+  
+  res;
+}
+
+function setContentSelectionResult(res) {
+  document.getElementById('calc-result').textContent = res;
+}
+
+
 
 function hideButtons() {
   skipBtn.style.display = 'none';
@@ -333,6 +374,7 @@ function showButtons() {
  * @param {string} [content=""] - Request content
  */
 function sendRequest(requestType, content = "") {
+  console.log('sending request:', requestType);
   const requestData = {
     user_id: userID,
     request_type: requestType,

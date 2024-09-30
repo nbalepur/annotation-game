@@ -31,7 +31,7 @@ function setAndGetEvalRoomCookie(roomName) {
   const randomAdjective = getRandomElement(adjectives);
   const randomNoun = getRandomElement(nouns);
   const randomColor = getRandomElement(colors);
-  const randomRoom = `${randomAdjective}${randomColor}${randomNoun}`;
+  const randomRoom = `${randomAdjective}-${randomColor}-${randomNoun}`;
   return randomRoom.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
 }
 
@@ -41,7 +41,6 @@ function sleep(ms = 0) {
 
 
 document.getElementById('evaluation-play-btn').addEventListener('click', function(event) {
-  console.log('hi');
   event.preventDefault();
   const roomName = document.getElementById('new-room-name').value;
   const evaluationRoom = setAndGetEvalRoomCookie(roomName);

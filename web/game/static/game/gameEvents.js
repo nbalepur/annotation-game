@@ -24,7 +24,6 @@ const chatBtn = document.getElementById('chat-btn');
 const resetBtn = document.getElementById('reset-btn');
 const banAlert = document.getElementById('ban-alert');
 
-
 // Init tooltip and popover
 $(document).ready(() => {
   // $('[data-bs-toggle="tooltip"]').tooltip();

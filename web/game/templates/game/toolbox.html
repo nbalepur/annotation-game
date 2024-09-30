@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toolbox</title>
+
+
+
+  <style>
+    /* Custom Styling */
+    #toolbox-collapse {
+      background-color: white;
+      /* White background for the toolbox */
+      padding: 20px;
+      /* Keep default padding */
+    }
+
+    .tool {
+      background-color: #f8f9fa;
+      /* Light grey background for each tool */
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      /* Subtle shadow */
+    }
+
+    .tool h6 {
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    .toolbox-header.card-header {
+      background-color: #ffd0d0;
+    }
+
+    .card {
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-body {
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card bg-faded">
+    <div class="toolbox-header card-header" id="toolbox-header">
+      <h6>Toolbox</h6>
+    </div>
+
+    <div class="card-body collapse show" id="toolbox-collapse">
+      <span id="toolbox-space">
+        <form id="model-toolbox">
+
+          <div class="row">
+
+            <div class="col-12">
+
+          <!-- Calculator Tool -->
+          <div id="calculator-tool" class="tool">
+            <h6>Calculator Tool: <span style="font-weight: normal">Evaluate a math equation</span></h6>
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" id="calc-expression" placeholder="Enter math equation" />
+              <button class="btn btn-outline-primary" type="button" onclick="calculate()">Calculate</button>
+            </div>
+            <p>Result: <span id="calc-result" class="fw-bold text-primary"></span></p>
+          </div>
+
+        </div>
+
+        <div class="col-12">
+          <!-- Google Search Tool -->
+          <div id="google-tool" class="tool">
+            <h6>Web Search Tool: <span style="font-weight: normal">Return the most relevant web page</span></h6>
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" id="google-query" placeholder="Enter search query" />
+              <button class="btn btn-outline-success" type="button" onclick="web_search()">Search</button>
+            </div>
+            <ul id="google-results" class="list-group"></ul>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <!-- Content Selector Tool -->
+          <div id="content-selector-tool" class="tool">
+            <h6>Content Selector Tool: <span style="font-weight: normal">Return relevant contexts in the document</span>
+            </h6>
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" id="content-search"
+                placeholder="Enter text to search in document" />
+              <button class="btn btn-outline-danger" type="button" onclick="select_content()">Find</button>
+            </div>
+          </div>
+        </div>
+
+        </div>
+
+        </form>
+      </span>
+    </div>
+  </div>
+
+  <!-- JavaScript to handle calculation -->
+  <script>
+    // Function to evaluate the math expression using math.js
+    function calculate() {
+      const expression = document.getElementById('calc-expression').value;  // Get the expression from input field
+      if (!expression) {
+        document.getElementById('calc-result').textContent = "Please enter a math equation.";
+        return;
+      }
+      sendRequest("calculate", expression);  // send "calculate" as requestType and expression as content
+    }
+
+    function web_search() {
+      const expression = document.getElementById('google-query').value;  // Get the expression from input field
+      if (!expression) {
+        document.getElementById('google-query').textContent = "Please enter a search query.";
+        return;
+      }
+      sendRequest("web_search", expression);  // send "calculate" as requestType and expression as content
+    }
+
+    function select_content() {
+      const expression = document.getElementById('content-search').value;  // Get the expression from input field
+      if (!expression) {
+        document.getElementById('content-search').textContent = "Please enter a search query.";
+        return;
+      }
+      sendRequest("content_select", expression);  // send "calculate" as requestType and expression as content
+    }
+
+
+  </script>
+
+  <!-- Bootstrap JS Bundle with Popper
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script> -->
+
+</body>
+
+</html>
