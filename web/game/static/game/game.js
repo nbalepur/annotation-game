@@ -295,6 +295,7 @@ function setCalculation(res) {
 }
 
 function setWebSearch(res) {
+  console.log(res);
   document.getElementById('view-page-collapse').srcdoc = res;
 }
 
@@ -321,6 +322,19 @@ function setContentSelectionResult(doc_idxs, num_docs) {
   }
 }
 
+function sendToNotes(copied_text) {
+  let content = scratchpadInput.innerHTML;
+
+  if (content.includes('</ul>')) {
+    const ul = scratchpadInput.querySelector('ul');
+    const newListItem = document.createElement('li');
+    newListItem.textContent = copied_text;
+    ul.appendChild(newListItem);
+  } else {
+    const newList = `<ul style="padding-left: 5px; margin-left: 10px;"><li>${copied_text}</li></ul>`;
+    scratchpadInput.innerHTML = newList;
+  }
+}
 
 
 
@@ -590,22 +604,22 @@ function next() {
       nextBtn.scrollIntoView({ block: 'start' });
       sendRequest("next");
 
-      // Extend the question-row to take up remaining space below
-      const questionRow = document.getElementById('question-row');
-      const footer = document.getElementById('footer');  // Optional if you have a footer
+      // // Extend the question-row to take up remaining space below
+      // const questionRow = document.getElementById('question-row');
+      // const footer = document.getElementById('footer');  // Optional if you have a footer
       
-      if (questionRow) {
-        const viewportHeight = window.innerHeight;
-        const nextBtnHeight = nextBtn.offsetHeight;
-        const nextBtnTop = nextBtn.getBoundingClientRect().top;
-        const footerTop = footer ? footer.getBoundingClientRect().top : viewportHeight;
+      // if (questionRow) {
+      //   const viewportHeight = window.innerHeight;
+      //   const nextBtnHeight = nextBtn.offsetHeight;
+      //   const nextBtnTop = nextBtn.getBoundingClientRect().top;
+      //   const footerTop = footer ? footer.getBoundingClientRect().top : viewportHeight;
 
-        // Calculate available space between next button and footer (and padding)
-        const availableHeight = footerTop - nextBtnTop - nextBtnHeight - 15;
+      //   // Calculate available space between next button and footer (and padding)
+      //   const availableHeight = footerTop - nextBtnTop - nextBtnHeight - 15;
 
-        // Set the height of question-row dynamically
-        questionRow.style.height = `${availableHeight}px`;
-      }
+      //   // Set the height of question-row dynamically
+      //   questionRow.style.height = `${availableHeight}px`;
+      // }
   }
  } 
  else 

@@ -8,13 +8,13 @@ let calculatorTool = document.getElementById('calculator-tool');
 let googleTool = document.getElementById('google-tool');
 let contentSelectorTool = document.getElementById('content-selector-tool');
 
-let calculatorToolCol = document.getElementById('calculator-tool');
-let googleToolCol = document.getElementById('google-tool');
-let contentSelectorToolCol = document.getElementById('content-selector-tool');
-
 let calculatorToolBtn = document.getElementById('calc-expression-btn');
 let googleToolBtn = document.getElementById('google-query-btn');
 let contentSelectorToolBtn = document.getElementById('content-search-btn');
+
+let calculatorToolInput = document.getElementById('calc-expression');
+let googleToolInput = document.getElementById('google-query');
+let contentSelectorToolInput = document.getElementById('content-search');
 
 let calculatorToolResult = document.getElementById('calc-expression-result');
 
@@ -44,6 +44,11 @@ function updateTools(use_calc, use_doc, use_web) {
     googleToolBtn.disabled = false;
     contentSelectorToolBtn.disabled = false;
 
+    calculatorToolInput.disabled = false;
+    googleToolInput.disabled = false;
+    contentSelectorToolInput.disabled = false;
+
+
     // if (use_doc && !use_web) {
     //     console.log('doc only!', contentSelectorToolCol);
     //     contentSelectorToolCol.className = 'col-12';
@@ -58,6 +63,10 @@ function disableButtons() {
     calculatorToolBtn.disabled = true;
     googleToolBtn.disabled = true;
     contentSelectorToolBtn.disabled = true;
+
+    calculatorToolInput.disabled = true;
+    googleToolInput.disabled = true;
+    contentSelectorToolInput.disabled = true;
 }
 
 function updateDoc(use_doc, doc_content) {

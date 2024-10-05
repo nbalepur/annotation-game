@@ -45,6 +45,20 @@ window.setInterval(update, 100);
 
 window.onbeforeunload = leave;
 
+window.addEventListener('load', function() {
+  navigator.permissions.query({ name: 'clipboard-read' }).then((result) => {
+    if (result.state === 'granted') {
+      console.log('Clipboard read access granted');
+    } else if (result.state === 'prompt') {
+      console.log('Clipboard read access needs to be granted by user');
+    } else if (result.state === 'denied') {
+      console.log('Clipboard read access denied');
+    }
+  }).catch((error) => {
+    console.error('Error requesting clipboard-read permission: ', error);
+  });
+});
+
 nameInput.addEventListener('input', debounce(setUserData, 300));
 nameInput.addEventListener('input', function validateUserName() {
   if (!this.value) {
@@ -86,7 +100,7 @@ optOutInput.addEventListener('click', function optOut() {
 });
 
 document.addEventListener('keypress', (e) => {
-  if (e.target.tagName != 'INPUT' && e.target.tagName != 'TEXTAREA') {
+  if (e.target.tagName != 'INPUT' && e.target.tagName != 'TEXTAREA' && e.target.id != 'user-notes') {
     if (e.key == 'n') {
       next();
     } else if (e.key == ' ') {
@@ -117,18 +131,14 @@ document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
     focusTextInput("content-search");
     e.preventDefault();
-  } else if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
-    e.preventDefault();
-    focusTextInput("google-query");
-  } else if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-    focusTextInput("calc-expression");
-    e.preventDefault();
-  } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    focusTextInput("user-notes");
-    e.preventDefault();
+  } else if ((e.ctrlKey || e.metaKey) && e.key == 'c') {
+        navigator.clipboard.readText()
+        .then(text => {
+          sendToNotes(text);
+        })
+    }
   }
-});
-
+);
 
 
 requestContentInput.addEventListener('keypress', (e) => {
@@ -142,9 +152,28 @@ requestContentInput.addEventListener('keypress', (e) => {
   }
 });
 
+function moveCursorToSecondBullet() {
+  const secondBullet = scratchpadInput.querySelector('ul li:nth-child(2)');
+  
+  const range = document.createRange();
+  range.setStart(secondBullet, 0);
+  range.collapse(true); // Collapse the range to the start of the second <li>
+
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
 scratchpadInput.addEventListener('keydown', (e) => {
   if (e.key == 'Escape') {
     scratchpadInput.blur();
+  } else if(e.key == 'Enter') {
+    content = scratchpadInput.innerHTML;
+    if (!content.includes('</ul>')) {
+      e.preventDefault();
+      scratchpadInput.innerHTML = `<ul style="padding-left: 5px; margin-left: 10px;"><li>${content}</li><li></li></ul>`;
+      moveCursorToSecondBullet();
+    }
   }
 });
 

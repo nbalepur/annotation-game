@@ -384,6 +384,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     def buzz_answer(self, room: Room, player: Player, content):
 
+        self.log_tool_use(room, player, '', dict(), 'buzz', 'start')
+
         # Reject when not in contest
         if room.state != Room.GameState.CONTEST:
             return
@@ -611,7 +613,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     return
 
                 q = random.choice(questions)
-                print('changing question: get answer')
+                q.answer = ''
+                q.content = ''
                 room.current_question = q
                 room.save()
 
@@ -667,9 +670,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             )
 
             # hide tools and the document
-            self.update_tools(self.channel_layer.send, player.channel_name, False, False, False)
-            self.update_doc(self.channel_layer.send, player.channel_name, False, '')
+            # self.update_tools(self.channel_layer.send, player.channel_name, False, False, False)
+            # self.update_doc(self.channel_layer.send, player.channel_name, False, '')
             # log the current interaction as "instruction reading"
+            self.disable_tool_btns(room=room, player=player)
             self.log_tool_use(room, player, '', dict(), 'read_instructions', 'success')
 
     def update_tools_and_doc_for_question_and_player(self, room: Room, player: Player):
@@ -949,6 +953,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     def web_search(self, room: Room, p: Player, query):
         """Tool to search Wikipedia"""
+        self.log_tool_use(room, p, query, dict(), 'web_search', 'start')
         # setup engine
         # api_key = os.getenv('GOOGLE_API_KEY')
         # search_engine_id = os.getenv('GOOGLE_CSE_ID')
@@ -1031,6 +1036,19 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=mediawiki.legacy.shared|mediawiki.skinning.content|mediawiki.skinning.interface&only=styles&skin=vector">
                 <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=site.styles&only=styles&skin=vector">
                 '''
+                copy_script = '''<script>
+            document.addEventListener("keydown", function(e) {
+              if ((e.ctrlKey || e.metaKey) && e.key == "c") {
+                navigator.clipboard.readText()
+                .then(text => {
+                  window.parent.sendToNotes(text);
+                })
+                .catch(err => {
+                  console.error("Error reading clipboard contents:", err);
+                });
+              }
+            });
+          </script>'''
                 final_html = f'''
                 <html>
                 <head>
@@ -1058,6 +1076,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                         </div>
                         {fixed_html_content}
                     </div>
+                    {copy_script}
                 </body>
                 </html>
                 '''
@@ -1076,6 +1095,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     def select_content(self, room: Room, p: Player, query: str):
         """Executes the content selection tool"""
+        self.log_tool_use(room, p, query, dict(), 'content_selection', 'start')
     
         res = ToolLog.get_last_tool_result(question=room.current_question, user=p.user, tool_name='web_search')
         if 'text' not in res:
@@ -1113,6 +1133,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     def calculate(self, room: Room, p: Player, equation):
         """Executes the calculator tool"""
+        self.log_tool_use(room, p, equation, dict(), 'calculator', 'start')
         allowed_functions = {name: obj for name, obj in math.__dict__.items() if callable(obj)}
         allowed_functions.update({
             'abs': abs,
