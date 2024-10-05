@@ -75,6 +75,12 @@ class Question(models.Model):
     wiki_sents = models.JSONField(null=True, blank=True)
     length = models.IntegerField(default=0, validators=[MinValueValidator(0)])
 
+    uses_calculator = models.BooleanField(default=True)
+    uses_web_search = models.BooleanField(default=True)
+    uses_doc_search = models.BooleanField(default=True)
+
+    document_context = models.TextField(default="")
+
     def save(self, *args, **kwargs):
         # Tokenize content into sentences and save to content_sentences
         if self.content and not (self.clue_list or len(self.clue_list) ):
@@ -260,6 +266,33 @@ class User(models.Model):
 
     def __str__(self):
         return str(self.name)
+
+class ToolLog(models.Model):
+    """Record the user's tool usage"""
+    tool_log_id = models.AutoField(primary_key=True)
+
+    question_id = models.IntegerField(default=0)
+    user_id = models.CharField(max_length=100, default='')
+    instruction_type = models.CharField(max_length=1)
+
+    tool_name = models.CharField(max_length=255)
+
+    tool_query = models.TextField()
+    tool_result = models.JSONField()
+    tool_execution_status = models.TextField()
+
+    queried_at = models.DateTimeField(auto_now_add=True)
+
+    def get_last_tool_result(question: Question, user: User, tool_name: str) -> dict:
+        """Get the result of the last tool use"""
+        tool_usage = ToolLog.objects.filter(question_id=question.question_id, user_id=user.user_id, tool_name=tool_name).order_by('-queried_at').first()
+        if tool_usage and tool_usage.tool_result:
+            return tool_usage.tool_result
+        return dict()
+    
+    def history(question: Question, user: User) -> List[dict]:
+        """Get this user's tool history"""
+        pass
 
 
 class Player(models.Model):

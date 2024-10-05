@@ -17,9 +17,10 @@ const categoryHeader = document.getElementById('category-header');
 const categorySelect = document.getElementById('category-select');
 const difficultySelect = document.getElementById('difficulty-select');
 //const speedSlider = document.getElementById('speed-slider');
-const skipBtn = document.getElementById('skip-btn');
+// const skipBtn = document.getElementById('skip-btn');
 const nextBtn = document.getElementById('next-btn');
 const buzzBtn = document.getElementById('buzz-btn');
+const settingsBtn = document.getElementById('settings-btn');
 const chatBtn = document.getElementById('chat-btn');
 const resetBtn = document.getElementById('reset-btn');
 const banAlert = document.getElementById('ban-alert');
@@ -88,12 +89,25 @@ document.addEventListener('keypress', (e) => {
     } else if (e.key == ' ') {
       buzz();
       e.preventDefault();
+    } else if (e.key == 't') {
+      toggleTools();
     }
     // else if (e.key == 'c') {
     //   chatInit();
     // }
   }
 });
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    settings();
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    alert('Search (Cmd/Ctrl+F) is disabled on this page.');
+}
+});
+
+
 
 requestContentInput.addEventListener('keypress', (e) => {
   if (e.key == 'Enter') {
@@ -109,7 +123,7 @@ requestContentInput.addEventListener('keypress', (e) => {
 categorySelect.addEventListener('change', setCategory);
 difficultySelect.addEventListener('change', setDifficulty);
 buzzBtn.addEventListener('click', buzz);
-skipBtn.addEventListener('click', skip);
+// skipBtn.addEventListener('click', skip);
 nextBtn.addEventListener('click', next);
 resetBtn.addEventListener('click', resetScore);
 // chatBtn.addEventListener('click', chatInit);

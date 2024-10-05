@@ -51,6 +51,13 @@ document.getElementById('evaluation-play-btn').addEventListener('click', functio
   }
 });
 
+document.getElementById("agree-btn").addEventListener("click", function() {
+      let agreeDiv = document.getElementById("agree-irb");
+      let roomSection = document.getElementById("room-section");
+      agreeDiv.style.display = 'none';
+      roomSection.style.display = 'flex';
+});
+
 // The below is old code that was used for default rooms
 const landingContent = document.getElementById('landing-content');
 // const landingForm = document.getElementById('landing-form');
@@ -79,3 +86,4 @@ landingButton.onclick = (e) => {
   e.stopPropagation();
   submitGamePage();
 }
+

@@ -260,3 +260,39 @@
 2024-09-26 21:59:40.394 EDT [5196] LOG:  invalid record length at 0/3E72D40: wanted 24, got 0
 2024-09-26 21:59:40.394 EDT [5196] LOG:  redo done at 0/3E72D08
 2024-09-26 21:59:40.407 EDT [5195] LOG:  database system is ready to accept connections
+2024-09-30 13:46:45.896 EDT [1753] LOG:  starting PostgreSQL 12.17 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-09-30 13:46:45.897 EDT [1753] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-09-30 13:46:45.901 EDT [1753] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-09-30 13:46:45.917 EDT [1754] LOG:  database system was interrupted; last known up at 2024-09-29 22:13:04 EDT
+2024-09-30 13:46:46.128 EDT [1754] LOG:  database system was not properly shut down; automatic recovery in progress
+2024-09-30 13:46:46.135 EDT [1754] LOG:  redo starts at 0/4838DB8
+2024-09-30 13:46:46.136 EDT [1754] LOG:  invalid record length at 0/4838EA0: wanted 24, got 0
+2024-09-30 13:46:46.136 EDT [1754] LOG:  redo done at 0/4838E68
+2024-09-30 13:46:46.157 EDT [1753] LOG:  database system is ready to accept connections
+2024-09-30 16:06:34.666 EDT [17439] FATAL:  database "nbalepur" does not exist
+2024-09-30 16:21:47.076 EDT [20618] FATAL:  lock file "postmaster.pid" already exists
+2024-09-30 16:21:47.076 EDT [20618] HINT:  Is another postmaster (PID 1753) running in data directory "/home/nbalepur/pgdata"?
+2024-09-30 16:22:40.080 EDT [1753] LOG:  received fast shutdown request
+2024-09-30 16:22:40.083 EDT [1753] LOG:  aborting any active transactions
+2024-09-30 16:22:40.083 EDT [20222] FATAL:  terminating connection due to administrator command
+2024-09-30 16:22:40.084 EDT [1753] LOG:  background worker "logical replication launcher" (PID 1760) exited with exit code 1
+2024-09-30 16:22:40.084 EDT [1755] LOG:  shutting down
+2024-09-30 16:22:40.100 EDT [1753] LOG:  database system is shut down
+2024-10-03 14:47:27.426 EDT [602] LOG:  starting PostgreSQL 12.17 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-10-03 14:47:27.427 EDT [602] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-10-03 14:47:27.432 EDT [602] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-10-03 14:47:27.449 EDT [603] LOG:  database system was interrupted; last known up at 2024-10-03 14:39:58 EDT
+2024-10-03 14:47:27.639 EDT [603] LOG:  database system was not properly shut down; automatic recovery in progress
+2024-10-03 14:47:27.643 EDT [603] LOG:  redo starts at 0/5FBC128
+2024-10-03 14:47:27.645 EDT [603] LOG:  invalid record length at 0/5FC67E0: wanted 24, got 0
+2024-10-03 14:47:27.646 EDT [603] LOG:  redo done at 0/5FC67A8
+2024-10-03 14:47:27.666 EDT [602] LOG:  database system is ready to accept connections
+2024-10-03 15:00:45.972 EDT [3866] LOG:  starting PostgreSQL 12.17 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2024-10-03 15:00:45.972 EDT [3866] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-10-03 15:00:45.976 EDT [3866] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-10-03 15:00:45.993 EDT [3867] LOG:  database system was interrupted; last known up at 2024-10-03 14:52:28 EDT
+2024-10-03 15:00:46.202 EDT [3867] LOG:  database system was not properly shut down; automatic recovery in progress
+2024-10-03 15:00:46.205 EDT [3867] LOG:  redo starts at 0/5FD0B60
+2024-10-03 15:00:46.206 EDT [3867] LOG:  invalid record length at 0/5FD2150: wanted 24, got 0
+2024-10-03 15:00:46.206 EDT [3867] LOG:  redo done at 0/5FD2128
+2024-10-03 15:00:46.220 EDT [3866] LOG:  database system is ready to accept connections

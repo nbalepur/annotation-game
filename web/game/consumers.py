@@ -18,8 +18,9 @@ from dotenv import load_dotenv
 import math
 import random
 import logging
-import justext
 from bs4 import BeautifulSoup
+import re
+import cohere
 
 load_dotenv()
 
@@ -56,7 +57,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
     def receive(self, text_data):
-        #print('receiving!', self.channel_layer)
+
         """Websocket receive
         """
 
@@ -65,6 +66,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             data['content'] = ''
 
         room = Room.objects.get(label=self.room_name)
+
+        print('receiving!', json.loads(text_data)['request_type'], room.state)
+
+        #print('recieve', room.current_question, room.state)
 
         # Handle new user and join room
         if data['request_type'] == 'new_user':
@@ -152,10 +157,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Receive ping
         """
 
+        print('ping', p)
         p.last_seen = timezone.now().timestamp()
         p.save()
 
-        update_time_state(room)
+        self.update_time_state(room)
 
         self.send_json(get_room_response_json(room))
         self.send_json({
@@ -179,11 +185,15 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             ~Q(user__user_id=data['user_id'])
         )
 
+        print('Current Players:', len(current_players))
+
+
         if p == None and len(current_players) < room.max_players:
             p = Player.objects.create(room=room, user=user)
         
         if len(current_players) >= room.max_players:
             self.too_many_players()
+            print('too many!')
         else:
             create_message("join", p, None, room)
 
@@ -196,13 +206,15 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     'data': get_room_response_json(room),
                 }
             )
+            room.refresh_from_db()
             # print(room.current_question)
             #if room.current_question:
+            self.update_status(room, room.state)
             self.get_shown_question(room=room)
             self.get_answer(room=room)
-            # else:
-            #     self.handle_not_enough_players(room=room, send_alert=False)
 
+            if room.state in {Room.GameState.PLAYING, Room.GameState.INSTRUCTION_READING}:
+                self.update_tools_and_doc_for_question_and_player(room=room, player=p)
             p.last_room = self.room_name
 
     def leave(self, room, p):
@@ -252,45 +264,51 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             return
 
     def handle_not_enough_players(self, room: Room, send_alert: bool):
-        
-        # fetch a random question for a new room
-        q = room.current_question
-        if q == None:
-            all_questions = Question.objects.all()
-            if len(all_questions) <= 0:
-                return
-            q = random.choice(all_questions)
-
-        q.content = 'Two players are needed to begin!'
-        q.answer = ''
-        room.current_question = q
-        room.save()
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
-            {
-                'type': 'update_room',
-                'data': get_room_response_json(room),
-            }
-        )
         if send_alert:
             self.send_json({
                 "response_type": "not_enough_players",
             })
-        self.get_shown_question(room=room)
+        # # fetch a random question for a new room
+        # q = room.current_question
+        # if q == None:
+        #     all_questions = Question.objects.all()
+        #     if len(all_questions) <= 0:
+        #         return
+        #     q = random.choice(all_questions)
+
+        # q.content = 'Two players are needed to begin!'
+        # q.answer = ''
+        # print('changing question: handling not enough error')
+        # room.current_question = q
+        # room.save()
+        # async_to_sync(self.channel_layer.group_send)(
+        #     self.room_group_name,
+        #     {
+        #         'type': 'update_room',
+        #         'data': get_room_response_json(room),
+        #     }
+        # )
+        # if send_alert:
+        #     self.send_json({
+        #         "response_type": "not_enough_players",
+        #     })
+        # self.get_shown_question(room=room)
 
     def next(self, room: Room, player: Player):
         """Next question
         """
+        # room.refresh_from_db()
+        # print('next!', room.state, room.state == Room.GameState.IDLE, room.state == Room.GameState.INSTRUCTION_READING)
 
-        update_time_state(room)
+        # update_time_state(room)
 
         # transition so the user has time to read the instructions
         if room.state == Room.GameState.IDLE:
             players = room.get_players_by_score()
-            num_players_in_room = len(players)
+            num_active_players = len([p_ for p_ in players if p_['active']])
 
             # we need two players for a pairwise comparison
-            if num_players_in_room != 2:
+            if num_active_players != 2:
                 self.handle_not_enough_players(room=room, send_alert=True)
                 return
 
@@ -300,58 +318,48 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 p1, p2 = p2, p1
             room.player_map = {str(p1['player_id']): 'A', str(p2['player_id']): 'B'}
 
+            # get the next question
+            questions = (
+                Question.objects.filter(difficulty=room.difficulty)
+                if room.category == 'Everything'
+                else Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty))
+            )
+            if len(questions) <= 0:
+                return
+            # TODO: questions haven't seen before (when we have enough!)
+            q = random.choice(questions)
+
+            #print('changing question: expected')
+            room.current_question = q
             room.state = Room.GameState.INSTRUCTION_READING
             room.start_time = timezone.now().timestamp()
             room.end_time = room.start_time + INSTRUCTION_READING_TIME # (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
             room.save()
+            self.update_status(room, room.state)
 
-            self.get_init_model_instructions(room=room)
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
                 {
                     'type': 'update_room',
                     'data': get_room_response_json(room),
                 }
-            )
-            self.get_shown_question(room=room)
+            ) 
+            
+            self.get_init_model_instructions(room=room)
+            self.get_shown_question(room=room)    
 
         elif room.state == Room.GameState.INSTRUCTION_READING:
-
-            questions = (
-                Question.objects.filter(difficulty=room.difficulty)
-                if room.category == 'Everything'
-                else Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty))
-            )
-
-            # if room.collects_feedback:
-            #     if room.current_question:
-            #         current_feedback = QuestionFeedback.objects.get(player=player, question=room.current_question)
-                    
-            #         # Do not execute next if not finished with feedback
-            #         #if not current_feedback.is_completed(): return
-
-            #     # Get the IDs of questions with feedback from the player
-            #     questions_ids_with_feedback = [feedback.question.question_id for feedback in player.feedback.all()]
-
-            #     # Exclude questions with feedback from the player
-            #     questions_without_feedback = (
-            #         Question.objects.exclude(question_id__in=questions_ids_with_feedback)
-            #         .filter(Q(category=room.category) & Q(difficulty=room.difficulty))
-            #     )
-            #     questions = questions_without_feedback if len(questions_without_feedback) > 0 else questions
-
-            # Abort if no questions
-            if len(questions) <= 0:
-                return
             
-            q = random.choice(questions)
-
             room.state = Room.GameState.PLAYING
             room.start_time = timezone.now().timestamp()
             room.end_time = room.start_time + QUESTION_TIME # (len(q.content.split())-1) / (room.speed / 60) # start_time (sec since epoch) + words in question / (words/sec)
-            room.current_question = q
-
             room.save()
+
+            # update status text
+            self.update_status(room, room.state)
+
+            # update visible tools + document based on question
+            self.update_tools_and_doc_for_question(room)
 
             # Unlock all players
             for p in room.players.all():
@@ -365,7 +373,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     'data': get_room_response_json(room),
                 }
             )
-            self.get_shown_question(room=room)
 
     def skip(self, room: Room, player: Player):
         """Skip question while it's playing.
@@ -408,6 +415,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             room.buzz_player = p
             room.buzz_start_time = timezone.now().timestamp()
             room.save()
+            self.update_status(room, room.state, p.user.name)
 
             p.locked_out = True
             p.save()
@@ -460,6 +468,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     cleaned_content,
                     room,
                 )
+
+                self.log_tool_use(room, player, '', dict(), 'buzz', 'success')
+                self.update_status(room, 'buzz_correct', player.user.name, cleaned_content)
             else:
 
                 if room.max_players == 1:
@@ -494,6 +505,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 room.start_time += buzz_duration
                 room.end_time += buzz_duration
                 room.save()
+
+                self.log_tool_use(room, player, '', dict(), 'buzz', 'failure')
+                self.update_status(room, 'buzz_incorrect', player.user.name, cleaned_content)
 
             current_question: Question = room.current_question
             try:
@@ -548,6 +562,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     'data': get_room_response_json(room),
                 }
             )
+
+            self.log_tool_use(room, player, '', dict(), 'buzz', 'forfeit')
+            self.update_status(room, 'buzz_abstain', player.user.name)
 
     def submit_initial_feedback(self, room: Room, player: Player, content):
         if room.state == Room.GameState.IDLE:
@@ -633,7 +650,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Get answer for room question
         """
 
-        update_time_state(room)
+        self.update_time_state(room)
 
         if room.state == Room.GameState.IDLE:
             # Generate random question for now if empty
@@ -645,6 +662,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     return
 
                 q = random.choice(questions)
+                print('changing question: get answer')
                 room.current_question = q
                 room.save()
 
@@ -662,6 +680,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def get_shown_question(self, room: Room):
         """Computes the correct amount of the question to show, depending on the state of the game.
             Note, this value is not persisted because, updating is too expensive."""
+        #print('shown', room.state, room.current_question)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -692,11 +711,87 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 {
                     'type': 'update_room',
                     'data': {
-                        'response_type': 'get_instructions',
+                        'response_type': 'update_instructions',
                         'instructions': instructions,
                     }
                 }
             )
+
+            # hide tools and the document
+            self.update_tools(self.channel_layer.send, player.channel_name, False, False, False)
+            self.update_doc(self.channel_layer.send, player.channel_name, False, '')
+            # log the current interaction as "instruction reading"
+            self.log_tool_use(room, player, '', dict(), 'read_instructions', 'success')
+
+    def update_tools_and_doc_for_question_and_player(self, room: Room, player: Player):
+        """Update the visible tools and document based on the current question for just one player"""
+        question = room.current_question    
+        self.update_tools(self.channel_layer.send, player.channel_name, question.uses_calculator, (not question.uses_web_search and question.uses_doc_search), question.uses_web_search)
+        self.update_doc(self.channel_layer.send, player.channel_name, question.uses_doc_search, question.document_context)
+
+    def update_tools_and_doc_for_question(self, room: Room):
+        """Update the visible tools and document based on the current question"""
+        for player in room.get_valid_players():     
+            self.update_tools_and_doc_for_question_and_player(room=room, player=player)
+
+    def update_status(self, room: Room, status: str, player_name='', answer=''):
+        """Helper function to update the status text"""
+        for player in room.get_valid_players():  
+            async_to_sync(self.channel_layer.send)(
+                player.channel_name,
+                {
+                    'type': 'update_room',
+                    'data': {
+                        'response_type': 'update_status',
+                        'status': status,
+                        'player': player_name,
+                        'answer': answer,
+                    }
+                }
+            )
+
+    def disable_tool_btns(self, room: Room, player: Player):
+        """Helper function to disable the tool buttons"""
+        print('disabling!', player, self.channel_layer.send, player.channel_name)
+        async_to_sync(self.channel_layer.send)(
+            player.channel_name,
+            {
+                'type': 'update_room',
+                'data': {
+                    'response_type': 'disable_tools',
+                    'response': [],
+                }
+            }
+        )
+
+    def update_doc(self, channel_layer_send, player_channel, use_doc, doc_content):
+        """Helper function to update document info"""
+        async_to_sync(channel_layer_send)(
+            player_channel,
+            {
+                'type': 'update_room',
+                'data': {
+                    'response_type': 'update_doc',
+                    'use_doc': use_doc,
+                    'doc_content': doc_content,
+                }
+            }
+        )
+
+    def update_tools(self, channel_layer_send, player_channel, use_calc, use_doc, use_web):
+        """Helper function to update tool info"""
+        async_to_sync(channel_layer_send)(
+            player_channel,  # Each player has their unique channel_name
+            {
+                'type': 'update_room',
+                'data': {
+                    'response_type': 'update_tools',
+                    'use_calculator': use_calc,
+                    'use_doc': use_doc,
+                    'use_web': use_web,
+                }
+            }
+        )
 
     def get_init_question_feedback(self, room: Room, player: Player) -> None:
         """After a question is completed (i.e. the room becomes idle),
@@ -881,14 +976,31 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 m.player.banned = True
                 m.player.save()
 
-    def send_web_error(self, error=""):
+    def log_tool_use(self, room: Room, p: Player, tool_query: str, tool_result: dict, tool_name: str, status: str):
+        """Log the tool that was used"""
+        ToolLog.objects.create(
+            user_id=p.user.user_id,
+            question_id=room.current_question.question_id,
+            instruction_type=room.player_map[str(p.player_id)],
+            tool_name=tool_name,
+            tool_query=tool_query,
+            tool_result=tool_result,
+            tool_execution_status=status
+        )
+
+    def send_web_search_error(self, room: Room, p: Player, query: str, error=""):
+        """Handle errors during web search"""
         self.send(text_data=json.dumps({
             'response_type': 'web_search_result',
             'result': f"<p>No results found: {error}\nTry another search query!</p>"
         }))
 
-    def web_search(self, room: Room, p: Player, query):
+        # log tool use
+        self.log_tool_use(room, p, query, {'error': error}, 'web_search', 'failure')
 
+    def web_search(self, room: Room, p: Player, query):
+        """Tool to search Wikipedia"""
+        # setup engine
         api_key = os.getenv('GOOGLE_API_KEY')
         search_engine_id = os.getenv('GOOGLE_CSE_ID')
         google_search_url = "https://www.googleapis.com/customsearch/v1"
@@ -896,82 +1008,146 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             "key": api_key,
             "cx": search_engine_id,
             "q": query,
-            "num": 5,
+            "num": 10,
         }
 
+        # google search
         search_results = None
         try:
-            # return early if there are no web pages
             response = requests.get(google_search_url, params=params)
             response_data = response.json()
             search_results = response_data.get('items', [])
             if not search_results:
-                self.send_web_error()
+                self.send_web_search_error(room, p, query, 'no_search_results')
                 return
         except Exception as e:
-            self.send_web_error(str(e))
+            self.send_web_search_error(room, p, query, str(e))
 
         # get all text from the top-5 web pages
-        cand_paras = []
         for search_res in search_results:
-            curr_link = search_res.get('link')
-            curr_title = search_res.get('title')
-            try:
-                page_response = requests.get(curr_link, timeout=2)
-            except Exception as e:
-                cand_paras.append(('', []))
-                continue
-            if page_response.status_code != 200:
-                cand_paras.append(('', []))
+
+            page_title = search_res['title'].replace(' - Wikipedia', '')
+            api_url = "https://en.wikipedia.org/w/api.php"
+            params = {
+                "action": "parse",
+                "page": page_title,
+                "format": "json",
+                "prop": "text|images"
+            }
+            response = requests.get(api_url, params=params)
+            
+            if response.status_code == 200:
+                data = response.json()
+                html_content = data["parse"]["text"]["*"]
+                soup = BeautifulSoup(html_content, 'html.parser')
+                
+                content_list = []
+                element_counter = 0
+            
+                for p_tag in soup.find_all('p'):
+                    text = p_tag.get_text()
+                    if text:
+                        content_list.append(text)
+                        p_tag['id'] = f"element-{element_counter}"
+                        element_counter += 1
+                
+                # for li_tag in soup.find_all('li'):
+                #     if not (li_tag.a and len(li_tag.contents) == 1):
+                #         text = li_tag.get_text()
+                #         if text:
+                #             content_list.append(text)
+                #             li_tag['id'] = f"element-{element_counter}"
+                #             element_counter += 1
+                
+                fixed_html_content = str(soup)
+                openbracket, closebracket = '{', '}'
+                wikipedia_css = '''
+                <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=mediawiki.legacy.shared|mediawiki.skinning.content|mediawiki.skinning.interface&only=styles&skin=vector">
+                <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=site.styles&only=styles&skin=vector">
+                '''
+                final_html = f'''
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>{page_title}</title>
+                    {wikipedia_css}
+                    <style>
+                        a {openbracket}
+                            pointer-events: none;
+                        {closebracket}
+                        .highlight {openbracket}
+                            background-color: yellow; /* Color for the highlight */
+                            transition: background-color 1s ease; /* Smooth transition */
+                        {closebracket}
+                        body {openbracket}
+                        font-size: 1.2em; /* Scale up text size by 20% */
+                        {closebracket}
+                    </style>
+                </head>
+                <body>
+                    <div class="mw-body-content">
+                        <div class="page-header">
+                            <h1>{page_title.replace("_", " ")}</h1>
+                        </div>
+                        {fixed_html_content}
+                    </div>
+                </body>
+                </html>
+                '''
+
+                self.log_tool_use(room, p, query, {'text': '<delim>'.join(content_list), 'wiki_page_title': 'page_title'}, 'web_search', 'success')
+                self.send(text_data=json.dumps({
+                    'response_type': 'web_search_result',
+                    'result': final_html
+                }))
+                self.update_tools(self.channel_layer.send, p.channel_name, room.current_question.uses_calculator, True, True)
+                return
             else:
-                paragraphs = justext.justext(page_response.content, justext.get_stoplist("English"))
-                paragraphs = [p for p in paragraphs if not p.is_boilerplate]
-                cand_paras.append((curr_title, paragraphs))
+                continue
+        
+        self.send_web_search_error(room, p, query, 'no_page_content')
 
-        # get the best web page (longest for now #TODO)
-        title, paragraphs = max(cand_paras, key=lambda item: len(item[1]))
-        print(cand_paras)
-        print(paragraphs)
-        if len(paragraphs) == 0:
-            self.send_web_error()
-            return 
-
-        ALLOWED_TAGS = {'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}
-
-        result_string = f"<b>{title}</b> <hr />"
-        for paragraph in paragraphs:
-            if not paragraph.is_boilerplate:
-
-                tag = paragraph.xpath.split('/')[-1]
-                try:
-                    tag = tag[:tag.index('[')]
-                except ValueError:
-                    pass
-                if tag not in ALLOWED_TAGS:
-                    tag = 'div'
-
-                result_string += f'<{tag}>{paragraph.text}</{tag}>'
-
-        print('Result:', result_string)
-
-        # Send the extracted content back to the frontend
-        self.send(text_data=json.dumps({
-            'response_type': 'web_search_result',
-            'result': result_string
-        }))
-
-    def select_content(self, room: Room, p: Player, equation):
+    def select_content(self, room: Room, p: Player, query: str):
         """Executes the content selection tool"""
+    
+        res = ToolLog.get_last_tool_result(question=room.current_question, user=p.user, tool_name='web_search')
+        if 'text' not in res:
+            self.send(text_data=json.dumps({
+                'response_type': 'content_selection_result',
+                'result': 'You need a web page before you can search!'
+            }))
+        docs = res['text'].split('<delim>')
+
+        cohere_client = cohere.ClientV2(api_key=os.getenv('COHERE_API_KEY'))
+
+        try:
+            retr_results = cohere_client.rerank(model="rerank-english-v3.0", query=query, documents=docs, top_n=1, return_documents=True)
+        except Exception as e:
+            self.send(text_data=json.dumps({
+                'response_type': 'content_selection_result',
+                'result': [],
+            }))
+            self.log_tool_use(room, p, query, {'error': str(e)}, 'content_selection', 'failure')
+            return
+
+        retr_docs = [d.document.text for d in retr_results.results]
+        retr_docs = [re.sub(r'\[.*?\]', ' ', doc) for doc in retr_docs]
+        retr_docs = [re.sub(r'\s+', ' ', doc).strip() for doc in retr_docs]
+        doc_idxs = [int(d.index) for d in retr_results.results]
+
+        self.log_tool_use(room, p, query, {'retrieved_docs': retr_docs, 'doc_idxs': doc_idxs}, 'content_selection', 'success')
+
+        # Send the retrieved content back to the frontend
         self.send(text_data=json.dumps({
             'response_type': 'content_selection_result',
-            'result': 'Here is your selected content.'
+            'result': doc_idxs,
+            'num_docs': len(docs),
         }))
-
 
     def calculate(self, room: Room, p: Player, equation):
         """Executes the calculator tool"""
         allowed_functions = {name: obj for name, obj in math.__dict__.items() if callable(obj)}
-
         allowed_functions.update({
             'abs': abs,
             'round': round,
@@ -980,6 +1156,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         try:
             result = eval(equation, {"__builtins__": None}, allowed_functions)
 
+            # log tool use
+            self.log_tool_use(room, p, equation, {'calculation': result}, 'calculator', 'success')
+
             self.send(text_data=json.dumps({
                 'response_type': 'calculation_result',  # Identify the message type
                 'result': result               # Send the calculated result
@@ -987,23 +1166,30 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         
         except Exception as e:
 
+            # log tool use
+            self.log_tool_use(room, p, equation, {'error': str(e)}, 'calculator', 'failure')
+
             self.send(text_data=json.dumps({
                 'response_type': 'calculation_result',  # Identify the message type
                 'result': 'Invalid equation :('             # Send the calculated result
             }))
+            
 
+    # === Helper methods ===
 
+    def update_time_state(self, room: Room):
 
-# === Helper methods ===
+        """Checks time and updates state
+        """
+        if not room.state == Room.GameState.CONTEST:
+            if timezone.now().timestamp() >= room.end_time and room.state != Room.GameState.IDLE:
+                room.state = Room.GameState.IDLE
+                curr_answer = room.current_question.answer
+                room.save()
+                self.update_status(room, room.state, '', curr_answer)
 
-def update_time_state(room):
-
-    """Checks time and updates state
-    """
-    if not room.state == Room.GameState.CONTEST:
-        if timezone.now().timestamp() >= room.end_time:
-            room.state = Room.GameState.IDLE
-            room.save()
+                # for player in room.get_valid_players():
+                #     self.disable_tool_btns(room=room, player=player)
 
 def get_room_response_json(room):
     """Generates JSON for update response

@@ -2,22 +2,20 @@
 {% load static %}
 
 {% block title %}
-<title>The Annotation Game</title>
+<title>True Helpfulness</title>
 {% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="jumbotron">
 
-    <img src="{% static 'game/parrot_md.png' %}" alt="Parrot" class="img-fluid mx-auto d-block" style="max-width: 10%; width: 10%;">
-    <h1 class="display-4 text-center">Welcome to</h1>
-    <h1 class="display-1 text-center">The Annotation Game</h1>
+    <img src="{% static 'game/science-discovery.svg' %}" alt="Lightbulb" class="img-fluid mx-auto d-block" style="max-width: 10%; width: 10%;">
+    <h1 class="display-4 text-center">True Helpfulness Data Collection</h1>
+    <!-- <h1 class="display-1 text-center">The Annotation Game</h1> -->
 
     <p class="lead text-center">
-      The Annotation Game is a trivia game used by researchers at the University of Maryland to generate better quizbowl questions using AI.
+      Come join us and help us uncover which instructions actually help humans complete complex question answering tasks!
     </br>
-      Please <b>allow cookies</b> to aid our collection of data.
-    </p>
 
     <div class="container">
       <div class="row justify-content-center">
@@ -56,13 +54,21 @@
 
         <div class="row justify-content-center">
           <div class="col-md-7 text-center mb-3">
-
-            <div class="input-group input-group-lg">
+            
+            <div id="agree-irb">
+              <div class="mb-4">
+                <p>Please read and agree to the above IRB before joining or creating a room.</p>
+                <button id="agree-btn" type="button" class="btn btn-primary btn-lg">I Agree</button>
+              </div>
+            </div>
+        
+            <div id="room-section" class="input-group input-group-lg" style="display: none;">
               <input type="text" class="form-control form-control-lg" id="new-room-name" placeholder="Type in the room name...">
               <div class="input-group-append">
                 <button id="evaluation-play-btn" type="button" class="btn btn-success btn-lg">Create/Join Room</button>
               </div>
             </div>
+            
           </div>
         </div>
 

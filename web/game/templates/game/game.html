@@ -3,167 +3,216 @@
 
 {% block title %}
 {% if room.collects_feedback %}
-  <title>Evaluation - Kuiperbowl</title>
+<title>Helpfulness - Kuiperbowl</title>
 {% else %}
-  <title>{{ room.label }} - Kuiperbowl</title>
+<title>{{ room.label }} - Kuiperbowl</title>
 {% endif %}
 {% endblock %}
 
+
 {% block content %}
-<div class="container">
+<div style="padding-left: 30px; padding-right: 30px;">
 
-  <!-- Row 0: Buttons + Timer -->
-  <div class="row mb-4">
-    <div class="col">
-      <input type="text" id="request-content" class="form-control" maxlength="200">
-      <button id="skip-btn" class="btn btn-info btn-lg" data-bs-toggle="tooltip" data-bs-placement="top" title="Shortcut: S">Skip</button>
-      <button id="next-btn" class="btn btn-info btn-lg" data-bs-toggle="tooltip" data-bs-placement="top" title="Shortcut: N">Next</button>
-      <button id="buzz-btn" class="btn btn-danger btn-lg float-right" data-bs-toggle="tooltip" data-bs-placement="top" title="Shortcut: SPACE">Buzz</button>
-      <div class="progress mt-2">
-        <div id="content-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-        <div id="buzz-progress" class="progress-bar bg-danger" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-        <div id="instruction-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-      </div>
-    </div>
-  </div>
+  <div>
 
-  <!-- Row 1: Toolbox | Instructions + Question Type | Embedded Webpage -->
-  <div class="row mb-4">
+      <!-- Row 0: Buttons + Timer -->
+      
+        <div class="row">
+          <div class="col">
+            <input type="text" id="request-content" class="form-control" maxlength="200">
+            <!-- <button id="skip-btn" class="btn btn-info btn-lg" data-bs-toggle="tooltip" data-bs-placement="top"
+          title="Shortcut: S">Skip</button> -->
+            <div class="row">
+              <div class="col-12">
+                <div>
+                  <button id="next-btn" class="btn btn-info btn-lg" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Shortcut: N">Next (n)</button>
+                  <button id="buzz-btn" class="btn btn-danger btn-lg" data-bs-toggle="tooltip"
+                    title="Shortcut: SPACE">Buzz (space)</button>
+                  <button id="settings-btn" class="btn btn-secondary btn-lg" data-bs-toggle="offcanvas"
+                    data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings"
+                    title="Shortcut: ESCAPE">Settings (esc)</button>
+                </div>
+              </div>
 
-    <!-- Question -->
-
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header">
-          <h6 id="category-header"></h6>
-        </div>
-        <div class="card-body">
-          <span id="question-space"></span>
-        </div>
-        <div class="card-footer">
-          <h6 id="answer-header"></h6>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-
-  <div class="row mb-4">
-
-    
-    <div class="col-4">
-      <!-- Instructions -->
-      {% if room.uses_instructions %}
-            {% include "game/instructions.html" %}
-            {% endif %}
-        <br/>
-
-      <!-- Note-Taking -->
-      <div class="card">
-        <div class="card-header">
-          <h6>Notes</h6>
-        </div>
-        <div class="card-body">
-          <textarea id="user-notes" class="form-control" rows="5" placeholder="Write your notes here..."></textarea>
-        </div>
-      </div>
-
-    </div>
-
-      <!-- Toolbox -->
-  <div class="col-4">
-    {% if room.uses_instructions %}
-      {% include "game/toolbox.html" %}
-    {% endif %}
-  </div>
-
-    <!-- Embedded Webpage -->
-    <div class="col-4">
-      {% if room.uses_instructions %}
-        {% include "game/page.html" %}
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Row 2: Settings | Scoreboard | Message Log -->
-  <div class="row mb-4">
-    <!-- Settings -->
-    <div class="col-4">
-      <div class="card">
-        <div class="card-header">Settings</div>
-        <div class="card-body">
-          <form>
-            <div class="form-group mb-3">
-              <label for="category-select">Category:</label>
-              <select id="category-select" class="form-control">
-                <option value="Everything">Everything</option>
-                <option value="Science">Science</option>
-                <option value="History">History</option>
-                <option value="Literature">Literature</option>
-                <option value="Philosophy">Philosophy</option>
-                <option value="Religion">Religion</option>
-                <option value="Geography">Geography</option>
-                <option value="Fine Arts">Fine Arts</option>
-                <option value="Social Science">Social Science</option>
-                <option value="Mythology">Mythology</option>
-                <option value="Trash">Trash</option>
-              </select>
             </div>
-            <div class="form-group mb-3">
-              <label for="difficulty-select">Difficulty:</label>
-              <select id="difficulty-select" class="form-control">
-                <option value="HS">HS</option>
-              </select>
+            <div class="progress mt-2">
+              <div id="content-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"
+                aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+              <div id="buzz-progress" class="progress-bar bg-danger" role="progressbar" style="width: 0%"
+                aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+              <div id="instruction-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%"
+                aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
-          </form>
-
-          <div id="reset-btn" class="btn btn-secondary" data-toggle="modal" data-target="#resetModal">Reset</div>
+            <h3 id="status-text" class="mb-4">Task: <span style="color:grey;">Hit "next" to continue...</span></h3>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Scoreboard -->
-    <div class="col-4">
-      <div class="card">
-        <div class="card-header">Scoreboard</div>
-        <div class="card-body">
-          <label for="name">Username:</label>
-          <div class="input-group mb-2">
-            <div class="input-group-prepend">
-              <span class="input-group-text">@</span>
+        <!-- <div class="row mb-4"> -->
+        <!-- <div class="col-12 h-100"> -->
+
+          <div class="row mb-4">
+
+            <div class="col-6">
+              
+              <div class="row mb-4">
+            <!-- Question -->
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h6 id="category-header">Question</h6>
+                </div>
+                <div class="card-body">
+                  <span id="question-space"></span>
+                </div>
+                <div class="card-footer">
+                  <h6 id="answer-header">Answer:</h6>
+                </div>
+              </div>
             </div>
-            <input type="text" class="form-control" id="name" maxlength="20" required placeholder="Username">
-            <div class="invalid-feedback">Please provide a username!</div>
           </div>
-          <label for="email">Email:</label>
-          <div class="input-group mb-3">
-            <input type="email" class="form-control" id="email" maxlength="320" placeholder="Enter your email">
-            <div class="invalid-feedback">Please provide a valid email or check the box below to opt out!</div>
-          </div>
-          <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="optOutCheck">
-            <label class="form-check-label" for="optOutCheck">I do not want to provide my email and receive prizing</label>
-          </div>
-          <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Score</th>
-              </tr>
-            </thead>
-            <tbody id="scoreboard-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
-    <!-- "Has joined the room" log -->
-    <div class="col-4">
-      <div class="card">
-        <div class="card-header">Message Log</div>
-        <div class="card-body">
-          <ul id="message-space" class="list-group"></ul>
+
+          <div class="row mb-4">
+
+            <div class="col-6">
+              {% if room.uses_instructions %}
+              {% include "game/instructions.html" %}
+              {% endif %}
+            </div>
+
+          <div class="col-6">
+
+            <!-- Note-Taking -->
+            <div class="card h-100">
+              <div class="card-header">
+                <h6>Notes</h6>
+              </div>
+              <div class="card-body">
+                <textarea id="user-notes" class="form-control h-100"
+                  placeholder="Write your notes here..."></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+
+          </div>
+
+          <!-- <div class="row mb-4"> -->
+
+  
+
+
+<!-- 
+          </div> -->
+
+        <!-- </div> -->
+
+        <!-- Instructions -->
+
+
+        <div class="col-6 mb-4">
+          {% if room.uses_instructions %}
+          {% include "game/page.html" %}
+          {% endif %}
+        </div>
+
+      </div>
+
+
+    <!-- Offcanvas for Toolbox -->
+
+        <!-- Embedded Webpage -->
+
+      
+    <!-- </div> -->
+
+
+    <!-- Off-canvas sidebar for the settings (replaces col-3) -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSettings"
+      aria-labelledby="offcanvasSettingsLabel">
+      <div class="offcanvas-header">
+        <h5 id="offcanvasSettingsLabel">Settings</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" id="settings-close-btn" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <!-- Scoreboard and settings content here -->
+        <div class="card mb-4">
+          <div class="card-header">Scoreboard</div>
+          <div class="card-body">
+            <label for="name">Username:</label>
+            <div class="input-group mb-2">
+              <div class="input-group-prepend">
+                <span class="input-group-text">@</span>
+              </div>
+              <input type="text" class="form-control" id="name" maxlength="20" required placeholder="Username">
+              <div class="invalid-feedback">Please provide a username!</div>
+            </div>
+            <label for="email">Email:</label>
+            <div class="input-group mb-3">
+              <input type="email" class="form-control" id="email" maxlength="320" placeholder="Enter your email">
+              <div class="invalid-feedback">Please provide a valid email or check the box below to opt out!</div>
+            </div>
+            <div class="form-check mb-3">
+              <input type="checkbox" class="form-check-input" id="optOutCheck">
+              <label class="form-check-label" for="optOutCheck">I do not want to provide my email and receive
+                prizing</label>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Score</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboard-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header">Message Log</div>
+          <div class="card-body">
+            <ul id="message-space" class="list-group"></ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header" role="button" aria-expanded="false">
+            Question Filter
+          </div>
+          <div id="settings">
+            <div class="card-body">
+              <form>
+                <div class="form-group mb-3">
+                  <label for="category-select">Category:</label>
+                  <select id="category-select" class="form-control">
+                    <option value="Everything">Everything</option>
+                    <option value="Science">Science</option>
+                    <option value="History">History</option>
+                    <option value="Literature">Literature</option>
+                    <option value="Philosophy">Philosophy</option>
+                    <option value="Religion">Religion</option>
+                    <option value="Geography">Geography</option>
+                    <option value="Fine Arts">Fine Arts</option>
+                    <option value="Social Science">Social Science</option>
+                    <option value="Mythology">Mythology</option>
+                    <option value="Trash">Trash</option>
+                  </select>
+                </div>
+                <div class="form-group mb-3">
+                  <label for="difficulty-select">Difficulty:</label>
+                  <select id="difficulty-select" class="form-control">
+                    <option value="HS">HS</option>
+                  </select>
+                </div>
+              </form>
+
+              <div id="reset-btn" class="btn btn-secondary" data-toggle="modal" data-target="#resetModal">Reset</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -173,7 +222,13 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/reconnecting-websocket@4.4.0/dist/reconnecting-websocket-iife.min.js"></script>
+<script type="text/javascript"
+  src="https://cdn.jsdelivr.net/npm/reconnecting-websocket@4.4.0/dist/reconnecting-websocket-iife.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"
+  integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script type="text/javascript" src={% static "game/instructions.js" %}></script>
 <script type="text/javascript" src={% static "game/game.js" %}></script>
 <script type="text/javascript" src={% static "game/gameEvents.js" %}></script>

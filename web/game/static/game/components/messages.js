@@ -1,6 +1,6 @@
 function updateMessages() {
     messageSpace.innerHTML = '';
-    for (i = 0; i < messages.length; i++) {
+    for (i = 0; i < Math.min(10, messages.length); i++) {
       const icon = document.createElement('i');
       let msgHTML;
 
@@ -39,31 +39,31 @@ function updateMessages() {
 
       switch (messages[i]['tag']) {
         case "join":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has joined the room`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> joined`;
           break;
         case "leave":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has left the room`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> left`;
           break;
         case "buzz_init":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has buzzed`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> buzzed`;
           break;
         case "buzz_correct":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has correctly answered <strong>${messages[i]['content']}</strong>`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> correctly answered <strong>${messages[i]['content']}</strong>`;
           break;
         case "buzz_wrong":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has incorrectly answered <strong>${messages[i]['content']}</strong>`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> incorrectly answered <strong>${messages[i]['content']}</strong>`;
           break;
         case "buzz_forfeit":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has forfeit the question`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> failed to buzz`;
           break;
         case "set_category":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has changed the category to <strong>${messages[i]['content']}</strong>`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> changed the category to <strong>${messages[i]['content']}</strong>`;
           break;
         case "set_difficulty":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has changed the difficulty to <strong>${messages[i]['content']}</strong>`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> changed the difficulty to <strong>${messages[i]['content']}</strong>`;
           break;
         case "reset_score":
-          msgHTML = `<strong>${messages[i]['user_name']}</strong> has reset their score`;
+          msgHTML = `<strong>${messages[i]['user_name']}</strong> reset their score`;
           break;
         case "chat":
           msgHTML = `<strong>${messages[i]['user_name']}</strong>: ${messages[i]['content']}`;

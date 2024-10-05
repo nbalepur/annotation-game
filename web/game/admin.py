@@ -65,3 +65,9 @@ class MessageAdmin(ImportExportModelAdmin, ExportActionMixin):
     list_display = ['message_id', 'room', 'player', 'content', 'tag', 'timestamp', 'visible']
     actions = ['export_as_csv', unban_players]
     resource_class = MessageResource
+
+@admin.register(ToolLog)
+class ToolLog(ImportExportModelAdmin, ExportActionMixin):
+    list_display = ['tool_log_id', 'question_id', 'user_id', 'instruction_type', 'tool_name', 'tool_query', 'tool_result', 'tool_execution_status', 'queried_at']
+    actions = ['export_as_csv']
+    resource_class = MessageResource

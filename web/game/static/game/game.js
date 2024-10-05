@@ -99,7 +99,7 @@ function update() {
       instructionProgress.style.display = '';
       buzzProgress.style.display = 'none';
       contentProgress.style.display = 'none'
-      answerHeader.innerHTML = '';
+      // answerHeader.innerHTML = '';
 
       if (readingPassedTime >= readingTime) {
         sendRequest('next');
@@ -111,6 +111,7 @@ function update() {
     case 'playing':
 
       // Update if game is going
+      console.log('updating?')
       contentProgress.style.width = Math.round(100 * (1.05 * timePassed / duration)) + '%';
 
       buzzPassedTime = 0;
@@ -119,7 +120,7 @@ function update() {
       contentProgress.style.display = '';
       buzzProgress.style.display = 'none';
       instructionProgress.style.display = 'none'
-      answerHeader.innerHTML = '';
+      // answerHeader.innerHTML = '';
       break;
 
     case 'contest':
@@ -145,8 +146,7 @@ function update() {
 gamesock.onmessage = message => {
 
   const data = JSON.parse(message.data);
-
-  console.log(data);
+  console.log(data['response_type'], data);
 
   if (data['response_type'] === "update") {
 
@@ -174,7 +174,7 @@ gamesock.onmessage = message => {
     // Update messages
     updateMessages();
 
-    categoryHeader.innerHTML = `Question Type: ${category}`;
+    //categoryHeader.innerHTML = `Question Type: ${category}`;
     categorySelect.value = data['room_category'];
     difficultySelect.value = data['difficulty'];
     //speedSlider.value = data['speed'];
@@ -195,14 +195,20 @@ gamesock.onmessage = message => {
     ping();
 
   } else if (data['response_type'] === "send_answer") {
-
     setAnswer(data['answer']);
-
   } else if (data['response_type'] === "get_shown_question") {
     setQuestion(data['shown_question'], data['state']);
-
-  } else if (data['response_type'] === "get_instructions") {
+  } else if (data['response_type'] === "update_instructions") {
     populateInstructions(data['instructions']);
+  } else if (data['response_type'] === 'update_tools') {
+    updateTools(data['use_calculator'], data['use_doc'], data['use_web']);
+  } else if (data['response_type'] === 'disable_tools') {
+    console.log('disabling!');
+    disableButtons();
+  } else if (data['response_type'] === 'update_doc') {
+    updateDoc(data['use_doc'], data['doc_content']);
+  } else if (data['response_type'] === 'update_status') {
+    updateStatus(data['status'], data['player'], data['answer']);
   }
   
   else if (data['response_type'] === "get_question_feedback") {
@@ -229,7 +235,7 @@ gamesock.onmessage = message => {
 
     hideButtons();
 
-    gameState = 'contest';
+    // gameState = 'contest';
 
     setTimeout(() => {
       requestContentInput.focus();
@@ -239,25 +245,26 @@ gamesock.onmessage = message => {
     gamesock.close();
     banAlert.style = 'display: block;'
   } else if (data['response_type'] == "not_enough_players") {
-    alert("Sorry! We can only begin playing once you have an opponent (two players are necessary).")
+    alert("Sorry! We can only begin playing once you have an opponent (two active players are necessary).")
   }
   else if (data['response_type'] === "too_many_players") {
     gamesock.close();
-    alert("Sorry! You can't let you join that room since there are too many active players. Rooms meant for evaluation only allow 2 players.")
+    alert("Sorry! You can't let you join that room since there are too many active players. Rooms meant for evaluation only allow 2 players. Try joining another room!")
     window.location.href = "/"
   }
   /* for tool use */
   else if (data['response_type'] === 'calculation_result') {
-    calc_result = data['result']
-    setCalculation(calc_result)
+    calc_result = data['result'];
+    setCalculation(calc_result);
   }
   else if (data['response_type'] === 'web_search_result') {
-    search_result = data['result']
-    setWebSearch(search_result)
+    search_result = data['result'];
+    setWebSearch(search_result);
   }
   else if (data['response_type'] === 'content_selection_result') {
-    select_result = data['result']
-    setContentSelectionResult(select_result)
+    doc_idxs = data['result'];
+    num_docs = data['num_docs'];
+    setContentSelectionResult(doc_idxs, num_docs);
   }
 }
 
@@ -268,20 +275,16 @@ gamesock.onmessage = message => {
  */
 
 function setQuestion(question_text, state) {
-  if (state == 'instruct') {
-    question_text = 'Read the instructions!'
-  } else {
-    question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
-    question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
-    question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
-  }
+  question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
+  question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
+  question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
   questionSpace.innerHTML = question_text;
   question = question_text;
 }
 
 function setAnswer(answer) {
   answer = answer.replace("{", "<u><b>").replace("}", "</b></u>");
-  answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : '';
+  answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : 'Answer:';
 }
 
 function setCalculation(res) {
@@ -289,30 +292,37 @@ function setCalculation(res) {
 }
 
 function setWebSearch(res) {
-  srcdoc = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
-  </head>
-  <body>`
-  srcdoc += res
-  srcdoc += '\n</body>'
-  document.getElementById('view-page-collapse').srcdoc = srcdoc
-  
-  res;
+  document.getElementById('view-page-collapse').srcdoc = res;
 }
 
-function setContentSelectionResult(res) {
-  document.getElementById('calc-result').textContent = res;
+function setContentSelectionResult(doc_idxs, num_docs) {
+  if (doc_idxs.length === 1) {
+    const iframe = document.getElementById('view-page-collapse');
+    const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+    
+    // console.log(num_docs);
+
+    for (let i = 0; i < num_docs; i++) {
+      const currElem = iframeDocument.getElementById('element-' + i);
+      if (currElem && currElem.classList.contains('highlight')) {
+        currElem.classList.remove('highlight');
+        // console.log('removed!');
+      }
+    }
+
+    const targetElement = iframeDocument.getElementById('element-' + doc_idxs[0]);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targetElement.classList.add('highlight');
+    }
+  }
 }
+
 
 
 
 function hideButtons() {
-  skipBtn.style.display = 'none';
+  // skipBtn.style.display = 'none';
   nextBtn.style.display = 'none';
   buzzBtn.style.display = 'none';
   //chatBtn.style.display = 'none';
@@ -323,34 +333,39 @@ function showButtons() {
   if (currentAction == 'idle') {
     switch (gameState) {
       case 'playing':
-        skipBtn.style.display = '';
+        // skipBtn.style.display = '';
         nextBtn.style.display = 'none';
         buzzBtn.style.display = '';
+        settingsBtn.style.display = 'none';
         //chatBtn.style.display = '';
         break;
       case 'idle':
-        skipBtn.style.display = 'none';
+        // skipBtn.style.display = 'none';
         nextBtn.style.display = '';
         buzzBtn.style.display = 'none';
+        settingsBtn.style.display = '';
         //chatBtn.style.display = '';
         break;
       case 'contest':
-        skipBtn.style.display = 'none';
+        // skipBtn.style.display = 'none';
         nextBtn.style.display = 'none';
         buzzBtn.style.display = 'none';
+        settingsBtn.style.display = 'none';
         //chatBtn.style.display = 'none';
         break;
       case 'instruct':
-        skipBtn.style.display = 'none';
+        // skipBtn.style.display = 'none';
         nextBtn.style.display = 'none';
         buzzBtn.style.display = 'none';
+        settingsBtn.style.display = 'none';
         //chatBtn.style.display = 'none';
         break;
     }
   } else {
-    skipBtn.style.display = 'none';
+    // skipBtn.style.display = 'none';
     nextBtn.style.display = 'none';
     buzzBtn.style.display = 'none';
+    settingsBtn.style.display = 'none';
     // chatBtn.style.display = 'none';
   }
 
@@ -374,7 +389,6 @@ function showButtons() {
  * @param {string} [content=""] - Request content
  */
 function sendRequest(requestType, content = "") {
-  console.log('sending request:', requestType);
   const requestData = {
     user_id: userID,
     request_type: requestType,
@@ -492,18 +506,41 @@ function skip() {
   }
 }
 
+function settings() {
+  offCanvasElement = document.querySelector('#offcanvasSettings');
+  isToggled = offCanvasElement.classList.contains('show');
+  if (gameState === 'idle') {
+    if (isToggled) {
+      document.querySelector('#settings-close-btn').click();
+    } else {
+      document.querySelector('#settings-btn').click();
+    }
+  }
+}
+
+function toggleTools() {
+  offCanvasElement = document.querySelector('#offcanvasToolbox');
+  isToggled = offCanvasElement.classList.contains('show');
+  if (isToggled) {
+    document.querySelector('#tools-close-btn').click();
+  } else {
+    document.querySelector('#open-toolbox-button').click();
+  }
+}
+
 function next() {
   emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (userName && (optOutInput.checked || (userEmail && emailRegex.test(userEmail)))) {
     if (gameState === 'idle' && completedFeedback) {
-      gameState = 'playing';
-      isFeedbackLoaded = false;
+      
+      //isFeedbackLoaded = false;
 
       // Collapse feedback section
       // disableFeedbackCollapseToggle();
       // collapseFeedback();
       sendRequest("next");
+      gameState = 'playing';
     }
   } else 
     alert("Please input a valid username and email before continuing.");
