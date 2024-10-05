@@ -22,6 +22,8 @@ from bs4 import BeautifulSoup
 import re
 import cohere
 
+from requests_oauthlib import OAuth2Session
+
 load_dotenv()
 
 logger = logging.getLogger('django')
@@ -268,57 +270,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             self.send_json({
                 "response_type": "not_enough_players",
             })
-        # # fetch a random question for a new room
-        # q = room.current_question
-        # if q == None:
-        #     all_questions = Question.objects.all()
-        #     if len(all_questions) <= 0:
-        #         return
-        #     q = random.choice(all_questions)
-
-        # q.content = 'Two players are needed to begin!'
-        # q.answer = ''
-        # print('changing question: handling not enough error')
-        # room.current_question = q
-        # room.save()
-        # async_to_sync(self.channel_layer.group_send)(
-        #     self.room_group_name,
-        #     {
-        #         'type': 'update_room',
-        #         'data': get_room_response_json(room),
-        #     }
-        # )
-        # if send_alert:
-        #     self.send_json({
-        #         "response_type": "not_enough_players",
-        #     })
-        # self.get_shown_question(room=room)
 
     def next(self, room: Room, player: Player):
         """Next question
         """
-        # room.refresh_from_db()
-        # print('next!', room.state, room.state == Room.GameState.IDLE, room.state == Room.GameState.INSTRUCTION_READING)
-
-        # update_time_state(room)
-
         # transition so the user has time to read the instructions
         if room.state == Room.GameState.IDLE:
-            players = room.get_players_by_score()
-            num_active_players = len([p_ for p_ in players if p_['active']])
-
-            # we need two players for a pairwise comparison
-            if num_active_players != 2:
-                self.handle_not_enough_players(room=room, send_alert=True)
-                return
-
-            # randomize player mappings
-            p1, p2 = players
-            if random.random() > 0.5:
-                p1, p2 = p2, p1
-            room.player_map = {str(p1['player_id']): 'A', str(p2['player_id']): 'B'}
-
-            # get the next question
             questions = (
                 Question.objects.filter(difficulty=room.difficulty)
                 if room.category == 'Everything'
@@ -388,14 +345,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             room.buzz_player = None
             room.state = Room.GameState.IDLE
             room.save()
-
-            # try:
-            #     feedback = QuestionFeedback.objects.get(question=current_question, player=player)
-            # except QuestionFeedback.DoesNotExist:
-            #     feedback = createFeedbackNoBuzz(room=room, player=player, skipped=True)
-            #     feedback.save()
-            # except ValidationError as e:
-            #     pass
 
     def buzz_init(self, room: Room, p: Player):
         """Initialize buzz
@@ -702,7 +651,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         instruction_map = {'A': room.current_question.instructions_a, 'B': room.current_question.instructions_b}
 
         for player in room.get_valid_players():
-            instruction_label = room.player_map[str(player.player_id)]
+            instruction_label = 'A'
             instructions = instruction_map[instruction_label]         
 
             # Send instructions only to the player's WebSocket
@@ -981,7 +930,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         ToolLog.objects.create(
             user_id=p.user.user_id,
             question_id=room.current_question.question_id,
-            instruction_type=room.player_map[str(p.player_id)],
+            instruction_type='A',
             tool_name=tool_name,
             tool_query=tool_query,
             tool_result=tool_result,
@@ -1001,44 +950,61 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def web_search(self, room: Room, p: Player, query):
         """Tool to search Wikipedia"""
         # setup engine
-        api_key = os.getenv('GOOGLE_API_KEY')
-        search_engine_id = os.getenv('GOOGLE_CSE_ID')
-        google_search_url = "https://www.googleapis.com/customsearch/v1"
-        params = {
-            "key": api_key,
-            "cx": search_engine_id,
-            "q": query,
-            "num": 10,
-        }
+        # api_key = os.getenv('GOOGLE_API_KEY')
+        # search_engine_id = os.getenv('GOOGLE_CSE_ID')
+        # google_search_url = "https://www.googleapis.com/customsearch/v1"
+        # params = {
+        #     "key": api_key,
+        #     "cx": search_engine_id,
+        #     "q": query,
+        #     "num": 10,
+        # }
 
-        # google search
-        search_results = None
-        try:
-            response = requests.get(google_search_url, params=params)
-            response_data = response.json()
-            search_results = response_data.get('items', [])
-            if not search_results:
-                self.send_web_search_error(room, p, query, 'no_search_results')
-                return
-        except Exception as e:
-            self.send_web_search_error(room, p, query, str(e))
+        # get Wikimedia token
+        session = self.scope["session"]
+        wikimedia_token = session.get('oauth_token')
+        # should reauthenticate (need to test)
+        if not wikimedia_token:
+            print('expired!')
+            self.send(text_data=json.dumps({
+                'response_type': 'reauthenticate',
+            }))
+            self.close()
+            return
+        oauth_session = OAuth2Session(os.getenv('WIKIMEDIA_CLIENT_ID'), token=wikimedia_token)
+
+        api_url = 'https://en.wikipedia.org/w/api.php'
+        params = {
+            "action": "opensearch",
+            "search": '+'.join(query.lower().split()),
+            "limit": 5,
+            "namespace": 0,
+            "format": "json",
+        }
+        response = oauth_session.get(api_url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            search_results = data[1]
+        else:
+            self.send_web_search_error(room, p, query, 'invalid_search_query')
+            return
 
         # get all text from the top-5 web pages
-        for search_res in search_results:
+        for page_title in search_results:
 
-            page_title = search_res['title'].replace(' - Wikipedia', '')
-            api_url = "https://en.wikipedia.org/w/api.php"
             params = {
                 "action": "parse",
                 "page": page_title,
                 "format": "json",
-                "prop": "text|images"
+                "prop": "text|images",
+                "redirects": 1,
             }
-            response = requests.get(api_url, params=params)
+            response = oauth_session.get(api_url, params=params)
             
             if response.status_code == 200:
                 data = response.json()
                 html_content = data["parse"]["text"]["*"]
+                title = data["parse"]["title"]
                 soup = BeautifulSoup(html_content, 'html.parser')
                 
                 content_list = []
@@ -1070,7 +1036,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>{page_title}</title>
+                    <title>{title}</title>
                     {wikipedia_css}
                     <style>
                         a {openbracket}
@@ -1088,7 +1054,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 <body>
                     <div class="mw-body-content">
                         <div class="page-header">
-                            <h1>{page_title.replace("_", " ")}</h1>
+                            <h1>{title.replace("_", " ")}</h1>
                         </div>
                         {fixed_html_content}
                     </div>
@@ -1096,7 +1062,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 </html>
                 '''
 
-                self.log_tool_use(room, p, query, {'text': '<delim>'.join(content_list), 'wiki_page_title': 'page_title'}, 'web_search', 'success')
+                self.log_tool_use(room, p, query, {'text': '<delim>'.join(content_list), 'wiki_page_title': title}, 'web_search', 'success')
                 self.send(text_data=json.dumps({
                     'response_type': 'web_search_result',
                     'result': final_html
@@ -1171,7 +1137,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             self.send(text_data=json.dumps({
                 'response_type': 'calculation_result',  # Identify the message type
-                'result': 'Invalid equation :('             # Send the calculated result
+                'result': 'ERROR'             # Send the calculated result
             }))
             
 

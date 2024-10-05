@@ -257,15 +257,18 @@ class Room(models.Model):
 
         return chrono_messages
 
+from django.db import models
+
 class User(models.Model):
-    """Site user"""
+    """Represents a user authenticated through Wikimedia OAuth"""
 
-    user_id = models.CharField(max_length=100)
-    name = models.CharField(max_length=20)
+    user_id = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100) # Wikipedia username
     email = models.CharField(default="", blank=True, max_length=320)
-
+    
     def __str__(self):
-        return str(self.name)
+        return self.name
+
 
 class ToolLog(models.Model):
     """Record the user's tool usage"""

@@ -265,6 +265,9 @@ gamesock.onmessage = message => {
     doc_idxs = data['result'];
     num_docs = data['num_docs'];
     setContentSelectionResult(doc_idxs, num_docs);
+  } else if (data['response_type'] === 'reauthenticate') {
+    console.log('renavigating!');
+    window.location.href = '/?reauthenticate=true';
   }
 }
 
@@ -336,7 +339,8 @@ function showButtons() {
         // skipBtn.style.display = '';
         nextBtn.style.display = 'none';
         buzzBtn.style.display = '';
-        settingsBtn.style.display = 'none';
+        settingsBtn.style.display = '';
+        settingsBtn.style.visibility = 'hidden';
         //chatBtn.style.display = '';
         break;
       case 'idle':
@@ -344,12 +348,15 @@ function showButtons() {
         nextBtn.style.display = '';
         buzzBtn.style.display = 'none';
         settingsBtn.style.display = '';
+        settingsBtn.style.visibility = 'visible';
         //chatBtn.style.display = '';
         break;
       case 'contest':
         // skipBtn.style.display = 'none';
         nextBtn.style.display = 'none';
         buzzBtn.style.display = 'none';
+
+        //settingsBtn.style.visibility = 'hidden';
         settingsBtn.style.display = 'none';
         //chatBtn.style.display = 'none';
         break;
@@ -357,7 +364,8 @@ function showButtons() {
         // skipBtn.style.display = 'none';
         nextBtn.style.display = 'none';
         buzzBtn.style.display = 'none';
-        settingsBtn.style.display = 'none';
+        settingsBtn.style.display = '';
+        settingsBtn.style.visibility = 'hidden';
         //chatBtn.style.display = 'none';
         break;
     }
@@ -365,11 +373,41 @@ function showButtons() {
     // skipBtn.style.display = 'none';
     nextBtn.style.display = 'none';
     buzzBtn.style.display = 'none';
-    settingsBtn.style.display = 'none';
+    settingsBtn.style.visibility = 'hidden';
     // chatBtn.style.display = 'none';
   }
-
 }
+
+// function adjustQuestionRowHeight() {
+//   // Get the height of the viewport
+//   const viewportHeight = window.innerHeight;
+
+//   // Get the height of the button-timer-row
+//   const buttonTimerRow = document.getElementById('button-timer-row');
+//   const buttonTimerHeight = buttonTimerRow ? buttonTimerRow.offsetHeight : 0;
+
+//   // Get the offset of the game-container
+//   const gameContainer = document.getElementById('game-container');
+//   const gameContainerOffset = gameContainer ? gameContainer.offsetTop : 0;
+
+//   // Get the footer's offset from the top of the page
+//   const footer = document.getElementById('footer');
+//   const footerOffset = footer ? footer.offsetTop : viewportHeight; // Use viewport height if no footer found
+
+//   // Calculate the available space above the footer
+//   const availableHeight = footerOffset - gameContainerOffset - buttonTimerHeight;
+
+//   // Set the height for question-row
+//   const questionRow = document.getElementById('question-row');
+//   if (questionRow) {
+//       questionRow.style.height = `${availableHeight}px`;
+//   }
+// }
+
+// window.addEventListener('load', adjustQuestionRowHeight);
+// window.addEventListener('resize', adjustQuestionRowHeight);
+
+
 /**
  * ==================================================
  * END OF FUNCTIONS THAT CHANGE FRONTEND
@@ -518,6 +556,15 @@ function settings() {
   }
 }
 
+function focusTextInput(elem_id) {
+  const calculatorInput = document.getElementById(elem_id);
+  if (calculatorInput) {
+    calculatorInput.focus();
+  } else {
+    console.warn(`No element with ID ${calc-expression} found.`);
+  }
+}
+
 function toggleTools() {
   offCanvasElement = document.querySelector('#offcanvasToolbox');
   isToggled = offCanvasElement.classList.contains('show');
@@ -532,17 +579,36 @@ function next() {
   emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (userName && (optOutInput.checked || (userEmail && emailRegex.test(userEmail)))) {
-    if (gameState === 'idle' && completedFeedback) {
+    if (gameState === 'idle') {
       
       //isFeedbackLoaded = false;
 
       // Collapse feedback section
       // disableFeedbackCollapseToggle();
       // collapseFeedback();
+      gameState = 'instruct';
+      nextBtn.scrollIntoView({ block: 'start' });
       sendRequest("next");
-      gameState = 'playing';
-    }
-  } else 
+
+      // Extend the question-row to take up remaining space below
+      const questionRow = document.getElementById('question-row');
+      const footer = document.getElementById('footer');  // Optional if you have a footer
+      
+      if (questionRow) {
+        const viewportHeight = window.innerHeight;
+        const nextBtnHeight = nextBtn.offsetHeight;
+        const nextBtnTop = nextBtn.getBoundingClientRect().top;
+        const footerTop = footer ? footer.getBoundingClientRect().top : viewportHeight;
+
+        // Calculate available space between next button and footer (and padding)
+        const availableHeight = footerTop - nextBtnTop - nextBtnHeight - 15;
+
+        // Set the height of question-row dynamically
+        questionRow.style.height = `${availableHeight}px`;
+      }
+  }
+ } 
+ else 
     alert("Please input a valid username and email before continuing.");
 }
 

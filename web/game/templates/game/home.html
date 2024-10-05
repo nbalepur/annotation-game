@@ -8,14 +8,12 @@
 {% block content %}
 <div class="container">
   <div class="jumbotron">
-
     <img src="{% static 'game/science-discovery.svg' %}" alt="Lightbulb" class="img-fluid mx-auto d-block" style="max-width: 10%; width: 10%;">
     <h1 class="display-4 text-center">True Helpfulness Data Collection</h1>
-    <!-- <h1 class="display-1 text-center">The Annotation Game</h1> -->
 
     <p class="lead text-center">
       Come join us and help us uncover which instructions actually help humans complete complex question answering tasks!
-    </br>
+    </p>
 
     <div class="container">
       <div class="row justify-content-center">
@@ -23,60 +21,52 @@
           <div class="border p-3 overflow-auto mb-3" style="height: 300px;">
             {% include "irb_consent.html" %}
           </div>
-          </div>
-          <!-- <div class="mt-5">
-            <a class="btn btn-secondary m-1" href="/game/evaluation">hs</a>
-            <a class="btn btn-secondary m-1" href="/game/hs">hs</a>
-            <a class="btn btn-secondary m-1" href="/game/ms">ms</a>
-            <a class="btn btn-secondary m-1" href="/game/college">college</a>
-            <a class="btn btn-secondary m-1" href="/game/history">history</a>
-            <a class="btn btn-secondary m-1" href="/game/science">science</a>
-            <a class="btn btn-secondary m-1" href="/game/literature">literature</a>
-            <a class="btn btn-secondary m-1" href="/game/trash">trash</a>
-          </div> -->
-
-          <!-- <form id="landing-form" class="mt-5 needs-validation" novalidate>
-            <div class="form-row">
-              <div class="input-group">
-                <input id="landing-content" type="text" class="form-control" placeholder="awesome-room">
-                <div class="input-group-append">
-                  <button id="landing-btn" class="btn btn-success rounded-right" type="button">Go!</button>
-                </div>
-                invalid-feedback needs to be sibling of input
-                See: https://github.com/twbs/bootstrap/issues/23454
-                <div class="invalid-feedback">
-                  Please enter a valid room name. Only the characters 'a-z', '-', and '_' are valid.
-                </div>
-              </div>
-            </div>
-          </form> -->
         </div>
 
         <div class="row justify-content-center">
           <div class="col-md-7 text-center mb-3">
-            
-            <div id="agree-irb">
-              <div class="mb-4">
-                <p>Please read and agree to the above IRB before joining or creating a room.</p>
-                <button id="agree-btn" type="button" class="btn btn-primary btn-lg">I Agree</button>
+            {% if user and not reauthenticate %}
+              <h3>Welcome, {{ user.name }}!</h3>
+              <!-- Show Room Creation Section -->
+              <div id="room-section" class="input-group input-group-lg">
+                <input type="text" class="form-control form-control-lg" id="new-room-name" placeholder="Type in the room name...">
+                <div class="input-group-append">
+                  <button id="evaluation-play-btn" type="button" class="btn btn-success btn-lg">Create/Join Room</button>
+                </div>
               </div>
+
+            {% else %}
+            {% if reauthenticate %}
+            <div class="alert alert-warning">
+                Your session has expired. Please log in again to continue.
             </div>
-        
-            <div id="room-section" class="input-group input-group-lg" style="display: none;">
-              <input type="text" class="form-control form-control-lg" id="new-room-name" placeholder="Type in the room name...">
-              <div class="input-group-append">
-                <button id="evaluation-play-btn" type="button" class="btn btn-success btn-lg">Create/Join Room</button>
+            <div id="login-section" class="text-center">
+              <a href="{% url 'oauth_login' %}" class="btn btn-primary btn-lg">Authenticate with Wikipedia</a>
+            </div>
+            {% else %}
+              <!-- IRB Agreement and Login Section -->
+              <div id="agree-irb">
+                <div class="mb-4">
+                  <p>Please read and agree to the above IRB before joining or creating a room.</p>
+                  <button id="agree-btn" type="button" class="btn btn-primary btn-lg">I Agree</button>
+                </div>
               </div>
-            </div>
-            
+              {% endif %}
+
+              <!-- Wikimedia OAuth2 Login Button (hidden by default) -->
+              <div id="login-section" class="text-center" style="display: none;">
+                <p class="mt-4">Please authenticate with Wikipedia to proceed:</p>
+                <a href="{% url 'oauth_login' %}" class="btn btn-primary btn-lg">Authenticate with Wikipedia</a>
+              </div>
+            {% endif %}
           </div>
         </div>
-
+      </div>
     </div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src={% static "game/home.js" %}></script>
+<script src="{% static 'game/home.js' %}"></script>
 {% endblock %}

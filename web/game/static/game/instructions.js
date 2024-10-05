@@ -4,18 +4,19 @@ let instructions = document.getElementById('model-instructions');
 let instructionHeader = document.getElementById('instruction-header');
 let instructionCollapse = document.getElementById('instruction-collapse');
 
-let toolCard = document.getElementById('toolbox');
 let calculatorTool = document.getElementById('calculator-tool');
 let googleTool = document.getElementById('google-tool');
 let contentSelectorTool = document.getElementById('content-selector-tool');
 
-let calculatorToolCol = document.getElementById('calculator-tool-col');
-let googleToolCol = document.getElementById('google-tool-col');
-let contentSelectorToolCol = document.getElementById('content-selector-tool-col');
+let calculatorToolCol = document.getElementById('calculator-tool');
+let googleToolCol = document.getElementById('google-tool');
+let contentSelectorToolCol = document.getElementById('content-selector-tool');
 
 let calculatorToolBtn = document.getElementById('calc-expression-btn');
 let googleToolBtn = document.getElementById('google-query-btn');
 let contentSelectorToolBtn = document.getElementById('content-search-btn');
+
+let calculatorToolResult = document.getElementById('calc-expression-result');
 
 let docViewer = document.getElementById('doc-viewer');
 let docContent = document.getElementById('view-page-collapse')
@@ -29,10 +30,15 @@ function populateInstructions(input_instructions) {
 }
 
 function updateTools(use_calc, use_doc, use_web) {
-    toolCard.style.display = (use_calc || use_doc || use_web) ? 'block' : 'none';
-    calculatorTool.style.display = use_calc ? 'block' : 'none';
-    googleTool.style.display = use_web ? 'block' : 'none';
-    contentSelectorTool.style.display = use_doc ? 'block' : 'none';
+    calculatorTool.style.display = use_calc ? '' : 'none';
+    googleTool.style.display = use_web ? '' : 'none';
+    contentSelectorTool.style.display = use_doc ? '' : 'none';
+ 
+    calculatorToolBtn.style.display = use_calc ? '' : 'none';
+    googleToolBtn.style.display = use_web ? '' : 'none';
+    contentSelectorToolBtn.style.display = use_doc ? '' : 'none';
+
+    calculatorToolResult.style.display = use_calc ? '' : 'none';
 
     calculatorToolBtn.disabled = false;
     googleToolBtn.disabled = false;
@@ -68,10 +74,7 @@ function updateDoc(use_doc, doc_content) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   </head>
   <body>
-    <div class="mt-4" style="margin-left:30px; margin-right:30px;">
-      <h3>Use the "Web Search Tool" to have a document appear!</h3>
-      <hr />
-    </div>
+    Search to make a document appear!
   </body>
   </html>
 ` : doc_content;
@@ -86,7 +89,7 @@ function updateStatus(status, player, answer) {
         if (answer !== "") {
             statusText.innerHTML = `Status: <span class=text-secondary>The correct answer is:</span> <span class=text-primary>${answer}</span>. Hit "next" to continue...`;
         } else {
-            statusText.innerHTML = `<span class=text-secondary>Status: Hit "next" to continue...</span>`;
+            statusText.innerHTML = `Status: <span class=text-secondary>Hit "next" to continue...</span>`;
         }
     } else if (status === "instruct") {
         statusText.innerHTML = 'Status: <span class=text-primary>Read the question + instructions</span>';

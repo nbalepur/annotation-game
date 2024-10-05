@@ -25,6 +25,11 @@ const chatBtn = document.getElementById('chat-btn');
 const resetBtn = document.getElementById('reset-btn');
 const banAlert = document.getElementById('ban-alert');
 
+const calcInput = document.getElementById('calc-expression');
+const webSearchInput = document.getElementById('google-query');
+const docSearchInput = document.getElementById('content-search');
+const scratchpadInput = document.getElementById('user-notes');
+
 // Init tooltip and popover
 $(document).ready(() => {
   // $('[data-bs-toggle="tooltip"]').tooltip();
@@ -84,13 +89,23 @@ document.addEventListener('keypress', (e) => {
   if (e.target.tagName != 'INPUT' && e.target.tagName != 'TEXTAREA') {
     if (e.key == 'n') {
       next();
-    } else if (e.key == 's') {
-      skip();
     } else if (e.key == ' ') {
       buzz();
       e.preventDefault();
-    } else if (e.key == 't') {
-      toggleTools();
+    } else if (e.key == 'c') {
+      focusTextInput("calc-expression");
+      e.preventDefault();
+    } else if (e.key == 'g') {
+      focusTextInput("google-query");
+      e.preventDefault();
+    } else if (e.key == 'f') {
+      focusTextInput("content-search");
+      e.preventDefault();
+    } else if (e.key == 's') {
+      focusTextInput("user-notes");
+      e.preventDefault();
+    } else if (e.key == ']' || e.key == '[') {
+      settings();
     }
     // else if (e.key == 'c') {
     //   chatInit();
@@ -99,12 +114,19 @@ document.addEventListener('keypress', (e) => {
 });
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    settings();
-  } else if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    focusTextInput("content-search");
     e.preventDefault();
-    alert('Search (Cmd/Ctrl+F) is disabled on this page.');
-}
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+    e.preventDefault();
+    focusTextInput("google-query");
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    focusTextInput("calc-expression");
+    e.preventDefault();
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    focusTextInput("user-notes");
+    e.preventDefault();
+  }
 });
 
 
@@ -119,6 +141,39 @@ requestContentInput.addEventListener('keypress', (e) => {
     // }
   }
 });
+
+scratchpadInput.addEventListener('keydown', (e) => {
+  if (e.key == 'Escape') {
+    scratchpadInput.blur();
+  }
+});
+
+
+calcInput.addEventListener('keydown', (e) => {
+  if (e.key == 'Enter') {
+    calculatorToolBtn.click();
+  } else if (e.key == 'Escape') {
+    calcInput.blur();
+  }
+});
+
+webSearchInput.addEventListener('keydown', (e) => {
+  if (e.key == 'Enter') {
+    googleToolBtn.click();
+  } else if (e.key == 'Escape') {
+    webSearchInput.blur();
+  }
+});
+
+docSearchInput.addEventListener('keydown', (e) => {
+  if (e.key == 'Enter') {
+    contentSelectorToolBtn.click();
+  } else if (e.key == 'Escape') {
+    docSearchInput.blur();
+  }
+});
+
+
 
 categorySelect.addEventListener('change', setCategory);
 difficultySelect.addEventListener('change', setDifficulty);

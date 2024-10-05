@@ -28,9 +28,13 @@ SECRET_KEY = os.getenv('SECRET_KEY', '+phm-vl*x5!l^az_3*+28q(*yv!*!d*ex-i(*r=e1o
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = 'True'
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://annotationgame.com', 'https://*.annotationgame.com', 'http://localhost']
+
+SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = None  # Set to 'Lax' or 'Strict' in production
 
 # Application definition
 

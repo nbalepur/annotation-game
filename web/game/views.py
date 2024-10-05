@@ -2,11 +2,33 @@ from django.shortcuts import render
 from .models import *
 from django.db.models import Count, Avg, Case, When, Q, F, FloatField, ExpressionWrapper, Func, Value
 from django.db.models.functions import Greatest, Least
+from django.shortcuts import redirect
+from requests_oauthlib import OAuth2Session
+from django.http import JsonResponse
+from django.conf import settings
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# Create your views here.
+# Wikimedia OAuth2 details
+WIKIMEDIA_AUTHORIZE_URL = "https://en.wikipedia.org/w/rest.php/oauth2/authorize"
+WIKIMEDIA_TOKEN_URL = "https://en.wikipedia.org/w/rest.php/oauth2/access_token"
+WIKIMEDIA_CLIENT_ID = os.getenv('WIKIMEDIA_CLIENT_ID')
+WIKIMEDIA_CLIENT_SECRET = os.getenv('WIKIMEDIA_CLIENT_SECRET')
+REDIRECT_URI = "http://localhost:8000/game/oauth/callback"
+
 def home(request):
-    return render(request, "game/home.html",{
+    user_id = request.session.get('user_id')
+    
+    reauthenticate = request.GET.get('reauthenticate', False)
 
+    user = None
+    if user_id:
+        user = User.objects.get(user_id=user_id)
+
+    return render(request, 'game/home.html', {
+        'reauthenticate': reauthenticate,
+        'user': user
     })
 
 def game_room(request, label):
@@ -100,3 +122,58 @@ def leaderboard(request):
 
     return render(request, 'game/leaderboard.html', {'leaderboard_data': sorted_leaderboard})
 
+def oauth_login(request):
+    oauth_session = OAuth2Session(WIKIMEDIA_CLIENT_ID, redirect_uri=REDIRECT_URI)
+    authorization_url, state = oauth_session.authorization_url(WIKIMEDIA_AUTHORIZE_URL)
+    request.session['oauth_state'] = state
+    print(f"Generated state: {state}")
+    return redirect(authorization_url)
+
+def oauth_callback(request):
+    stored_state = request.session.get('oauth_state')
+    received_state = request.GET.get('state')
+
+    print(f"Stored state: {stored_state}")
+    print(f"Received state: {received_state}")
+
+    if stored_state != received_state:
+        print("Error: State mismatch!")
+        return JsonResponse({"error": "State mismatch!"}, status=400)
+
+    oauth_session = OAuth2Session(WIKIMEDIA_CLIENT_ID, state=stored_state, redirect_uri=REDIRECT_URI)
+    token = oauth_session.fetch_token(WIKIMEDIA_TOKEN_URL, authorization_response=request.build_absolute_uri(), client_secret=WIKIMEDIA_CLIENT_SECRET)
+
+    request.session['oauth_token'] = token
+    return redirect('profile')
+
+
+def profile(request):
+    oauth_session = OAuth2Session(WIKIMEDIA_CLIENT_ID, token=request.session.get('oauth_token'))
+    response = oauth_session.get("https://en.wikipedia.org/w/api.php", params={
+        'action': 'query',
+        'meta': 'userinfo',
+        'format': 'json'
+    })
+    user_info = response.json().get('query', {}).get('userinfo', {})
+
+    # Get or create the user in the database using Wikimedia's user_id
+    user, created = User.objects.get_or_create(
+        user_id=user_info['id'],
+        defaults={'name': user_info['name']}
+    )
+
+    request.session['user_id'] = user.user_id
+    request.session['can_join_room'] = True  # Set flag to allow room joining
+
+    # Redirect back to home after successful login
+    return redirect('home')
+
+
+def test_session(request):
+    # Store something in the session
+    request.session['test_key'] = 'test_value'
+
+    # Retrieve it on subsequent requests
+    test_value = request.session.get('test_key', 'Not Set')
+
+    return JsonResponse({'test_key': test_value})
