@@ -2,6 +2,7 @@
 // Scripts for landing page
 
 const agreeBtn = document.getElementById('agree-btn')
+const evalBtn = document.getElementById('evaluation-play-btn')
 
 function uuidv4() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
@@ -34,16 +35,18 @@ function sleep(ms = 0) {
 }
 
 
-document.getElementById('evaluation-play-btn').addEventListener('click', function(event) {
-  event.preventDefault();
-  const roomName = document.getElementById('new-room-name').value;
-  const evaluationRoom = setAndGetEvalRoomCookie(roomName);
-  if (evaluationRoom) {
-    window.location.href = `/game/evaluation/${evaluationRoom}`;
-  } else {
-    alert('Please enter a valid room name!');
-  }
-});
+if (evalBtn) {
+  evalBtn.addEventListener('click', function(event) {
+    event.preventDefault();
+    const roomName = document.getElementById('new-room-name').value;
+    const evaluationRoom = setAndGetEvalRoomCookie(roomName);
+    if (evaluationRoom) {
+      window.location.href = `/game/evaluation/${evaluationRoom}`;
+    } else {
+      alert('Please enter a valid room name!');
+    }
+  });
+}
 
 // document.getElementById("agree-btn").addEventListener("click", function() {
 //       let agreeDiv = document.getElementById("agree-irb");
@@ -85,6 +88,7 @@ if (landingButton) {
 
 // Handle the "I Agree" button click
 if (agreeBtn) {
+    console.log('yo');
     agreeBtn.addEventListener('click', function() {
     // Hide the "I Agree" section
     document.getElementById('agree-irb').style.display = 'none';

@@ -78,9 +78,9 @@ function update() {
       lockedOut = false;
       readingPassedTime = 0;
       
-      if (answerHeader.innerHTML === '') {
-        getAnswer();
-      }
+      // if (answerHeader.innerHTML === '') {
+      //   getAnswer();
+      // }
 
       if (!isFeedbackLoaded) {
         isFeedbackLoaded = true;
@@ -162,8 +162,8 @@ gamesock.onmessage = message => {
     changeLocked = data['change_locked'];
 
     // Update change widgets
-    categorySelect.disabled = changeLocked;
-    difficultySelect.disabled = changeLocked;
+    // categorySelect.disabled = changeLocked;
+    // difficultySelect.disabled = changeLocked;
 
     showButtons();
 
@@ -175,8 +175,8 @@ gamesock.onmessage = message => {
     updateMessages();
 
     //categoryHeader.innerHTML = `Question Type: ${category}`;
-    categorySelect.value = data['room_category'];
-    difficultySelect.value = data['difficulty'];
+    // categorySelect.value = data['room_category'];
+    // difficultySelect.value = data['difficulty'];
     //speedSlider.value = data['speed'];
 
   } else if (data['response_type'] === "new_user") {
@@ -203,8 +203,10 @@ gamesock.onmessage = message => {
   } else if (data['response_type'] === 'update_tools') {
     updateTools(data['use_calculator'], data['use_doc'], data['use_web']);
   } else if (data['response_type'] === 'disable_tools') {
-    console.log('disabling!');
-    disableButtons();
+    toggleDisableButtons(data['should_disable']);
+    if (data['should_disable']) {
+      clearFields(data['should_clear_document']);
+    }
   } else if (data['response_type'] === 'update_doc') {
     updateDoc(data['use_doc'], data['doc_content']);
   } else if (data['response_type'] === 'update_status') {
@@ -266,7 +268,6 @@ gamesock.onmessage = message => {
     num_docs = data['num_docs'];
     setContentSelectionResult(doc_idxs, num_docs);
   } else if (data['response_type'] === 'reauthenticate') {
-    console.log('renavigating!');
     window.location.href = '/?reauthenticate=true';
   }
 }
@@ -285,10 +286,10 @@ function setQuestion(question_text, state) {
   question = question_text;
 }
 
-function setAnswer(answer) {
-  answer = answer.replace("{", "<u><b>").replace("}", "</b></u>");
-  answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : 'Answer:';
-}
+// function setAnswer(answer) {
+//   answer = answer.replace("{", "<u><b>").replace("}", "</b></u>");
+//   answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : 'Answer:';
+// }
 
 function setCalculation(res) {
   document.getElementById('calc-result').textContent = res;
@@ -622,8 +623,10 @@ function next() {
       // }
   }
  } 
- else 
+ else {
+    settings();
     alert("Please input a valid username and email before continuing.");
+ }
 }
 
 function getAnswer() {

@@ -1,0 +1,1352 @@
+[
+    {
+        "model": "game.question",
+        "pk": 0,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "complex_web_questions",
+            "difficulty": "HS",
+            "content": "Of the sights to see in Madrid, which is the earliest opened building?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Plaza Mayor, Madrid"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for a list of notable sights in Madrid.",
+                    "Find the earliest opened building from the list of notable sights."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for historical buildings in Madrid.",
+                    "Find the opening year of the first building mentioned.",
+                    "Find the opening year of the second building mentioned.",
+                    "Compare the opening years to determine the earliest.",
+                    "Find the building corresponding to the earliest year."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "WebQTest-153_6c7f73984c5fff7892cadc3063c6ef23"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 1,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "complex_web_questions",
+            "difficulty": "HS",
+            "content": "What country in North Africa has the smallest army?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Sudan"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information on the armies of North African countries.",
+                    "Find out which country has the smallest army from the document."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for a list of North African countries.",
+                    "Identify the countries listed in the document.",
+                    "Search for the military size of the first country in the list.",
+                    "Find the army size of the first country from the document.",
+                    "Search for the military size of the second country in the list.",
+                    "Find the army size of the second country from the document.",
+                    "Compare the army sizes of the first two countries.",
+                    "Continue searching and comparing army sizes for the remaining countries in the list.",
+                    "Find the army size of the third country from the document.",
+                    "Determine the country with the smallest army size from all compared sizes."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "WebQTest-1563_e5e8a3074199e57ae47fce05ab95ab6e"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 2,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "complex_web_questions",
+            "difficulty": "HS",
+            "content": "Which types of art were made by the person who illustrated the book De divina proportione?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Drawing",
+                "Painting",
+                "Sculpture"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information about the book 'De divina proportione'.",
+                    "Find out who illustrated the book from the document.",
+                    "Search for information about the illustrator.",
+                    "Find the types of art made by the illustrator from the document."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for the illustrator of 'De divina proportione'.",
+                    "Extract the name of the illustrator from the document.",
+                    "Search for the artistic works of the illustrator.",
+                    "Identify the types of art created by the illustrator from the document."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "WebQTest-645_0db5dafcef666da2d314e42c8fbe8ecf"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 3,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "complex_web_questions",
+            "difficulty": "HS",
+            "content": "What country that uses the Lao Kip currency borders China?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Laos"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information about the Lao Kip currency.",
+                    "Find out which country uses the Lao Kip currency from the document.",
+                    "Search for information about the borders of the identified country.",
+                    "Find out if the identified country borders China."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for a list of countries that border China.",
+                    "Find the list of countries that border China from the document.",
+                    "Search for information about the Lao Kip currency.",
+                    "Find out which country uses the Lao Kip currency from the document.",
+                    "Check if the identified country is in the list of countries bordering China."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "WebQTrn-3351_513d3d27fdbcf5130896177ea2dd146f"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 4,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "complex_web_questions",
+            "difficulty": "HS",
+            "content": "Who is the Louisiana State Senator who ended his/her government position after 2-4-1861?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "David Vitter",
+                "Edward Douglass White",
+                "Huey Long",
+                "John Breaux",
+                "Russell B. Long"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for a list of Louisiana State Senators to find relevant information.",
+                    "Find the senator who ended their position on February 4, 1861, from the list of senators."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for historical events in Louisiana around February 1861 to gather context.",
+                    "Find information about any political changes or resignations in Louisiana during February 1861.",
+                    "Search for the specific senator who resigned or ended their position in February 1861.",
+                    "Find the name of the senator who ended their position on February 4, 1861, from the resignation document."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "WebQTest-575_690987f5d610e8afe3e94e0c135c983a"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 5,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "hotpot_qa",
+            "difficulty": "HS",
+            "content": "Who was the only actor to appear in leading roles in both The Hunt for Red October (rebooted in 2002 as The Sum of All Fears) and its sequel?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "James Earl Jones"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information about 'The Hunt for Red October' on Wikipedia.",
+                    "Find the lead actor in 'The Hunt for Red October' from the document.",
+                    "Search for information about 'The Sum of All Fears' on Wikipedia.",
+                    "Find the lead actor in 'The Sum of All Fears' from the document.",
+                    "Compare the lead actors from both movies to find the common actor.",
+                    "Determine if the same actor appeared in both movies."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for information about 'The Hunt for Red October' and its sequel on Wikipedia.",
+                    "Find the list of actors who appeared in both movies from the document.",
+                    "Identify the actor who had leading roles in both movies from the list.",
+                    "Verify the actor's role in both movies to ensure they were leading roles."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "5ac46957554299204fd21f3f"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 6,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "hotpot_qa",
+            "difficulty": "HS",
+            "content": "Bill Barretta has produced two of the Muppets television films, including a 2002 NBC television film that was written by Tom Martin and Jim Lewis, and was directed by who?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Kirk Thatcher"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information on the 2002 NBC Muppets television film.",
+                    "Find the director of the film from the document."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for information on Bill Barretta's film productions.",
+                    "Find the 2002 NBC Muppets film in the document.",
+                    "Search for the specific 2002 NBC Muppets film using its title.",
+                    "Find the director of the film from the document."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "5aba516e5542994dbf0198d7"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 7,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "hotpot_qa",
+            "difficulty": "HS",
+            "content": "Charles Hirshberg's mother is known for uncovering a method for predicting what?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "sunspot cycles"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information about Charles Hirshberg's mother.",
+                    "Find out what method Charles Hirshberg's mother is known for uncovering."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for information about Charles Hirshberg.",
+                    "Find out who Charles Hirshberg's mother is.",
+                    "Search for information about the mother of Charles Hirshberg using her name.",
+                    "Find out what method she is known for uncovering."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "5ae77a745542997b22f6a792"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 8,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "hotpot_qa",
+            "difficulty": "HS",
+            "content": "Super 8 is a 2011 American science-fiction thriller film produced by an American director who is one of the co-founders of what?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "DreamWorks Studios"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for the film 'Super 8' to gather information about its production and director.",
+                    "Find the name of the director of 'Super 8' from the document.",
+                    "Search for the director's name to find more about their career and achievements.",
+                    "Find out what the director co-founded from the director's document."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for the director of 'Super 8' to gather information about their career and achievements.",
+                    "Find the name of the director from the document.",
+                    "Search for the director's name to find more about their career and achievements.",
+                    "Find out what the director co-founded from the director's information document."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "5ae160275542997b2ef7d1b4"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 9,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "hotpot_qa",
+            "difficulty": "HS",
+            "content": "Which child actress began her career in 2006 and also stared in the television series The Emperor: Owner of the Mask?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Kim So-hyun"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information about the television series 'The Emperor: Owner of the Mask'.",
+                    "Find the name of the child actress who starred in the series from the document."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for a list of child actresses who began their careers in 2006.",
+                    "Find the name of the actress who starred in 'The Emperor: Owner of the Mask' from the document."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "5a8b20d355429949d91db4c3"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 10,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "musique",
+            "difficulty": "HS",
+            "content": "Who wrote the national anthem of the country where the next summit will be held?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Ananda Samarakoon"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for the location of the next summit.",
+                    "Find the country where the next summit will be held from the document.",
+                    "Search for the national anthem of the identified country.",
+                    "Find the author of the national anthem from the document."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for the next summit to determine its location.",
+                    "Extract the city or country where the summit will be held from the document.",
+                    "Search for the national anthem of the country identified in the previous step.",
+                    "Identify the writer of the national anthem from the document."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "2hop__82033_44852"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 11,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "musique",
+            "difficulty": "HS",
+            "content": "Which country contains Logan in the county bordering with the county having Chain-O-Lakes in the US state having German as the largest ancestry group?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "U.S.",
+                "the US",
+                "US of A",
+                "America",
+                "U.S",
+                "the United States",
+                "the U.S.",
+                "United States",
+                "US"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for the US state where German is the largest ancestry group.",
+                    "Find the name of the state from the document.",
+                    "Search for counties in the identified state.",
+                    "Find the county with Chain-O-Lakes in the identified state.",
+                    "Search for counties bordering the identified county.",
+                    "Find the county with Logan in the bordering counties.",
+                    "Search for the country containing the identified county.",
+                    "Find the name of the country from the document."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for the largest ancestry group in the US.",
+                    "Find the state where German is the largest ancestry group.",
+                    "Search for lakes in the identified state.",
+                    "Find the county with Chain-O-Lakes in the identified state.",
+                    "Search for counties adjacent to the identified county.",
+                    "Find the county with Logan in the adjacent counties.",
+                    "Search for the country containing the identified county.",
+                    "Find the name of the country from the document."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "4hop3__257990_280480_160165_606586"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 12,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "musique",
+            "difficulty": "HS",
+            "content": "in 1860, what percent of the population were slaves of the state the governor during the Civil War died?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "33"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information about the governor of the state who died during the Civil War.",
+                    "Find the name of the state from the document about the governor.",
+                    "Search for the population statistics of the identified state in 1860.",
+                    "Find the total population of the state in 1860 from the document.",
+                    "Find the number of slaves in the state in 1860 from the document.",
+                    "Calculate the percentage of the population that were slaves in 1860.",
+                    "Conclude with the percentage of the population that were slaves in the state in 1860."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for a list of governors who died during the Civil War.",
+                    "Find the name of the state associated with a governor who died during the Civil War.",
+                    "Search for the 1860 census data of the identified state.",
+                    "Find the total population of the state in 1860 from the census data.",
+                    "Find the number of slaves in the state in 1860 from the census data.",
+                    "Calculate the percentage of the population that were slaves in 1860.",
+                    "Conclude with the percentage of the population that were slaves in the state in 1860."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "3hop1__22527_146265_24600"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 13,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "musique",
+            "difficulty": "HS",
+            "content": "What did Goring believe the operator of battleships from the country where Princess Sophie Antoinette of Brunswick-Wolfenb\u00fcttel died would gain with further support?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "control of more Luftwaffe units",
+                "Luftwaffe"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for information about Princess Sophie Antoinette of Brunswick-Wolfenb\u00fcttel to identify the country she was associated with.",
+                    "Find the country where Princess Sophie Antoinette died from the document.",
+                    "Search for information about Goring's beliefs regarding battleships.",
+                    "Find what Goring believed the operator of battleships from the identified country would gain with further support."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for information about Princess Sophie Antoinette of Brunswick-Wolfenb\u00fcttel to determine her country of death.",
+                    "Extract the country where Princess Sophie Antoinette died from the document.",
+                    "Search for Goring's views on naval power and battleships.",
+                    "Identify what Goring believed the operator of battleships from the identified country would gain with additional support."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "4hop1__451599_805015_475503_32631"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 14,
+        "fields": {
+            "category": "Multi-Hop",
+            "split": "musique",
+            "difficulty": "HS",
+            "content": "How many independent states emerged after the collapse of the first Allied nation to reach the German city where the director of The Man from Morocco was born?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "15"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for the birthplace of the director of 'The Man from Morocco'.",
+                    "Find the German city where the director was born from the document.",
+                    "Search for the first Allied nation to reach the identified German city.",
+                    "Find the first Allied nation from the document.",
+                    "Search for the collapse of the identified Allied nation.",
+                    "Find the number of independent states that emerged after the collapse from the document."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for the director of 'The Man from Morocco'.",
+                    "Find the name of the director from the document.",
+                    "Search for the birthplace of the identified director.",
+                    "Find the German city where the director was born from the document.",
+                    "Search for the first Allied nation to reach the identified German city.",
+                    "Find the first Allied nation from the document.",
+                    "Search for the historical events leading to the collapse of the identified nation.",
+                    "Find the number of independent states that emerged after the collapse from the document."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": "4hop1__205937_144938_83779_79692"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 15,
+        "fields": {
+            "category": "Math",
+            "split": "aqua",
+            "difficulty": "HS",
+            "content": "A school currently maintains a fixed number of students per class. If the ratio of students per class were to be increased by 1, 10 fewer classes would be run for a total of 120 students. What is the current ratio Q of students per class?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "A",
+                "A)Q=3"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the total number of classes with the current ratio.",
+                    "Calculate the total number of classes with the increased ratio.",
+                    "Set up the equation for the difference in the number of classes.",
+                    "Solve for Q using the equation that the difference in classes is 10.",
+                    "Verify the solution by recalculating the number of classes with the found Q.",
+                    "Verify the solution by recalculating the number of classes with the increased ratio.",
+                    "Ensure the difference in recalculated classes is 10.",
+                    "Confirm the solution is correct if the difference is 10."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Express the number of classes with the current ratio as a function of Q.",
+                    "Express the number of classes with the increased ratio as a function of Q.",
+                    "Set up the equation for the difference in the number of classes.",
+                    "Express the equation for the difference in classes being 10.",
+                    "Rearrange the equation to solve for Q.",
+                    "Substitute Q back into the original expressions to verify.",
+                    "Substitute Q back into the increased ratio expression to verify.",
+                    "Check that the difference in recalculated classes is 10.",
+                    "Confirm the solution is correct if the difference is 10."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 26
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 16,
+        "fields": {
+            "category": "Math",
+            "split": "aqua",
+            "difficulty": "HS",
+            "content": "A pipe takes a hours to fill the tank. But because of a leakage it took 7 times of its original time. Find the time taken by the leakage to empty the tank",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "E",
+                "E)70 min"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the original time taken to fill the tank without leakage.",
+                    "Calculate the time taken to fill the tank with leakage.",
+                    "Determine the time taken by the leakage to empty the tank by subtracting the original time from the leakage time."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the rate of filling the tank without leakage.",
+                    "Calculate the rate of filling the tank with leakage.",
+                    "Determine the rate of leakage by subtracting the leakage fill rate from the original fill rate.",
+                    "Calculate the time taken by the leakage to empty the tank using the leakage rate."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 421
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 17,
+        "fields": {
+            "category": "Math",
+            "split": "aqua",
+            "difficulty": "HS",
+            "content": "A can run a kilometer race in 4 1/2 min while B can run same race in 5 min. How many meters start can A give B in a kilometer race, so that the race mat end in a dead heat?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "D",
+                "D)100 metre"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Convert A's time from minutes to seconds for easier calculation.",
+                    "Convert B's time from minutes to seconds for easier calculation.",
+                    "Calculate A's speed in meters per second.",
+                    "Calculate B's speed in meters per second.",
+                    "Determine the time it takes for A to finish the race in seconds.",
+                    "Calculate the distance B can cover in the time A finishes the race.",
+                    "Calculate the start distance A can give B for a dead heat."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the time difference between A and B in seconds.",
+                    "Determine B's speed in meters per second.",
+                    "Calculate the distance B covers in the time difference.",
+                    "Calculate the start distance A can give B for a dead heat."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 360
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 18,
+        "fields": {
+            "category": "Math",
+            "split": "aqua",
+            "difficulty": "HS",
+            "content": "If the perimeter of a rectangular garden is 600 m, its length when its breadth is 95 m is?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "D",
+                "D)205 m"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the total length of the garden using the perimeter formula for rectangles.",
+                    "Solve for the length of the garden using the calculated total length."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the sum of the length and breadth using the perimeter formula for rectangles.",
+                    "Determine the length by subtracting the breadth from the sum of length and breadth."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 517
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 19,
+        "fields": {
+            "category": "Math",
+            "split": "aqua",
+            "difficulty": "HS",
+            "content": "The Julie's father's age is two more than thrice Julie's age. If Julie will be 15 after 4 years, what is her father's present age?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "A",
+                "A)35 years"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate Julie's current age by subtracting 4 from her age in 4 years.",
+                    "Calculate thrice Julie's current age.",
+                    "Add 2 to thrice Julie's age to find her father's current age."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Determine Julie's current age by subtracting 4 from her age in 4 years.",
+                    "Multiply Julie's current age by 3 to find thrice her age.",
+                    "Add 2 to the result to find Julie's father's current age."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 397
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 20,
+        "fields": {
+            "category": "Math",
+            "split": "gsm8k",
+            "difficulty": "HS",
+            "content": "A flagpole is 12 feet tall. It breaks, folding over in half, such that what was the tip of the flagpole is now dangling two feet above the ground. How far from the base, in feet, did the flagpole break?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "7"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the height from the ground to the break point of the flagpole.",
+                    "Calculate the length of the broken part of the flagpole that is now horizontal.",
+                    "Use the Pythagorean theorem to find the distance from the base to the break point."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the total length of the flagpole when it is folded over.",
+                    "Calculate the length of the flagpole that is still vertical.",
+                    "Use the Pythagorean theorem to find the distance from the base to the break point."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 868
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 21,
+        "fields": {
+            "category": "Math",
+            "split": "gsm8k",
+            "difficulty": "HS",
+            "content": "Mom went shopping at the market. She left with \u20ac55. She bought 2 packs of bananas for \u20ac4 each, pears for \u20ac2, asparagus for \u20ac6 and finally a chicken for \u20ac11. How much money does Mom have left?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "28"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the total cost of the bananas by multiplying the price per pack by the number of packs.",
+                    "Add the cost of pears to the total cost of bananas.",
+                    "Add the cost of asparagus to the running total.",
+                    "Add the cost of the chicken to the running total.",
+                    "Subtract the total amount spent from the initial amount of money Mom had.",
+                    "Output the remaining money Mom has after shopping."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the total cost of all items by adding the cost of bananas, pears, asparagus, and chicken.",
+                    "Subtract the total amount spent from the initial amount of money Mom had.",
+                    "Output the remaining money Mom has after shopping."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 423
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 22,
+        "fields": {
+            "category": "Math",
+            "split": "gsm8k",
+            "difficulty": "HS",
+            "content": "Aisha enjoys listening to music on her mp3 player. She starts with 500 songs on her mp3 player, then adds another 500 the week after that. She realizes her mp3 player has a large capacity for storing songs so she adds twice the amount she already had on her mp3 player. After a while, though, she decides that she doesn't like 50 of the songs and removes them. How many songs are on Aisha's mp3 player now?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "2,950"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the initial number of songs after adding 500 more.",
+                    "Calculate the total number of songs after doubling the current amount.",
+                    "Calculate the final number of songs after removing 50."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the total number of songs after adding 500 more and doubling the amount.",
+                    "Calculate the final number of songs after removing 50."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 919
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 23,
+        "fields": {
+            "category": "Math",
+            "split": "gsm8k",
+            "difficulty": "HS",
+            "content": "The Rotary Club is holding its annual fundraising Omelet Breakfast, with tickets sold in advance. The tickets come in different price levels, for young children, older children, adults, and seniors. This year they sold 53 small children tickets, 35 older children tickets, 75 adult tickets, and 37 senior tickets. To figure out how many eggs they need to buy, the club estimates that small children can eat a half omelet, older children can eat a whole omelet, adults will eat two omelets, and seniors will eat one and a half omelets. Just to be on the safe side, they get enough eggs to make 25 extra omelets. If they use 2 eggs for each omelet, how many eggs will they need to buy?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "584"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the total number of omelets needed for small children.",
+                    "Calculate the total number of omelets needed for older children.",
+                    "Calculate the total number of omelets needed for adults.",
+                    "Calculate the total number of omelets needed for seniors.",
+                    "Sum up all the omelets needed for all age groups.",
+                    "Add 25 extra omelets to the total for safety.",
+                    "Calculate the total number of eggs needed by multiplying the total omelets by 2.",
+                    "Output the total number of eggs needed."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the total number of omelets needed for small children and older children combined.",
+                    "Calculate the total number of omelets needed for adults and seniors combined.",
+                    "Sum up the omelets needed for children and adults/seniors.",
+                    "Add 25 extra omelets to the total for safety.",
+                    "Calculate the total number of eggs needed by multiplying the total omelets by 2.",
+                    "Output the total number of eggs needed."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 839
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 24,
+        "fields": {
+            "category": "Math",
+            "split": "gsm8k",
+            "difficulty": "HS",
+            "content": "A fox can run at the maximum speed of 50 kilometers per hour. Considering the fox would run at a constant speed, what distance would he make during 120 minutes?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "100"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Convert the time from minutes to hours.",
+                    "Calculate the distance using the speed and time in hours.",
+                    "Output the calculated distance."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the total distance directly using the speed and time in minutes.",
+                    "Output the calculated distance."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 244
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 25,
+        "fields": {
+            "category": "Math",
+            "split": "math",
+            "difficulty": "HS",
+            "content": "If $x$ is a number between 0 and 1, which of the following represents the smallest value?\n\nA). $x$\nB). $x^2$\nC). $2x$\nD). $\\sqrt{x}$\nE). $\\frac{1}{x}$\n\nExpress your answer as A, B, C, D, or E.",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "\\text{B"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the square of x to compare with other values.",
+                    "Calculate twice the value of x to compare with other values.",
+                    "Calculate the square root of x to compare with other values.",
+                    "Calculate the reciprocal of x to compare with other values.",
+                    "Compare all calculated values to determine the smallest."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the square of x to compare with other values.",
+                    "Calculate twice the value of x to compare with other values.",
+                    "Calculate the square root of x to compare with other values.",
+                    "Calculate the reciprocal of x to compare with other values.",
+                    "Use a logical approach to determine the smallest value among the options."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 856
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 26,
+        "fields": {
+            "category": "Math",
+            "split": "math",
+            "difficulty": "HS",
+            "content": "Three fair, standard six-sided dice are rolled. What is the probability that the sum of the numbers on the top faces is 18? Express your answer as a common fraction.",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "\\frac{1"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the total number of possible outcomes when rolling three six-sided dice.",
+                    "Determine the number of ways to roll a sum of 18 with three dice.",
+                    "Calculate the probability of rolling a sum of 18 by dividing the number of favorable outcomes by the total number of outcomes.",
+                    "Express the probability as a common fraction."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Identify the maximum possible sum when rolling three six-sided dice.",
+                    "Verify that the sum of 18 is possible with three dice.",
+                    "Calculate the total number of possible outcomes when rolling three six-sided dice.",
+                    "Determine the number of ways to roll a sum of 18 with three dice.",
+                    "Calculate the probability of rolling a sum of 18 by dividing the number of favorable outcomes by the total number of outcomes.",
+                    "Express the probability as a common fraction."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 612
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 27,
+        "fields": {
+            "category": "Math",
+            "split": "math",
+            "difficulty": "HS",
+            "content": "My club has 25 members.  In how many ways can I choose members to form a 4-person executive committee?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "12,\\!650"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the number of ways to choose 4 members from 25 using the combination formula.",
+                    "Output the number of ways to form the committee."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the factorial of 25, which is the total number of permutations of 25 members.",
+                    "Calculate the factorial of 4, which is the number of permutations of the 4 chosen members.",
+                    "Calculate the factorial of 21, which is the number of permutations of the remaining members after choosing 4.",
+                    "Calculate the number of ways to choose 4 members from 25 using the combination formula.",
+                    "Output the number of ways to form the committee."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 575
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 28,
+        "fields": {
+            "category": "Math",
+            "split": "math",
+            "difficulty": "HS",
+            "content": "Determine the number of ways to arrange the letters of the word TOOT.",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "6"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the factorial of the total number of letters in the word.",
+                    "Calculate the factorial of the number of repeated letters 'T'.",
+                    "Calculate the factorial of the number of repeated letters 'O'.",
+                    "Divide the total permutations by the product of the factorials of repeated letters to find the number of unique arrangements."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the factorial of the total number of letters in the word.",
+                    "Calculate the factorial of the number of repeated letters 'T'.",
+                    "Calculate the factorial of the number of repeated letters 'O'.",
+                    "Multiply the factorials of the repeated letters to get the total repetition factor.",
+                    "Divide the total permutations by the repetition factor to find the number of unique arrangements."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 560
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 29,
+        "fields": {
+            "category": "Math",
+            "split": "math",
+            "difficulty": "HS",
+            "content": "Let $\\mathbf{M}$ be a matrix, and let $\\mathbf{v}$ and $\\mathbf{w}$ be vectors, such that\n\\[\\mathbf{M} \\mathbf{v} = \\begin{pmatrix} 1 \\\\ -5 \\end{pmatrix} \\quad \\text{and} \\quad \\mathbf{M} \\mathbf{w} = \\begin{pmatrix} 7 \\\\ 2 \\end{pmatrix}.\\]Compute $\\mathbf{M} (-2 \\mathbf{v} + \\mathbf{w}).$",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "\\begin{pmatrix"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the result of multiplying vector v by -2.",
+                    "Calculate the result of multiplying vector v by -2.",
+                    "Add the result of -2v to vector w's first component.",
+                    "Add the result of -2v to vector w's second component.",
+                    "Combine the results to form the final vector."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Multiply vector v by -2 and calculate the first component.",
+                    "Multiply vector v by -2 and calculate the second component.",
+                    "Add the first component of -2v to the first component of w.",
+                    "Add the second component of -2v to the second component of w.",
+                    "Combine the results to form the final vector."
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": 1618
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 30,
+        "fields": {
+            "category": "Long-Context",
+            "split": "quality",
+            "difficulty": "HS",
+            "content": "What emotions could likely be behind the expression on Peter's face at the end of the passage when he was told that they could not return to Earth?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "3",
+                "C",
+                "Defeat"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Find the paragraph in the document that describes Peter's expression at the end of the passage.",
+                    "Find the paragraph in the document that discusses the emotions related to not returning to Earth.",
+                    "Answer the question about Peter's emotions using the paragraphs about his expression and related emotions."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Find the paragraph in the document that describes the situation when Peter was told they couldn't return to Earth.",
+                    "Find the paragraph in the document that describes Peter's reaction to the news.",
+                    "Find the paragraph in the document that discusses general emotional responses to similar situations.",
+                    "Answer the question about Peter's emotions using the paragraphs about the situation, his reaction, and general emotional responses."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": false,
+            "uses_doc_search": true,
+            "document_context": "62619"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 31,
+        "fields": {
+            "category": "Long-Context",
+            "split": "quality",
+            "difficulty": "HS",
+            "content": "Members of western society in 1996 are _________ expletives compared to members of western society from three decades prior.",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "3",
+                "C",
+                "less offended by"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Find a paragraph discussing expletive usage in 1996.",
+                    "Find a paragraph discussing expletive usage in the 1960s.",
+                    "Answer the question about expletive usage comparison using the found paragraphs."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Find a paragraph about cultural changes in language in 1996.",
+                    "Find a paragraph about cultural changes in language in the 1960s.",
+                    "Find a paragraph about societal attitudes towards expletives in 1996.",
+                    "Find a paragraph about societal attitudes towards expletives in the 1960s.",
+                    "Answer the question about expletive usage comparison using the found paragraphs."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": false,
+            "uses_doc_search": true,
+            "document_context": "20046"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 32,
+        "fields": {
+            "category": "Long-Context",
+            "split": "quality",
+            "difficulty": "HS",
+            "content": "Why was mountain climbing prohibited on the Eastern Slope during the time?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "3",
+                "C",
+                "They feared the danger of rock slides"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Search for reasons related to mountain climbing prohibition on the Eastern Slope in the document.",
+                    "Search for historical context or events that might have led to the prohibition in the document.",
+                    "Search for any environmental or safety concerns mentioned in the document.",
+                    "Answer the question using the gathered paragraphs about the prohibition of mountain climbing on the Eastern Slope."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Search for legal or governmental regulations related to mountain climbing on the Eastern Slope in the document.",
+                    "Search for any incidents or accidents that might have influenced the prohibition in the document.",
+                    "Search for community or local opinions on mountain climbing on the Eastern Slope in the document.",
+                    "Answer the question using the gathered paragraphs about the prohibition of mountain climbing on the Eastern Slope."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": false,
+            "uses_doc_search": true,
+            "document_context": "50893"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 33,
+        "fields": {
+            "category": "Long-Context",
+            "split": "quality",
+            "difficulty": "HS",
+            "content": "Why does the crew later refer to Ha-Adamah as Adam? ",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "2",
+                "B",
+                "Ha-Adamah is Adam's Hebrew origination."
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Find a paragraph in the document that discusses the crew's reference to Ha-Adamah.",
+                    "Find another paragraph that might explain the crew's naming convention.",
+                    "Find a paragraph that provides context about Ha-Adamah.",
+                    "Answer the question using the gathered paragraphs."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Find a paragraph that explains the significance of the name Ha-Adamah.",
+                    "Find a paragraph that discusses the crew's interaction with Ha-Adamah.",
+                    "Find a paragraph that might mention any changes in the crew's perception of Ha-Adamah.",
+                    "Find a paragraph that could provide historical or cultural context for the name change.",
+                    "Answer the question using the gathered paragraphs."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": false,
+            "uses_doc_search": true,
+            "document_context": "61007"
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 34,
+        "fields": {
+            "category": "Long-Context",
+            "split": "quality",
+            "difficulty": "HS",
+            "content": "What is the significance of the evidence of human lodging on the islet?\u00a0\n",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "1",
+                "A",
+                "Nazis were hiding out there.\n"
+            ],
+            "answer": "",
+            "generation_method": "human",
+            "instructions_a": {
+                "steps": [
+                    "Find a paragraph in the document that discusses human lodging on the islet.",
+                    "Find a paragraph in the document that discusses the significance of evidence.",
+                    "Answer the question about the significance of the evidence of human lodging using the found paragraphs."
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Find a paragraph in the document that mentions archaeological findings related to human lodging.",
+                    "Find a paragraph in the document that discusses historical context of the islet.",
+                    "Find a paragraph in the document that discusses the impact of human activities on the islet.",
+                    "Answer the question about the significance of the evidence of human lodging using the found paragraphs."
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": false,
+            "uses_doc_search": true,
+            "document_context": "61481"
+        }
+    }
+]

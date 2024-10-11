@@ -71,3 +71,9 @@ class ToolLog(ImportExportModelAdmin, ExportActionMixin):
     list_display = ['tool_log_id', 'question_id', 'user_id', 'instruction_type', 'tool_name', 'tool_query', 'tool_result', 'tool_execution_status', 'queried_at']
     actions = ['export_as_csv']
     resource_class = MessageResource
+
+@admin.register(Document)
+class Document(ImportExportModelAdmin, ExportActionMixin):
+    list_display = ['document_id', 'doc_id', 'document_text']
+    actions = ['export_as_csv']
+    resource_class = MessageResource

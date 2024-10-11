@@ -8,41 +8,16 @@ from .models import Question
 major_matcher = re.compile(r'(?<={).*?(?=})')
 pedant = PEDANT()
 
-def judge_answer_annotation_game(candidate_answer: str, question: Question):
+def judge_answer(candidate_answer: str, question: Question):
     """Judge answer response as correct - follows QA Metrics answer verification pipeline"""
-    # accept = question.answer_accept
-    # reject = question.answer_reject
-    # room.current_question.answer_regular_prompt,
-    # room.current_question.answer_antiprompt,
-    # question = room.current_question.content,
-    last_clue = question.clue_list[-1]
 
-    correct = False
-    # try:
-    #     prompt = f"question: {question}\nreference: {reference_answer}\ncandidate: {candidate_answer}\nIs the candidate answer correct based on the question and reference answer? Please only output 'correct' or 'incorrect'."
-    #     correct = model.prompt_gpt(prompt=prompt, model_engine='gpt-4-turbo', temperature=0.1).lower() == "correct"
-    # except:
-
-    # correct = []
-    # incorrect = []
-
-    # for ref_correct in question.answer_accept:
-    #     correct.append(pedant.evaluate(ref_correct, candidate_answer, last_clue))
+    if candidate_answer == "":
+        return False
     
-    # for ref_reject in question.answer_reject:
-    #     incorrect.append(pedant.evaluate(ref_reject, candidate_answer, last_clue))
+    if question.category in {Question.Category.LONGCONTEXT, Question.Category.MATH}:
+        return candidate_answer in question.answer_accept
 
-    correct = pedant.evaluate(question.answer_accept, candidate_answer, last_clue)\
-                if question.answer_accept else False
-    incorrect = pedant.evaluate(question.answer_reject, candidate_answer, last_clue)\
-                if question.answer_reject else False
-
-    # print(question.answer_accept)
-    # print(correct)
-    # print(question.answer_reject)
-    # print(incorrect)
-
-    return correct and not incorrect
+    return pedant.evaluate(question.answer_accept, candidate_answer, question.content)
 
 def judge_answer_kuiperbowl(user_answer, question_answer):
     """Judge answer response as correct - follows a fuzzywuzzy string matching approach"""

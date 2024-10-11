@@ -39,34 +39,40 @@ function updateTools(use_calc, use_doc, use_web) {
     contentSelectorToolBtn.style.display = use_doc ? '' : 'none';
 
     calculatorToolResult.style.display = use_calc ? '' : 'none';
-
-    calculatorToolBtn.disabled = false;
-    googleToolBtn.disabled = false;
-    contentSelectorToolBtn.disabled = false;
-
-    calculatorToolInput.disabled = false;
-    googleToolInput.disabled = false;
-    contentSelectorToolInput.disabled = false;
-
-
-    // if (use_doc && !use_web) {
-    //     console.log('doc only!', contentSelectorToolCol);
-    //     contentSelectorToolCol.className = 'col-12';
-    // } else if (use_doc && use_web) {
-    //     googleToolCol.className = 'col-6';
-    //     contentSelectorToolCol.className = 'col-6';
-    // }
 }
 
-function disableButtons() {
-    console.log('disabling!');
-    calculatorToolBtn.disabled = true;
-    googleToolBtn.disabled = true;
-    contentSelectorToolBtn.disabled = true;
+function clearFields(should_clear_document) {
+    calculatorToolInput.innerText = '';
+    googleToolInput.innerText = '';
+    contentSelectorToolInput.innerText = '';
 
-    calculatorToolInput.disabled = true;
-    googleToolInput.disabled = true;
-    contentSelectorToolInput.disabled = true;
+    if (should_clear_document) {
+        docContent.srcdoc = `<!DOCTYPE html>
+            <html lang="en">
+            <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Embedded Page</title>
+            <!-- Bootstrap CSS -->
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            </head>
+            <body>
+            <div style="margin-left:10px; margin-right:10px;">
+                <p>Search to make a document appear!</p>
+            </div>
+            </body>
+            </html>`
+    }
+}
+
+function toggleDisableButtons(flag) {
+    calculatorToolBtn.disabled = flag;
+    googleToolBtn.disabled = flag;
+    contentSelectorToolBtn.disabled = flag;
+
+    calculatorToolInput.disabled = flag;
+    googleToolInput.disabled = flag;
+    contentSelectorToolInput.disabled = flag;
 }
 
 function updateDoc(use_doc, doc_content) {
@@ -107,9 +113,9 @@ function updateStatus(status, player, answer) {
     } else if (status === "contest") {
         statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> has buzzed</span>`;
     } else if (status === "buzz_correct") {
-        statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> buzzed </span><span class=text-success>correctly (<i>${answer}</i>)</span>`;
+        statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> buzzed </span><span class=text-success>correctly</span> with <span class=text-success>"${answer}"</span></span>`;
     } else if (status === "buzz_incorrect") {
-        statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly (<i>${answer}</i>)</span>`;
+        statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>`;
     } else if (status === "buzz_abstain") {
         statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> buzzed and </span><span class=text-danger>did not answer</span>`;
     }

@@ -20,6 +20,12 @@ except LookupError:
 
 # Create your models here.
 
+class Document(models.Model):
+
+    document_id = models.AutoField(primary_key=True)
+    doc_id = models.TextField()
+    document_text = models.TextField()
+
 class Question(models.Model):
     """Quizbowl current_question"""
 
@@ -35,6 +41,9 @@ class Question(models.Model):
         SOCIAL_SCIENCE = 'Social Science', _('Social Science')
         MYTHOLOGY = 'Mythology', _('Mythology')
         TRASH = 'Trash', _('Trash')
+        MULTIHOP = 'Multi-Hop', _('Multi-Hop')
+        MATH = 'Math', _('Math')
+        LONGCONTEXT = 'Long-Context', _('Long-Context')
 
     class Difficulty(models.TextChoices):
         COLLEGE = "College", _("College")
@@ -56,6 +65,7 @@ class Question(models.Model):
     group_id = models.IntegerField(null=True)
     category = models.TextField(default=Category.EVERYTHING)
     content = models.TextField()
+    split = models.TextField(default="all")
 
     answer = models.TextField()
     answer_accept = models.JSONField(null=True, blank=True)
@@ -256,11 +266,9 @@ class Room(models.Model):
         } for m in valid_messages.order_by('timestamp').reverse()[:30]]
 
         return chrono_messages
-
-from django.db import models
+    
 
 class User(models.Model):
-    """Represents a user authenticated through Wikimedia OAuth"""
 
     user_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100) # Wikipedia username
@@ -268,6 +276,14 @@ class User(models.Model):
     
     def __str__(self):
         return self.name
+    
+class LeaderboardLog(models.Model):
+
+    log_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    question_id = models.IntegerField()
+    correctness_score = models.FloatField()
+    seconds_taken = models.IntegerField()
 
 
 class ToolLog(models.Model):

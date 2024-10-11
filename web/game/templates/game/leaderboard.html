@@ -24,18 +24,18 @@
                         <th data-field="name" scope="col">Name</th>
                         <th data-field="turing-score" scope="col" data-sortable="true"> 
                             <div data-bs-toggle="tooltip" title="Measures how well a user can differentiate AI-generated questions from human-written questions.">
-                                Turing Score 🤖
+                                Task Completion Accuracy 🎯
                             </div>
                         </th>
                         <th data-field="knowledge-score" scope="col" data-sortable="true"> 
                             <div data-bs-toggle="tooltip" title="Measures how good you were at answering questions correctly.">
-                                Knowledge Score 🧠
+                                Time Spent for Correct Answers ⌛️
                             </div>
                         </th>
                         <!-- <th scope="col">Accuracy</th> -->
                         <!-- <th scope="col">Precision</th> -->
                         <!-- <th scope="col">Recall</th> -->
-                        <th data-field="total" scope="col" data-sortable="true">Total Questions Seen</th>
+                        <th data-field="total" scope="col" data-sortable="true">Total Questions Seen 🤔</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,9 +43,9 @@
                     <tr>
                         <th scope="row">{{ forloop.counter }}</th>
                         <td>{{ user.username }}</td>
-                        <td>{{ user.f1|floatformat:2 }}</td>
-                        <td>{{ user.expected_wins|floatformat:2 }}</td>
-                        <td>{{ user.total }}</td>
+                        <td>{{ user.correctness|floatformat:4 }}</td>
+                        <td>{{ user.time|floatformat:4 }} seconds</td>
+                        <td>{{ user.num_questions }}</td>
                     </tr>
                     {% empty %}
                     <tr>

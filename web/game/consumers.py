@@ -8,11 +8,12 @@ from django.core.serializers import serialize
 
 from .models import *
 from .utils import clean_content, generate_name, generate_id
-from .judge import judge_answer_annotation_game
+from .judge import judge_answer
 
 import json
 import os
 import datetime
+import nltk
 import requests
 from dotenv import load_dotenv
 import math
@@ -23,6 +24,7 @@ import re
 import cohere
 
 from requests_oauthlib import OAuth2Session
+from oauthlib.oauth2 import TokenExpiredError
 
 load_dotenv()
 
@@ -112,7 +114,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data['request_type'] == 'leave':
                 self.leave(room, p)
             elif data['request_type'] == 'get_answer':
-                self.get_answer(room)
+                self.get_answer(room, player=p)
             # elif data['request_type'] == 'get_current_question_feedback':
             #     self.get_init_question_feedback(room, p)
             elif data['request_type'] == 'set_user_data':
@@ -146,7 +148,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data['request_type'] == 'web_search':
                 self.web_search(room, p, data['content'])
             elif data['request_type'] == 'content_select':
-                self.select_content(room, p, data['content'])
+                self.select_content_wrapper(room, p, data['content'])
             else:
                 pass
 
@@ -163,7 +165,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         p.last_seen = timezone.now().timestamp()
         p.save()
 
-        self.update_time_state(room)
+        self.update_time_state(room, p)
 
         self.send_json(get_room_response_json(room))
         self.send_json({
@@ -213,7 +215,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             #if room.current_question:
             self.update_status(room, room.state)
             self.get_shown_question(room=room)
-            self.get_answer(room=room)
+            self.get_answer(room=room, player=p)
 
             if room.state in {Room.GameState.PLAYING, Room.GameState.INSTRUCTION_READING}:
                 self.update_tools_and_doc_for_question_and_player(room=room, player=p)
@@ -276,11 +278,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """
         # transition so the user has time to read the instructions
         if room.state == Room.GameState.IDLE:
-            questions = (
-                Question.objects.filter(difficulty=room.difficulty)
-                if room.category == 'Everything'
-                else Question.objects.filter(Q(category=room.category) & Q(difficulty=room.difficulty))
-            )
+            questions = Question.objects.filter(category=Question.Category.LONGCONTEXT)
+            print(questions)
             if len(questions) <= 0:
                 return
             # TODO: questions haven't seen before (when we have enough!)
@@ -303,7 +302,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             ) 
             
             self.get_init_model_instructions(room=room)
-            self.get_shown_question(room=room)    
+            self.show_and_disable_tools(room)
+            self.get_shown_question(room=room)
+                
 
         elif room.state == Room.GameState.INSTRUCTION_READING:
             
@@ -315,13 +316,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             # update status text
             self.update_status(room, room.state)
 
-            # update visible tools + document based on question
-            self.update_tools_and_doc_for_question(room)
-
             # Unlock all players
             for p in room.players.all():
                 p.locked_out = False
                 p.save()
+
+            for player in room.get_valid_players():
+                self.disable_tool_btns(room=room, player=player, should_disable=False, should_clear_document=False)
 
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -398,7 +399,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             cleaned_content = clean_content(content)
             answered_correctly: bool = \
-                judge_answer_annotation_game(cleaned_content, room.current_question)
+                judge_answer(cleaned_content, room.current_question)
             # answered_correctly: bool = judge_answer_kuiperbowl(cleaned_content, room.current_question.answer)
             words_to_show: int = room.compute_words_to_show()
 
@@ -422,6 +423,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
                 self.log_tool_use(room, player, '', dict(), 'buzz', 'success')
                 self.update_status(room, 'buzz_correct', player.user.name, cleaned_content)
+                self.log_leaderboard(room, player)
             else:
 
                 if room.max_players == 1:
@@ -597,11 +599,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             )
 
 
-    def get_answer(self, room):
+    def get_answer(self, room, player):
         """Get answer for room question
         """
 
-        self.update_time_state(room)
+        self.update_time_state(room, player)
 
         if room.state == Room.GameState.IDLE:
             # Generate random question for now if empty
@@ -618,16 +620,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 room.current_question = q
                 room.save()
 
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    'type': 'update_room',
-                    'data': {
-                        "response_type": "send_answer",
-                        "answer": room.current_question.answer,
-                    },
-                }
-            )
+            # async_to_sync(self.channel_layer.group_send)(
+            #     self.room_group_name,
+            #     {
+            #         'type': 'update_room',
+            #         'data': {
+            #             "response_type": "send_answer",
+            #             "answer": room.current_question.answer,
+            #         },
+            #     }
+            # )
 
     def get_shown_question(self, room: Room):
         """Computes the correct amount of the question to show, depending on the state of the game.
@@ -668,24 +670,20 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     }
                 }
             )
-
-            # hide tools and the document
-            # self.update_tools(self.channel_layer.send, player.channel_name, False, False, False)
-            # self.update_doc(self.channel_layer.send, player.channel_name, False, '')
-            # log the current interaction as "instruction reading"
-            self.disable_tool_btns(room=room, player=player)
             self.log_tool_use(room, player, '', dict(), 'read_instructions', 'success')
 
     def update_tools_and_doc_for_question_and_player(self, room: Room, player: Player):
         """Update the visible tools and document based on the current question for just one player"""
         question = room.current_question    
         self.update_tools(self.channel_layer.send, player.channel_name, question.uses_calculator, (not question.uses_web_search and question.uses_doc_search), question.uses_web_search)
-        self.update_doc(self.channel_layer.send, player.channel_name, question.uses_doc_search, question.document_context)
+        curr_doc = '' if question.category != Question.Category.LONGCONTEXT else self.retrieve_from_document_cache('long_context:' + room.current_question.document_context)
+        self.update_doc(self.channel_layer.send, player.channel_name, question.uses_doc_search, curr_doc)
 
-    def update_tools_and_doc_for_question(self, room: Room):
+    def show_and_disable_tools(self, room: Room):
         """Update the visible tools and document based on the current question"""
         for player in room.get_valid_players():     
             self.update_tools_and_doc_for_question_and_player(room=room, player=player)
+            self.disable_tool_btns(room=room, player=player, should_disable=True, should_clear_document=room.current_question.uses_web_search)
 
     def update_status(self, room: Room, status: str, player_name='', answer=''):
         """Helper function to update the status text"""
@@ -703,16 +701,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 }
             )
 
-    def disable_tool_btns(self, room: Room, player: Player):
-        """Helper function to disable the tool buttons"""
-        print('disabling!', player, self.channel_layer.send, player.channel_name)
+    def disable_tool_btns(self, room: Room, player: Player, should_disable: bool, should_clear_document: bool):
+        """Helper function to enable/disable the tool buttons"""
         async_to_sync(self.channel_layer.send)(
             player.channel_name,
             {
                 'type': 'update_room',
                 'data': {
                     'response_type': 'disable_tools',
-                    'response': [],
+                    'should_disable': should_disable,
+                    'should_clear_document': should_clear_document,
                 }
             }
         )
@@ -929,6 +927,38 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 m.player.banned = True
                 m.player.save()
 
+    def log_leaderboard(self, room: Room, p: Player):
+        """Log the stats on this question for the leaderboard"""
+        tool_calls = ToolLog.objects.filter(user_id=p.user.user_id, question_id=room.current_question.question_id).order_by('queried_at')
+        num_buzzes = tool_calls.filter(tool_name="buzz").count()
+        if num_buzzes == 0 or (num_buzzes == 4 and room.current_question.category == Question.Category.LONGCONTEXT):
+            correctness = 0.0
+        else:
+            correctness = 1.0 / num_buzzes
+        
+        tool_calls = list(tool_calls)
+        total_time_taken = (tool_calls[-1].queried_at - tool_calls[0].queried_at).total_seconds()
+        if tool_calls[-1].tool_name == 'no_buzz':
+            tool_calls_noninstruct = tool_calls[1:-1]
+        else:
+            tool_calls_noninstruct = tool_calls[1:]
+
+        tool_runtime = 0
+        for idx in range(len(tool_calls_noninstruct) // 2):
+            tool_start, tool_end = tool_calls_noninstruct[2*idx], tool_calls_noninstruct[2*idx+1]
+            print(tool_start.tool_name, tool_end.tool_name)
+            print(tool_start.tool_execution_status, tool_end.tool_execution_status)
+            # assert(tool_start.tool_name == tool_end.tool_name)
+            # assert(tool_start.tool_execution_status == 'start')
+            tool_runtime += (tool_end.queried_at - tool_start.queried_at).total_seconds() 
+
+        LeaderboardLog.objects.create(
+            user=p.user,
+            question_id=room.current_question.question_id,
+            correctness_score=correctness,
+            seconds_taken=total_time_taken - tool_runtime
+        )
+
     def log_tool_use(self, room: Room, p: Player, tool_query: str, tool_result: dict, tool_name: str, status: str):
         """Log the tool that was used"""
         ToolLog.objects.create(
@@ -951,52 +981,139 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         # log tool use
         self.log_tool_use(room, p, query, {'error': error}, 'web_search', 'failure')
 
-    def web_search(self, room: Room, p: Player, query):
-        """Tool to search Wikipedia"""
-        self.log_tool_use(room, p, query, dict(), 'web_search', 'start')
-        # setup engine
-        # api_key = os.getenv('GOOGLE_API_KEY')
-        # search_engine_id = os.getenv('GOOGLE_CSE_ID')
-        # google_search_url = "https://www.googleapis.com/customsearch/v1"
+    def retrieve_from_document_cache(self, key: str):
+        doc_obj = Document.objects.filter(doc_id=key)
+        if doc_obj.count() == 0:
+            return None
+        return doc_obj.first().document_text
+    
+    def add_to_document_cache(self, key: str, value: str):
+        Document.objects.create(
+            doc_id=key,
+            document_text=value
+        )
+
+    def get_wiki_pages(self, room: Room, p: Player, query):
+        """Get the Wikipedia page based on the query"""
+
+        # # get Wikimedia token
+        # session = self.scope["session"]
+        # wikimedia_token = session.get('oauth_token')
+        # oauth_session = OAuth2Session(os.getenv('WIKIMEDIA_CLIENT_ID'), token=wikimedia_token)
+
+        # api_url = 'https://en.wikipedia.org/w/api.php'
         # params = {
-        #     "key": api_key,
-        #     "cx": search_engine_id,
-        #     "q": query,
-        #     "num": 10,
+        #     "action": "opensearch",
+        #     "search": '+'.join(query.lower().split()),
+        #     "limit": 5,
+        #     "namespace": 0,
+        #     "format": "json",
         # }
 
-        # get Wikimedia token
+        # try:
+        #     response = oauth_session.get(api_url, params=params)
+        # except TokenExpiredError:
+        #     print('expired!')
+        #     self.send(text_data=json.dumps({
+        #         'response_type': 'reauthenticate',
+        #     }))
+        #     self.close()
+        #     return
+        # except Exception as e:
+        #     self.send_web_search_error(room, p, query, str(e))
+            
+        # if response.status_code == 200:
+        #     data = response.json()
+        #     search_results = data[1]
+        # else:
+        #     self.send_web_search_error(room, p, query, f'Error Code: {response.status_code}')
+        #     return
+
+        # get text from the Wikipedia page
+
+        query = self.clean_query(query)
+        self.log_tool_use(room, p, query, dict(), 'web_search', 'start')
+
+        cached_query_res = self.retrieve_from_document_cache('wiki_title_query:' + query)
+        if cached_query_res != None:
+            return [cached_query_res], 'from_cache'
+
+        try:
+            api_key = os.getenv('GOOGLE_API_KEY')
+            search_engine_id = os.getenv('GOOGLE_CSE_ID')
+            google_search_url = "https://www.googleapis.com/customsearch/v1"
+            params = {
+                "key": api_key,
+                "cx": search_engine_id,
+                "q": query,
+                "num": 10,
+            }
+            response = requests.get(google_search_url, params=params)
+            response_data = response.json()
+            search_results = response_data.get('items', [])
+            if not search_results:
+                return ['no_search_results'], 'error'
+        except Exception as e:
+            return [str(e)], 'error'
+
+        return [r['title'].replace(' - Wikipedia', '').strip() for r in search_results], 'new_search'
+
+    def extract_elements_from_html(self, html: str):
+        soup = BeautifulSoup(html, 'html.parser')
+        elements = soup.find_all(id=re.compile(r'^element-'))
+        sentences = []
+        for elem in elements:
+            sentences.append(elem.text.strip())
+        return sentences
+
+    def send_web_search_success(self, room: Room, p: Player, query: str, title: str, final_html: str, cache_title: bool, cache_html: bool):
+        """Successful web search"""
+
+        if cache_title:
+            self.add_to_document_cache('wiki_title_query:' + query, title)
+        if cache_html:
+            self.add_to_document_cache('wiki_page_query:' + title, final_html)
+
+        self.log_tool_use(room, p, query, title, 'web_search', 'success')
+        self.send(text_data=json.dumps({
+            'response_type': 'web_search_result',
+            'result': final_html
+        }))
+        self.update_tools(self.channel_layer.send, p.channel_name, room.current_question.uses_calculator, True, True)
+
+        # auto-search for the relevant paragraph
+        self.select_content(room, p, query, final_html)
+
+    def web_search(self, room: Room, p: Player, query):
+
+        wiki_pages, status = self.get_wiki_pages(room, p, query)
+        print(wiki_pages, status)
+        if status == 'error':
+            self.send_web_search_error(room, p, query, wiki_pages[0])
+            return
+
         session = self.scope["session"]
         wikimedia_token = session.get('oauth_token')
-        # should reauthenticate (need to test)
-        if not wikimedia_token:
-            print('expired!')
-            self.send(text_data=json.dumps({
-                'response_type': 'reauthenticate',
-            }))
-            self.close()
-            return
         oauth_session = OAuth2Session(os.getenv('WIKIMEDIA_CLIENT_ID'), token=wikimedia_token)
+        
+        for page_title in wiki_pages:
+            page_title_clean = self.clean_query(page_title)
 
-        api_url = 'https://en.wikipedia.org/w/api.php'
-        params = {
-            "action": "opensearch",
-            "search": '+'.join(query.lower().split()),
-            "limit": 5,
-            "namespace": 0,
-            "format": "json",
-        }
-        response = oauth_session.get(api_url, params=params)
-        if response.status_code == 200:
-            data = response.json()
-            search_results = data[1]
-        else:
-            self.send_web_search_error(room, p, query, 'invalid_search_query')
-            return
+            cached_page_res = self.retrieve_from_document_cache('wiki_page_query:' + page_title_clean)
 
-        # get all text from the top-5 web pages
-        for page_title in search_results:
-
+            if cached_page_res != None:
+                print('page found in cache!')
+                self.send_web_search_success(room=room,
+                                    p=p,
+                                    query=self.clean_query(query),
+                                    title=page_title_clean,
+                                    final_html=cached_page_res,
+                                    cache_title=(status == 'new_search'),
+                                    cache_html=False)
+                return
+            
+            print('page not found')
+        
             params = {
                 "action": "parse",
                 "page": page_title,
@@ -1004,7 +1121,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 "prop": "text|images",
                 "redirects": 1,
             }
-            response = oauth_session.get(api_url, params=params)
+
+            try:
+                api_url = 'https://en.wikipedia.org/w/api.php'
+                response = oauth_session.get(api_url, params=params)
+            except TokenExpiredError:
+                self.send(text_data=json.dumps({
+                    'response_type': 'reauthenticate',
+                }))
+                self.close()
+                return
+            except Exception as e:
+                continue
             
             if response.status_code == 200:
                 data = response.json()
@@ -1012,13 +1140,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 title = data["parse"]["title"]
                 soup = BeautifulSoup(html_content, 'html.parser')
                 
-                content_list = []
                 element_counter = 0
+
+                # TODO: fix the web scraping
             
                 for p_tag in soup.find_all('p'):
                     text = p_tag.get_text()
                     if text:
-                        content_list.append(text)
                         p_tag['id'] = f"element-{element_counter}"
                         element_counter += 1
                 
@@ -1036,19 +1164,20 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=mediawiki.legacy.shared|mediawiki.skinning.content|mediawiki.skinning.interface&only=styles&skin=vector">
                 <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=site.styles&only=styles&skin=vector">
                 '''
-                copy_script = '''<script>
-            document.addEventListener("keydown", function(e) {
-              if ((e.ctrlKey || e.metaKey) && e.key == "c") {
-                navigator.clipboard.readText()
-                .then(text => {
-                  window.parent.sendToNotes(text);
-                })
-                .catch(err => {
-                  console.error("Error reading clipboard contents:", err);
-                });
-              }
-            });
-          </script>'''
+        #         copy_script = '''<script>
+        #     document.addEventListener("keydown", function(e) {
+        #       if ((e.ctrlKey || e.metaKey) && e.key == "c") {
+        #         navigator.clipboard.readText()
+        #         .then(text => {
+        #           window.parent.sendToNotes(text);
+        #         })
+        #         .catch(err => {
+        #           console.error("Error reading clipboard contents:", err);
+        #         });
+        #       }
+        #     });
+        #   </script>'''
+                copy_script = ''
                 final_html = f'''
                 <html>
                 <head>
@@ -1080,30 +1209,36 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 </body>
                 </html>
                 '''
+                print('new page')
+                self.send_web_search_success(room=room,
+                                             p=p,
+                                             query=self.clean_query(query),
+                                             title=page_title_clean,
+                                             final_html=final_html,
+                                             cache_title=(status == 'new_search'),
+                                             cache_html=True)
 
-                self.log_tool_use(room, p, query, {'text': '<delim>'.join(content_list), 'wiki_page_title': title}, 'web_search', 'success')
-                self.send(text_data=json.dumps({
-                    'response_type': 'web_search_result',
-                    'result': final_html
-                }))
-                self.update_tools(self.channel_layer.send, p.channel_name, room.current_question.uses_calculator, True, True)
                 return
             else:
                 continue
         
         self.send_web_search_error(room, p, query, 'no_page_content')
 
-    def select_content(self, room: Room, p: Player, query: str):
+    def clean_query(self, query):
+        cleaned_query = re.sub(r'[^a-zA-Z0-9\s\-]', '', query)
+        cleaned_query = re.sub(r'\s+', '-', cleaned_query.strip())
+        return cleaned_query.lower()
+
+    def select_content_wrapper(self, room: Room, p: Player, query: str):
+        html = self.retrieve_from_document_cache('long_context:' + room.current_question.document_context)
+        print('got the doc!')
+        self.select_content(room, p, query, html)
+
+    def select_content(self, room: Room, p: Player, query: str, html: str):
         """Executes the content selection tool"""
+
         self.log_tool_use(room, p, query, dict(), 'content_selection', 'start')
-    
-        res = ToolLog.get_last_tool_result(question=room.current_question, user=p.user, tool_name='web_search')
-        if 'text' not in res:
-            self.send(text_data=json.dumps({
-                'response_type': 'content_selection_result',
-                'result': 'You need a web page before you can search!'
-            }))
-        docs = res['text'].split('<delim>')
+        docs = self.extract_elements_from_html(html)
 
         cohere_client = cohere.ClientV2(api_key=os.getenv('COHERE_API_KEY'))
 
@@ -1164,16 +1299,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     # === Helper methods ===
 
-    def update_time_state(self, room: Room):
+    def update_time_state(self, room: Room, player: Player):
 
         """Checks time and updates state
         """
         if not room.state == Room.GameState.CONTEST:
             if timezone.now().timestamp() >= room.end_time and room.state != Room.GameState.IDLE:
                 room.state = Room.GameState.IDLE
-                curr_answer = room.current_question.answer
+                curr_answer = room.current_question.answer_accept[0]
                 room.save()
                 self.update_status(room, room.state, '', curr_answer)
+                self.log_leaderboard(room, player)
+                self.log_tool_use(room, player, '', dict(), 'no_buzz', 'start')
 
                 # for player in room.get_valid_players():
                 #     self.disable_tool_btns(room=room, player=player)

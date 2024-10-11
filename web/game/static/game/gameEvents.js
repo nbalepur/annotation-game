@@ -10,7 +10,7 @@ const contentProgress = document.getElementById('content-progress');
 const instructionProgress = document.getElementById('instruction-progress');
 const questionSpace = document.getElementById('question-space');
 const answerFooter = document.getElementById('answer-footer');
-const answerHeader = document.getElementById('answer-header');
+// const answerHeader = document.getElementById('answer-header');
 const scoreboard = document.getElementById('scoreboard-body');
 const messageSpace = document.getElementById('message-space');
 const categoryHeader = document.getElementById('category-header');
@@ -109,7 +109,7 @@ document.addEventListener('keypress', (e) => {
     } else if (e.key == 'c') {
       focusTextInput("calc-expression");
       e.preventDefault();
-    } else if (e.key == 'g') {
+    } else if (e.key == 'w') {
       focusTextInput("google-query");
       e.preventDefault();
     } else if (e.key == 'f') {
@@ -131,11 +131,12 @@ document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
     focusTextInput("content-search");
     e.preventDefault();
-  } else if ((e.ctrlKey || e.metaKey) && e.key == 'c') {
-        navigator.clipboard.readText()
-        .then(text => {
-          sendToNotes(text);
-        })
+  } else if ((e.ctrlKey || e.metaKey) && e.key == 'c' && e.target.id != 'user-notes') {
+        // navigator.clipboard.readText()
+        // .then(text => {
+        //   sendToNotes(text);
+        // })
+        return;
     }
   }
 );
@@ -204,8 +205,8 @@ docSearchInput.addEventListener('keydown', (e) => {
 
 
 
-categorySelect.addEventListener('change', setCategory);
-difficultySelect.addEventListener('change', setDifficulty);
+// categorySelect.addEventListener('change', setCategory);
+// difficultySelect.addEventListener('change', setDifficulty);
 buzzBtn.addEventListener('click', buzz);
 // skipBtn.addEventListener('click', skip);
 nextBtn.addEventListener('click', next);

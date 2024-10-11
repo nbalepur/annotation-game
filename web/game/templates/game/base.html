@@ -11,22 +11,33 @@
   <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
   {% block title %}
   {% endblock %}
+  
+  <style>
+    /* Reset default margins and paddings */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+
 </head>
 
 <body>
-
   {% include "game/navbar.html" %}
-
-  <br>
-
-  {% block content %}
-  {% endblock %}
-
-  <br>
-  <hr>
-  {% include "game/footer.html" %}
-  <br>
-
+  
+  <div id="main-content">
+    {% block content %}
+    {% endblock %}
+  </div>
+  
+  {% if request.path == "/" %}
+    <br>
+    <hr>
+    {% include "game/footer.html" %}
+  {% endif %}
+  
+  <!-- Include your JavaScript files here -->
 </body>
 
 <!-- ORIGINAL -->
@@ -63,6 +74,8 @@
 <script src={% static "game/base.js" %}></script>
 <script type="text/javascript" src={% static "game/userdata.js" %}></script>
 <script type="text/javascript" src={% static "game/utils.js" %}></script>
+
+
 
 {% block scripts %}
 {% endblock %}

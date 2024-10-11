@@ -9,228 +9,136 @@
 {% endif %}
 {% endblock %}
 
-
 {% block content %}
-<div style="padding-left: 30px; padding-right: 30px;" id="game-container">
-
-  <div>
-
-      <!-- Row 0: Buttons + Timer -->
-      
+<div id="game-container">
+  <div class="d-flex flex-column flex-grow-1">
+    <!-- Row 0: Buttons + Timer -->
+    <div class="row" id="buttons-row">
+      <div class="col">
         <div class="row">
-          <div class="col">
-            <!-- <button id="skip-btn" class="btn btn-info btn-lg" data-bs-toggle="tooltip" data-bs-placement="top"
-          title="Shortcut: S">Skip</button> -->
-          <div class="row">
-            <div class="d-flex justify-content-between align-items-center w-100">
-              <input type="text" id="request-content" class="form-control" maxlength="200">
-              <!-- Left Side Buttons (Next and Buzz) -->
-              <div class="d-flex align-items-center" id="left-buttons">
-                <!-- Next button (it might disappear) -->
-                <button id="next-btn" class="btn btn-info btn-lg me-3" data-bs-toggle="tooltip" data-bs-placement="top"
-                  title="Shortcut: N">Next (n)</button>
-                <!-- Buzz button should stay at the left when Next disappears -->
-                <button id="buzz-btn" class="btn btn-danger btn-lg" data-bs-toggle="tooltip"
-                  title="Shortcut: SPACE">Buzz (space)</button>
-              </div>
-              
-              <!-- Right Side Button (Settings) -->
-              <div>
-                <button id="settings-btn" class="btn btn-secondary btn-lg" data-bs-toggle="offcanvas"
-                  data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings"
-                  title="Shortcut: [">Settings (&thinsp;[&thinsp;)</button>
-              </div>
+          <div class="d-flex justify-content-between align-items-center w-100">
+            <input type="text" id="request-content" class="form-control" maxlength="200">
+            <div class="d-flex align-items-center" id="left-buttons">
+              <button id="next-btn" class="btn btn-info btn me-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Shortcut: N">Next (n)</button>
+              <button id="buzz-btn" class="btn btn-danger btn me-2" data-bs-toggle="tooltip"
+                title="Shortcut: SPACE">Buzz (space)</button>
+              <button id="settings-btn" class="btn btn-secondary btn" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings"
+                title="Shortcut: [">Settings (&thinsp;[&thinsp;)</button>
             </div>
-          </div>
-                  
-            <div class="progress mt-2">
-              <div id="content-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"
-                aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-              <div id="buzz-progress" class="progress-bar bg-danger" role="progressbar" style="width: 0%"
-                aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-              <div id="instruction-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%"
-                aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="d-flex justify-content-center align-items-center">
+              <h4 id="status-text" class="mb-0">Status: <span style="color:grey;">Hit "next" to continue...</span></h4>
             </div>
-            <h3 id="status-text" class="mb-4">Status: <span style="color:grey;">Hit "next" to continue...</span></h3>
           </div>
         </div>
-
-        <!-- <div class="row mb-4"> -->
-        <!-- <div class="col-12 h-100"> -->
-
-          <div class="row mb-4" id="question-row">
-
-            <div class="col-6">
-              
-              <div class="row mb-4">
-            <!-- Question -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <h6 id="category-header">Question</h6>
-                </div>
-                <div class="card-body">
-                  <span id="question-space"></span>
-                </div>
-                <div class="card-footer">
-                  <h6 id="answer-header">Answer:</h6>
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-          <div class="row mb-4">
-
-            <div class="col-6">
-              {% if room.uses_instructions %}
-              {% include "game/instructions.html" %}
-              {% endif %}
-            </div>
-
-          <div class="col-6">
-
-            <!-- Note-Taking -->
-            <div class="card h-100">
-              <div class="card-header">
-                <h6>Scratchpad (s)</h6>
-              </div>
-              
-              <div class="card-body">
-                <div id="user-notes" class="form-control h-100" contenteditable="true"
-                  style="min-height: 150px; max-height: 200px; overflow-y: auto;">
-                  <ul style="padding-left: 5px; margin-left: 10px;">
-                    <li>Write your notes here...</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
+        <div class="progress mt-2">
+          <div id="content-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"
+            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+          <div id="buzz-progress" class="progress-bar bg-danger" role="progressbar" style="width: 0%"
+            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+          <div id="instruction-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%"
+            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
+      </div>
+    </div>
 
-
+    <!-- Row 1: Question and Embedded Page -->
+    <div class="row flex-grow-1" id="question-row">
+      <!-- Left Column -->
+      <div class="col-6 d-flex flex-column">
+        <!-- Question -->
+        <div class="mb-3">
+          <div class="card">
+            <div class="card-header bg-danger bg-opacity-50">
+              <h6 id="category-header">Question</h6>
+            </div>
+            <div class="card-body">
+              <span id="question-space"></span>
+            </div>
           </div>
-
-          <!-- <div class="row mb-4"> -->
-
-  
-
-
-<!-- 
-          </div> -->
-
-        <!-- </div> -->
+        </div>
 
         <!-- Instructions -->
-
-
-        <div class="col-6 mb-4">
-          {% if room.uses_instructions %}
-          {% include "game/page.html" %}
-          {% endif %}
+        {% if room.uses_instructions %}
+        <div class="mb-3">
+          {% include "game/instructions.html" %}
         </div>
+        {% endif %}
 
+        <!-- Scratchpad -->
+        <div class="d-flex flex-column flex-grow-1">
+          <div class="card h-100 d-flex flex-column flex-grow-1">
+            <div class="card-header">
+              <h6>Scratchpad (s)</h6>
+            </div>
+            <div class="card-body user-notes-card-body d-flex flex-column flex-grow-1">
+              <textarea id="user-notes" placeholder="Write your notes here..." class="form-control h-100 flex-grow-1"></textarea>
+            </div>
+          </div>
+        </div>
       </div>
 
-
-    <!-- Offcanvas for Toolbox -->
-
-        <!-- Embedded Webpage -->
-
-      
-    <!-- </div> -->
-
-
-    <!-- Off-canvas sidebar for the settings (replaces col-3) -->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSettings"
-      aria-labelledby="offcanvasSettingsLabel">
-      <div class="offcanvas-header">
-        <h5 id="offcanvasSettingsLabel">Settings</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" id="settings-close-btn" aria-label="Close"></button>
-      </div>
-      <div class="offcanvas-body">
-        <!-- Scoreboard and settings content here -->
-        <div class="card mb-4">
-          <div class="card-header">Scoreboard</div>
-          <div class="card-body">
-            <label for="name">Username:</label>
-            <div class="input-group mb-2">
-              <div class="input-group-prepend">
-                <span class="input-group-text">@</span>
-              </div>
-              <input type="text" class="form-control" id="name" maxlength="20" required placeholder="Username">
-              <div class="invalid-feedback">Please provide a username!</div>
-            </div>
-            <label for="email">Email:</label>
-            <div class="input-group mb-3">
-              <input type="email" class="form-control" id="email" maxlength="320" placeholder="Enter your email">
-              <div class="invalid-feedback">Please provide a valid email or check the box below to opt out!</div>
-            </div>
-            <div class="form-check mb-3">
-              <input type="checkbox" class="form-check-input" id="optOutCheck">
-              <label class="form-check-label" for="optOutCheck">I do not want to provide my email and receive
-                prizing</label>
-            </div>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Score</th>
-                </tr>
-              </thead>
-              <tbody id="scoreboard-body"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card mb-4">
-          <div class="card-header">Message Log</div>
-          <div class="card-body">
-            <ul id="message-space" class="list-group"></ul>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header" role="button" aria-expanded="false">
-            Question Filter
-          </div>
-          <div id="settings">
-            <div class="card-body">
-              <form>
-                <div class="form-group mb-3">
-                  <label for="category-select">Category:</label>
-                  <select id="category-select" class="form-control">
-                    <option value="Everything">Everything</option>
-                    <option value="Science">Science</option>
-                    <option value="History">History</option>
-                    <option value="Literature">Literature</option>
-                    <option value="Philosophy">Philosophy</option>
-                    <option value="Religion">Religion</option>
-                    <option value="Geography">Geography</option>
-                    <option value="Fine Arts">Fine Arts</option>
-                    <option value="Social Science">Social Science</option>
-                    <option value="Mythology">Mythology</option>
-                    <option value="Trash">Trash</option>
-                  </select>
-                </div>
-                <div class="form-group mb-3">
-                  <label for="difficulty-select">Difficulty:</label>
-                  <select id="difficulty-select" class="form-control">
-                    <option value="HS">HS</option>
-                  </select>
-                </div>
-              </form>
-
-              <div id="reset-btn" class="btn btn-secondary" data-toggle="modal" data-target="#resetModal">Reset</div>
-            </div>
-          </div>
-        </div>
+      <!-- Right Column -->
+      <div class="col-6 d-flex flex-column">
+        {% if room.uses_instructions %}
+        {% include "game/page.html" %}
+        {% endif %}
       </div>
     </div>
   </div>
 
+  <!-- Offcanvas for Toolbox -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSettings"
+    aria-labelledby="offcanvasSettingsLabel">
+    <div class="offcanvas-header">
+      <h5 id="offcanvasSettingsLabel">Settings</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" id="settings-close-btn"
+        aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <!-- Scoreboard and settings content here -->
+      <div class="card mb-3">
+        <div class="card-header">Scoreboard</div>
+        <div class="card-body">
+          <label for="name">Username:</label>
+          <div class="input-group mb-2">
+            <div class="input-group-prepend">
+              <span class="input-group-text">@</span>
+            </div>
+            <input type="text" class="form-control" id="name" maxlength="20" required placeholder="Username">
+            <div class="invalid-feedback">Please provide a username!</div>
+          </div>
+          <label for="email">Email:</label>
+          <div class="input-group mb-3">
+            <input type="email" class="form-control" id="email" maxlength="320" placeholder="Enter your email">
+            <div class="invalid-feedback">Please provide a valid email or check the box below to opt out!</div>
+          </div>
+          <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="optOutCheck">
+            <label class="form-check-label" for="optOutCheck">I do not want to provide my email and receive
+              prizing</label>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Score</th>
+              </tr>
+            </thead>
+            <tbody id="scoreboard-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">Message Log</div>
+        <div class="card-body">
+          <ul id="message-space" class="list-group"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -242,11 +150,44 @@
   integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g=="
   crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script type="text/javascript" src={% static "game/instructions.js" %}></script>
-<script type="text/javascript" src={% static "game/game.js" %}></script>
-<script type="text/javascript" src={% static "game/gameEvents.js" %}></script>
-<script type="text/javascript" src={% static "game/feedback.js" %}></script>
-<script type="text/javascript" src={% static "game/components/scoreboard.js" %}></script>
-<script type="text/javascript" src={% static "game/components/messages.js" %}></script>
-<link rel="stylesheet" href={% static "game/game.css" %}>
+<script type="text/javascript" src="{% static 'game/instructions.js' %}"></script>
+<script type="text/javascript" src="{% static 'game/game.js' %}"></script>
+<script type="text/javascript" src="{% static 'game/gameEvents.js' %}"></script>
+<script type="text/javascript" src="{% static 'game/feedback.js' %}"></script>
+<script type="text/javascript" src="{% static 'game/components/scoreboard.js' %}"></script>
+<script type="text/javascript" src="{% static 'game/components/messages.js' %}"></script>
+<link rel="stylesheet" href="{% static 'game/game.css' %}">
+<style>
+  /* game.css */
+  #game-container {
+    padding: 20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Ensure the main content fills the available space */
+  #question-row {
+    flex-grow: 1;
+  }
+
+  .card-header {
+    margin-bottom: 0;
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-top: 5px;
+  }
+
+  .card-body {
+    margin-bottom: 0;
+    margin-top: 0;
+    padding-bottom: 10px;
+    padding-top: 10px;
+  }
+
+  .user-notes-card-body {
+    padding-bottom: 15px;
+    padding-top: 15px;
+  }
+</style>
 {% endblock %}
