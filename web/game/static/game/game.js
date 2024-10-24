@@ -29,6 +29,7 @@ let readingTime = 10;
 let readingPassedTime = 0;
 
 let questionTime = 10;
+let questionPassedTime = 0;
 
 let question;
 let category;
@@ -91,7 +92,8 @@ function update() {
 
     case 'instruct':
       // Update if game is going
-      width = Math.round(100 * (1.05 * timePassed / duration));
+      questionPassedTime = 0;
+      width = Math.min(100, (100 * ((1.05 * readingPassedTime) / readingTime)));
       instructionProgress.style.width = width + '%';
 
       currentTime += 0.1;
@@ -111,8 +113,7 @@ function update() {
     case 'playing':
 
       // Update if game is going
-      console.log('updating?')
-      contentProgress.style.width = Math.round(100 * (1.05 * timePassed / duration)) + '%';
+      contentProgress.style.width = Math.round(100 * (1.05 * questionPassedTime / questionTime)) + '%';
 
       buzzPassedTime = 0;
       currentTime += 0.1;
@@ -121,6 +122,13 @@ function update() {
       buzzProgress.style.display = 'none';
       instructionProgress.style.display = 'none'
       // answerHeader.innerHTML = '';
+
+      if (questionPassedTime >= questionTime) {
+        sendRequest('no_buzz');
+        contentProgress.style.width = '0%';
+      }
+      questionPassedTime += 0.1;
+
       break;
 
     case 'contest':
@@ -130,6 +138,7 @@ function update() {
       instructionProgress.style.display = 'none'
       contentProgress.style.display = 'none';
       buzzProgress.style.display = '';
+      buzzProgress.style.visibility = 'visible';
 
       // auto answer if over buzz time
       if (buzzPassedTime >= buzzTime) {
@@ -151,7 +160,6 @@ gamesock.onmessage = message => {
   if (data['response_type'] === "update") {
 
     // sync client with server
-    gameState = data['game_state'];
     currentTime = data['current_time'];
     startTime = data['start_time'];
     endTime = data['end_time'];
@@ -165,7 +173,7 @@ gamesock.onmessage = message => {
     // categorySelect.disabled = changeLocked;
     // difficultySelect.disabled = changeLocked;
 
-    showButtons();
+    //showButtons();
 
     // Update scoreboard
     // TODO: Make it so we don't have to redo popover??
@@ -200,6 +208,8 @@ gamesock.onmessage = message => {
     setQuestion(data['shown_question'], data['state']);
   } else if (data['response_type'] === "update_instructions") {
     populateInstructions(data['instructions']);
+  } else if (data['response_type'] === "populate_comparison") {
+    populateComparisonPane(data['question'], data['instructions_a'], data['instructions_b']);
   } else if (data['response_type'] === 'update_tools') {
     updateTools(data['use_calculator'], data['use_doc'], data['use_web']);
   } else if (data['response_type'] === 'disable_tools') {
@@ -211,9 +221,9 @@ gamesock.onmessage = message => {
     updateDoc(data['use_doc'], data['doc_content']);
   } else if (data['response_type'] === 'update_status') {
     updateStatus(data['status'], data['player'], data['answer']);
-  }
-  
-  else if (data['response_type'] === "get_question_feedback") {
+  } else if (data['response_type'] === 'toggle_comparison') {
+    toggleComparisonViewer(data['show_comparison']);
+  } else if (data['response_type'] === "get_question_feedback") {
 
     // console.log(data)
     
@@ -292,7 +302,7 @@ function setQuestion(question_text, state) {
 // }
 
 function setCalculation(res) {
-  document.getElementById('calc-result').textContent = res;
+  calculatorResult.value = res;
 }
 
 function setWebSearch(res) {
@@ -337,8 +347,6 @@ function sendToNotes(copied_text) {
   }
 }
 
-
-
 function hideButtons() {
   // skipBtn.style.display = 'none';
   nextBtn.style.display = 'none';
@@ -346,44 +354,73 @@ function hideButtons() {
   //chatBtn.style.display = 'none';
 }
 
+function showButtonsForState(currGameState) {
+  switch (currGameState) {
+    case 'compare':
+      reportBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      buzzBtn.style.display = 'none';
+      settingsBtn.style.display = '';
+      settingsBtn.style.visibility = 'hidden';
+      break;
+    case 'compare_correct':
+        reportBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        buzzBtn.style.display = 'none';
+        settingsBtn.style.display = '';
+        settingsBtn.style.visibility = 'hidden';
+        break;
+    case 'compare_incorrect':
+      reportBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      buzzBtn.style.display = 'none';
+      settingsBtn.style.display = '';
+      settingsBtn.style.visibility = 'hidden';
+      break;
+    case 'playing':
+      // skipBtn.style.display = '';
+      reportBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      buzzBtn.style.display = '';
+      settingsBtn.style.display = '';
+      settingsBtn.style.visibility = 'hidden';
+      //chatBtn.style.display = '';
+      break;
+    case 'idle':
+      // skipBtn.style.display = 'none';
+      nextBtn.style.display = '';
+      buzzBtn.style.display = 'none';
+      settingsBtn.style.display = '';
+      settingsBtn.style.visibility = 'visible';
+      reportBtn.style.display = '';
+      //chatBtn.style.display = '';
+      break;
+    case 'contest':
+      // skipBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      buzzBtn.style.display = 'none';
+      reportBtn.style.display = 'none';
+
+      //settingsBtn.style.visibility = 'hidden';
+      settingsBtn.style.display = 'none';
+      //chatBtn.style.display = 'none';
+      break;
+    case 'instruct':
+      // skipBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      buzzBtn.style.display = 'none';
+      settingsBtn.style.display = '';
+      reportBtn.style.display = 'none';
+      settingsBtn.style.visibility = 'hidden';
+      //chatBtn.style.display = 'none';
+      break;
+  }
+}
+
 function showButtons() {
 
   if (currentAction == 'idle') {
-    switch (gameState) {
-      case 'playing':
-        // skipBtn.style.display = '';
-        nextBtn.style.display = 'none';
-        buzzBtn.style.display = '';
-        settingsBtn.style.display = '';
-        settingsBtn.style.visibility = 'hidden';
-        //chatBtn.style.display = '';
-        break;
-      case 'idle':
-        // skipBtn.style.display = 'none';
-        nextBtn.style.display = '';
-        buzzBtn.style.display = 'none';
-        settingsBtn.style.display = '';
-        settingsBtn.style.visibility = 'visible';
-        //chatBtn.style.display = '';
-        break;
-      case 'contest':
-        // skipBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-        buzzBtn.style.display = 'none';
-
-        //settingsBtn.style.visibility = 'hidden';
-        settingsBtn.style.display = 'none';
-        //chatBtn.style.display = 'none';
-        break;
-      case 'instruct':
-        // skipBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-        buzzBtn.style.display = 'none';
-        settingsBtn.style.display = '';
-        settingsBtn.style.visibility = 'hidden';
-        //chatBtn.style.display = 'none';
-        break;
-    }
+    showButtonsForState(gameState);
   } else {
     // skipBtn.style.display = 'none';
     nextBtn.style.display = 'none';
@@ -601,26 +638,9 @@ function next() {
       // Collapse feedback section
       // disableFeedbackCollapseToggle();
       // collapseFeedback();
-      gameState = 'instruct';
-      nextBtn.scrollIntoView({ block: 'start' });
+      // gameState = 'instruct';
+      statusText.scrollIntoView({ block: 'start' });
       sendRequest("next");
-
-      // // Extend the question-row to take up remaining space below
-      // const questionRow = document.getElementById('question-row');
-      // const footer = document.getElementById('footer');  // Optional if you have a footer
-      
-      // if (questionRow) {
-      //   const viewportHeight = window.innerHeight;
-      //   const nextBtnHeight = nextBtn.offsetHeight;
-      //   const nextBtnTop = nextBtn.getBoundingClientRect().top;
-      //   const footerTop = footer ? footer.getBoundingClientRect().top : viewportHeight;
-
-      //   // Calculate available space between next button and footer (and padding)
-      //   const availableHeight = footerTop - nextBtnTop - nextBtnHeight - 15;
-
-      //   // Set the height of question-row dynamically
-      //   questionRow.style.height = `${availableHeight}px`;
-      // }
   }
  } 
  else {

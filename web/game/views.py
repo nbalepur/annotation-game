@@ -74,7 +74,7 @@ def leaderboard(request):
     correctness_scores = [-1 * d['avg_correctness'] for d in aggregated_data]
     correctness_rank = rankdata(correctness_scores, method='dense')
 
-    time_scores = [d['avg_seconds_taken'] for d in aggregated_data]
+    time_scores = [d['avg_seconds_taken'] if d['avg_seconds_taken'] != None else float('inf') for d in aggregated_data]
     time_rank = rankdata(time_scores, method='dense')
 
     combined_rank = list(correctness_rank + time_rank)
@@ -84,8 +84,8 @@ def leaderboard(request):
     for idx in combined_rank_idx:
         row = aggregated_data[idx]
         leaderboard_data.append({'username': row['user__name'], 
-                                 'correctness': row['avg_correctness'], 
-                                 'time': row['avg_seconds_taken'], 
+                                 'correctness': f"{'%.3f' % (row['avg_correctness'] * 100)}% Success Rate", 
+                                 'time': 'N/A' if row['avg_seconds_taken'] == None else f"{'%.3f' % row['avg_seconds_taken']} Seconds", 
                                  'num_questions': len(correctness_scores)})
 
     # Render the leaderboard data to the template

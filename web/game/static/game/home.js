@@ -88,7 +88,6 @@ if (landingButton) {
 
 // Handle the "I Agree" button click
 if (agreeBtn) {
-    console.log('yo');
     agreeBtn.addEventListener('click', function() {
     // Hide the "I Agree" section
     document.getElementById('agree-irb').style.display = 'none';

@@ -107,12 +107,15 @@ class Room(models.Model):
         PLAYING = 'playing', _('Playing')
         CONTEST = 'contest', _('Contest')
         INSTRUCTION_READING = 'instruct', _('Instruct')
+        PAIRWISE_COMPARISON = 'compare', _('Compare')
 
     label = models.SlugField(unique=True)
     collects_feedback = models.BooleanField(default=False)
     uses_instructions = models.BooleanField(default=False)
     max_players = models.IntegerField(default=20, validators=[MinValueValidator(0)])
     state = models.CharField(max_length=9, choices=GameState.choices, default=GameState.IDLE)
+    
+    show_comparisons_before = models.BooleanField(null=True)
 
     current_question = models.ForeignKey(
         Question,
@@ -124,7 +127,7 @@ class Room(models.Model):
     start_time = models.FloatField(default=0)
     end_time = models.FloatField(default=1)
 
-    player_map = models.JSONField(null=True, blank=True)
+    instruction_map = models.JSONField(null=True, blank=True)
 
     buzz_player = models.OneToOneField(
         'Player',
@@ -277,6 +280,18 @@ class User(models.Model):
     def __str__(self):
         return self.name
     
+class ReportIssue(models.Model):
+
+    report_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    question_id = models.IntegerField()
+
+    is_bad_question = models.BooleanField()
+    is_bad_instruction = models.BooleanField()
+    is_bad_answer_verifier = models.BooleanField()
+
+    feedback = models.TextField(max_length=1000)
+
 class LeaderboardLog(models.Model):
 
     log_id = models.AutoField(primary_key=True)
@@ -284,7 +299,6 @@ class LeaderboardLog(models.Model):
     question_id = models.IntegerField()
     correctness_score = models.FloatField()
     seconds_taken = models.IntegerField()
-
 
 class ToolLog(models.Model):
     """Record the user's tool usage"""
@@ -348,6 +362,16 @@ class Player(models.Model):
     def __str__(self):
         return self.user.name + ":" + self.room.label
 
+class ComparisonFeedback(models.Model):
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    chosen = models.CharField(default="", max_length=30)
+    chosen_adjusted = models.CharField(default="", max_length=30)
+    chosen_instruction = models.JSONField(null=True, blank=True)
+    shown_first = models.BooleanField()
 
 class QuestionFeedback(models.Model):
     """Feedback for quizbowl questions"""

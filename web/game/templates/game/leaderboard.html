@@ -35,7 +35,7 @@
                         <!-- <th scope="col">Accuracy</th> -->
                         <!-- <th scope="col">Precision</th> -->
                         <!-- <th scope="col">Recall</th> -->
-                        <th data-field="total" scope="col" data-sortable="true">Total Questions Seen 🤔</th>
+                        <th data-field="total" scope="col" data-sortable="true">Total Questions Attempted 🤔</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,8 +43,8 @@
                     <tr>
                         <th scope="row">{{ forloop.counter }}</th>
                         <td>{{ user.username }}</td>
-                        <td>{{ user.correctness|floatformat:4 }}</td>
-                        <td>{{ user.time|floatformat:4 }} seconds</td>
+                        <td>{{ user.correctness }}</td>
+                        <td>{{ user.time }}</td>
                         <td>{{ user.num_questions }}</td>
                     </tr>
                     {% empty %}

@@ -1,14 +1,80 @@
-<div class="card bg-faded">
-    <div class="card-header" data-bs-toggle="" id="feedback-header" data-bs-target="#feedback-collapse" aria-expanded="false" aria-controls="feedback-collapse">
-      <h6>Feedback</h6>
-    </div>
+<style>
+  .hover-highlight:hover {
+    background-color: #cbfcfc;
+    border-color: #07e2ff;
+    transition: 0.3s;
+  }
+</style>
+<div class="card bg-faded mb-3">
+  <div
+    class="card-header bg-info"
+    style="padding-bottom: 5px; padding-top: 10px"
+    id="feedback-header"
+  >
+    <h6>Pairwise Comparison</h6>
+  </div>
+  <div class="card-body" id="feedback-body">
+    <div class="row">
+      <div class="col-12">
+        <p>
+          Which of the following instructions do you think would help you answer
+          the question more accurately and quickly?
+        </p>
+      </div>
+      <div class="col-3 mb-3"></div>
 
-    
-    <div class="card-body collapse" id="feedback-collapse" data-toggle="validator">
-        <span id="feedback-space">
-            <form id="initial-feedback" class="needs-validation" novalidate></form>
+      <div class="col-6 mb-3">
+        <div class="card" id="feedback-question">
+          <div class="card-header">
+            <h6>Question</h6>
+          </div>
+          <div class="card-body" id="feedback-question-body">
+            This is the question
+          </div>
+        </div>
+      </div>
 
-            <form id="additional-feedback" class="needs-validation" novalidate></form>            
-        </span>
+      <div class="col-3 mb-3"></div>
     </div>
+    <div class="row align-items-stretch">
+      <div class="col-5 mb-3">
+        <div
+          class="card h-100 hover-highlight"
+          id="plan-a"
+          style="cursor: pointer"
+          onclick="selectPlan('A')"
+        >
+          <div class="card-header bg-primary bg-opacity-50" id="plan-a-header">
+            <h6>Instructions A are Better (&thinsp;[&thinsp;)</h6>
+          </div>
+          <div class="card-body" id="plan-a-body">This is plan A</div>
+        </div>
+      </div>
+
+      <div class="col-2 d-flex justify-content-center align-items-center mb-3">
+        <button
+          id="tie-btn"
+          class="btn btn-primary"
+          title="Shortcut: T"
+          onclick="selectPlan('Tie')"
+        >
+          Tied (Enter)
+        </button>
+      </div>
+
+      <div class="col-5 mb-3">
+        <div
+          class="card h-100 hover-highlight"
+          id="plan-b"
+          style="cursor: pointer"
+          onclick="selectPlan('B')"
+        >
+          <div class="card-header bg-primary bg-opacity-50" id="plan-b-header">
+            <h6>Instructions B are Better (&thinsp;]&thinsp;)</h6>
+          </div>
+          <div class="card-body" id="plan-b-body">This is plan B</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

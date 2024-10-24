@@ -77,3 +77,21 @@ class Document(ImportExportModelAdmin, ExportActionMixin):
     list_display = ['document_id', 'doc_id', 'document_text']
     actions = ['export_as_csv']
     resource_class = MessageResource
+
+@admin.register(ComparisonFeedback)
+class ComparisonFeedback(ImportExportModelAdmin, ExportActionMixin):
+    list_display = ['question', 'user', 'chosen', 'chosen_adjusted', 'chosen_instruction', 'shown_first']
+    actions = ['export_as_csv']
+    resource_class = MessageResource
+
+@admin.register(LeaderboardLog)
+class LeaderboardLog(ImportExportModelAdmin, ExportActionMixin):
+    list_display = ['log_id', 'user', 'question_id', 'correctness_score', 'seconds_taken']
+    actions = ['export_as_csv']
+    resource_class = MessageResource
+
+@admin.register(ReportIssue)
+class ReportIssue(ImportExportModelAdmin, ExportActionMixin):
+    list_display = ['report_id', 'user', 'question_id', 'is_bad_question', 'is_bad_instruction', 'is_bad_answer_verifier', 'feedback']
+    actions = ['export_as_csv']
+    resource_class = MessageResource

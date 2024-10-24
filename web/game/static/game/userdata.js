@@ -4,7 +4,6 @@
  */
 function retrieveUserdata(){
   const prefs = cookieToDict(document.cookie);
-  console.log(prefs);
   userName = prefs['user_name'];
   userID = prefs['user_id'];
   userEmail = prefs['user_email'];

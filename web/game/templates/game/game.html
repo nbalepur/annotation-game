@@ -19,13 +19,12 @@
           <div class="d-flex justify-content-between align-items-center w-100">
             <input type="text" id="request-content" class="form-control" maxlength="200">
             <div class="d-flex align-items-center" id="left-buttons">
-              <button id="next-btn" class="btn btn-info btn me-2" data-bs-toggle="tooltip" data-bs-placement="top"
-                title="Shortcut: N">Next (n)</button>
-              <button id="buzz-btn" class="btn btn-danger btn me-2" data-bs-toggle="tooltip"
-                title="Shortcut: SPACE">Buzz (space)</button>
+              <button id="next-btn" class="btn btn-info btn me-2"title="Shortcut: N">Next (n)</button>
+              <button id="buzz-btn" class="btn btn-danger btn me-2"">Buzz (space)</button>
+                <button id="report-btn" class="btn btn-warning btn me-2" data-bs-toggle="modal" data-bs-target="#reportModal" style="display: none;">Report</button>
               <button id="settings-btn" class="btn btn-secondary btn" data-bs-toggle="offcanvas"
                 data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings"
-                title="Shortcut: [">Settings (&thinsp;[&thinsp;)</button>
+                title="Shortcut: [">Settings (Tab)</button>
             </div>
             <div class="d-flex justify-content-center align-items-center">
               <h4 id="status-text" class="mb-0">Status: <span style="color:grey;">Hit "next" to continue...</span></h4>
@@ -43,10 +42,18 @@
       </div>
     </div>
 
+    <div class="row" id="feedback-row" style="display: none;">
+      <div class="col-12">
+        {% if room.uses_instructions %}
+        {% include "game/feedback.html" %}
+        {% endif %}
+      </div>
+    </div>
+
     <!-- Row 1: Question and Embedded Page -->
     <div class="row flex-grow-1" id="question-row">
       <!-- Left Column -->
-      <div class="col-6 d-flex flex-column">
+      <div class="col-6 d-flex flex-column flex-grow-1">
         <!-- Question -->
         <div class="mb-3">
           <div class="card">
@@ -65,25 +72,24 @@
           {% include "game/instructions.html" %}
         </div>
         {% endif %}
-
+      
         <!-- Scratchpad -->
-        <div class="d-flex flex-column flex-grow-1">
-          <div class="card h-100 d-flex flex-column flex-grow-1">
-            <div class="card-header">
-              <h6>Scratchpad (s)</h6>
-            </div>
-            <div class="card-body user-notes-card-body d-flex flex-column flex-grow-1">
-              <textarea id="user-notes" placeholder="Write your notes here..." class="form-control h-100 flex-grow-1"></textarea>
-            </div>
+        <div class="card mb-3">
+          <div class="card-header">
+            <h6>Scratchpad (s)</h6>
           </div>
+            <textarea id="user-notes" placeholder="Write any notes here..." class="form-control flex-grow-1" rows="4"></textarea>
         </div>
+      
       </div>
 
       <!-- Right Column -->
       <div class="col-6 d-flex flex-column">
+
         {% if room.uses_instructions %}
-        {% include "game/page.html" %}
+          {% include "game/toolbox.html" %}
         {% endif %}
+
       </div>
     </div>
   </div>
@@ -99,7 +105,7 @@
     <div class="offcanvas-body">
       <!-- Scoreboard and settings content here -->
       <div class="card mb-3">
-        <div class="card-header">Scoreboard</div>
+        <div class="card-header" style="padding-bottom: 10px;">Scoreboard</div>
         <div class="card-body">
           <label for="name">Username:</label>
           <div class="input-group mb-2">
@@ -132,13 +138,63 @@
       </div>
 
       <div class="card mb-4">
-        <div class="card-header">Message Log</div>
+        <div class="card-header" style="padding-bottom: 10px;">Message Log</div>
         <div class="card-body">
           <ul id="message-space" class="list-group"></ul>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Offcanvas for issues -->
+  <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reportModalLabel">Report an Issue</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="reportForm">
+            <!-- Checkbox List of Issues -->
+            <div class="mb-3">
+              <label class="form-label">Please select the issues you encountered for this question:</label>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="issue1">
+                <label class="form-check-label" for="issue1">
+                  The question was incorrect or had an error
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="2" id="issue2">
+                <label class="form-check-label" for="issue2">
+                  The instructions were incorrect or had an error
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="3" id="issue3">
+                <label class="form-check-label" for="issue3">
+                  My answer was incorrectly marked as correct/incorrect
+                </label>
+              </div>
+            </div>
+  
+            <!-- Textarea for Additional Feedback -->
+            <div class="mb-3">
+              <label for="feedback" class="form-label">Additional feedback (optional):</label>
+              <textarea class="form-control" id="feedback" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="submitReportBtn">Submit Report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 </div>
 {% endblock %}
 
@@ -160,15 +216,25 @@
 <style>
   /* game.css */
   #game-container {
-    padding: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
     height: 100vh;
     display: flex;
     flex-direction: column;
   }
 
-  /* Ensure the main content fills the available space */
-  #question-row {
+  #tool-history {
     flex-grow: 1;
+    min-height: 0; /* Ensures it doesn't grow uncontrollably */
+    max-height: 100vh; /* You can adjust this height to fit your design */
+    overflow-y: auto; /* Enables vertical scrolling */
+  }
+
+  #question-row {
+      flex-grow: 1;
+      min-height: 0;
   }
 
   .card-header {
