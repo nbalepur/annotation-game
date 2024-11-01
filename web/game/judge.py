@@ -15,7 +15,9 @@ def judge_answer(candidate_answer: str, question: Question):
         return False
     
     if question.category in {Question.Category.LONGCONTEXT, Question.Category.MATH}:
-        return candidate_answer in question.answer_accept
+        candidate_answer_clean = re.sub(r'[^0-9]', '', candidate_answer)
+        question_answer_clean = [re.sub(r'[^0-9]', '', a) for a in question.answer_accept]
+        return candidate_answer_clean in question_answer_clean
 
     return pedant.evaluate(question.answer_accept, candidate_answer, question.content)
 

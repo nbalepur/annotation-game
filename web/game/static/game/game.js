@@ -25,10 +25,10 @@ let buzzPassedTime = 0;
 let graceTime = 3;
 let buzzTime = 8;
 
-let readingTime = 10;
+let readingTime = 3;
 let readingPassedTime = 0;
 
-let questionTime = 10;
+let questionTime = 180;
 let questionPassedTime = 0;
 
 let question;
@@ -113,7 +113,7 @@ function update() {
     case 'playing':
 
       // Update if game is going
-      contentProgress.style.width = Math.round(100 * (1.05 * questionPassedTime / questionTime)) + '%';
+      contentProgress.style.width = (100 * (1.05 * questionPassedTime / questionTime)).toFixed(4) + '%';
 
       buzzPassedTime = 0;
       currentTime += 0.1;
@@ -134,7 +134,7 @@ function update() {
     case 'contest':
       timePassed = buzzStartTime - startTime;
 
-      buzzProgress.style.width = Math.round(100 * (1.05 * buzzPassedTime / buzzTime)) + '%';
+      buzzProgress.style.width = (100 * (1.05 * buzzPassedTime / buzzTime)).toFixed(4) + '%';
       instructionProgress.style.display = 'none'
       contentProgress.style.display = 'none';
       buzzProgress.style.display = '';
@@ -155,7 +155,7 @@ function update() {
 gamesock.onmessage = message => {
 
   const data = JSON.parse(message.data);
-  console.log(data['response_type'], data);
+  //console.log(data['response_type'], data);
 
   if (data['response_type'] === "update") {
 
@@ -206,8 +206,27 @@ gamesock.onmessage = message => {
     setAnswer(data['answer']);
   } else if (data['response_type'] === "get_shown_question") {
     setQuestion(data['shown_question'], data['state']);
+  } else if (data['response_type'] === 'clear_instructions') {
+    clearInstructions();
   } else if (data['response_type'] === "update_instructions") {
-    populateInstructions(data['instructions']);
+    if (data['should_clear']) {
+      clearInstructions();
+    }
+    populateInstructions(data['instructions'], data['step_num'], data['is_last_step'], false);
+    if (data['is_last_step']) {
+      stepBtn.style.visibility = 'hidden';
+    }
+  } else if (data['response_type'] === 'update_swapped_instructions') {
+    clearInstructions();
+    populateInstructions(data['instructions'], -1, data['is_last_step'], true);
+    if (data['subanswers']) {
+      populateSubanswers(data['subanswers']);
+    }
+    if (data['is_last_step']) {
+      stepBtn.style.visibility = 'hidden';
+    } else {
+      stepBtn.style.visibility = 'visible';
+    }
   } else if (data['response_type'] === "populate_comparison") {
     populateComparisonPane(data['question'], data['instructions_a'], data['instructions_b']);
   } else if (data['response_type'] === 'update_tools') {
@@ -220,7 +239,7 @@ gamesock.onmessage = message => {
   } else if (data['response_type'] === 'update_doc') {
     updateDoc(data['use_doc'], data['doc_content']);
   } else if (data['response_type'] === 'update_status') {
-    updateStatus(data['status'], data['player'], data['answer']);
+    updateStatus(data['status'], data['player'], data['answer'], data['allow_swaps']);
   } else if (data['response_type'] === 'toggle_comparison') {
     toggleComparisonViewer(data['show_comparison']);
   } else if (data['response_type'] === "get_question_feedback") {
@@ -306,7 +325,7 @@ function setCalculation(res) {
 }
 
 function setWebSearch(res) {
-  console.log(res);
+  //console.log(res);
   document.getElementById('view-page-collapse').srcdoc = res;
 }
 
@@ -354,45 +373,61 @@ function hideButtons() {
   //chatBtn.style.display = 'none';
 }
 
-function showButtonsForState(currGameState) {
+function showButtonsForState(currGameState, allowSwaps) {
+  console.log('updating buttons', currGameState);
   switch (currGameState) {
     case 'compare':
       reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+      stepBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
+      swapBtn.style.display = 'none';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'hidden';
+      toggleFollowCheckbox(false);
       break;
     case 'compare_correct':
         reportBtn.style.display = 'none';
         nextBtn.style.display = 'none';
+        stepBtn.style.display = 'none';
         buzzBtn.style.display = 'none';
+        swapBtn.style.display = 'none';
         settingsBtn.style.display = '';
         settingsBtn.style.visibility = 'hidden';
+        toggleFollowCheckbox(false);
         break;
     case 'compare_incorrect':
       reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+      stepBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
+      swapBtn.style.display = 'none';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'hidden';
+      toggleFollowCheckbox(false);
       break;
     case 'playing':
       // skipBtn.style.display = '';
       reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+      stepBtn.style.display = '';
       buzzBtn.style.display = '';
+      swapBtn.style.display = '';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'hidden';
+      toggleFollowCheckbox(true);
       //chatBtn.style.display = '';
       break;
     case 'idle':
       // skipBtn.style.display = 'none';
       nextBtn.style.display = '';
       buzzBtn.style.display = 'none';
+      stepBtn.style.display = 'none';
+      swapBtn.style.display = 'none';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'visible';
       reportBtn.style.display = '';
+      toggleFollowCheckbox(false);
       //chatBtn.style.display = '';
       break;
     case 'contest':
@@ -400,9 +435,11 @@ function showButtonsForState(currGameState) {
       nextBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
       reportBtn.style.display = 'none';
-
+      stepBtn.style.display = 'none';
+      swapBtn.style.display = 'none';
       //settingsBtn.style.visibility = 'hidden';
       settingsBtn.style.display = 'none';
+      toggleFollowCheckbox(false);
       //chatBtn.style.display = 'none';
       break;
     case 'instruct':
@@ -412,15 +449,29 @@ function showButtonsForState(currGameState) {
       settingsBtn.style.display = '';
       reportBtn.style.display = 'none';
       settingsBtn.style.visibility = 'hidden';
+      stepBtn.style.display = 'none';
+      swapBtn.style.display = 'none';
+      toggleFollowCheckbox(false);
       //chatBtn.style.display = 'none';
       break;
+
+    case 'buzz_correct':
+      nextBtn.style.display = '';
+      buzzBtn.style.display = 'none';
+      stepBtn.style.display = '';
+      swapBtn.style.display = '';
+      settingsBtn.style.display = '';
+      settingsBtn.style.visibility = 'visible';
+      reportBtn.style.display = '';
+      toggleFollowCheckbox(false);
+      break;    
   }
 }
 
 function showButtons() {
 
   if (currentAction == 'idle') {
-    showButtonsForState(gameState);
+    showButtonsForState(gameState, false);
   } else {
     // skipBtn.style.display = 'none';
     nextBtn.style.display = 'none';
@@ -609,11 +660,11 @@ function settings() {
 }
 
 function focusTextInput(elem_id) {
-  const calculatorInput = document.getElementById(elem_id);
-  if (calculatorInput) {
-    calculatorInput.focus();
+  const focusInput = document.getElementById(elem_id);
+  if (focusInput) {
+    focusInput.focus();
   } else {
-    console.warn(`No element with ID ${calc-expression} found.`);
+    console.warn(`No element with ID ${elem_id} found.`);
   }
 }
 
@@ -629,16 +680,9 @@ function toggleTools() {
 
 function next() {
   emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+  console.log('game state:', gameState);
   if (userName && (optOutInput.checked || (userEmail && emailRegex.test(userEmail)))) {
     if (gameState === 'idle') {
-      
-      //isFeedbackLoaded = false;
-
-      // Collapse feedback section
-      // disableFeedbackCollapseToggle();
-      // collapseFeedback();
-      // gameState = 'instruct';
       statusText.scrollIntoView({ block: 'start' });
       sendRequest("next");
   }
@@ -647,6 +691,15 @@ function next() {
     settings();
     alert("Please input a valid username and email before continuing.");
  }
+}
+
+function next_step() {
+  sendRequest("show_next_step");
+}
+
+function swap_plan() {
+  subanswers = getSubanswers();
+  sendRequest("swap_plan", subanswers);
 }
 
 function getAnswer() {

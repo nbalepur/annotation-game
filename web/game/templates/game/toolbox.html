@@ -24,7 +24,7 @@
   </div>
 
   <!-- Document Viewer -->
-  <div id="doc-viewer" class="mb-3">
+  <div id="doc-viewer">
   <div class="card flex-grow-1 d-flex flex-column">
     <div class="card-header bg-primary bg-opacity-50 view-page-header" id="view-page-header">
       <h6>Document</h6>
@@ -32,12 +32,12 @@
 
     <div id="doc-viewer-content" class="d-flex flex-column flex-grow-1">
       <div class="input-group mt-2" id="content-selector-tool">
-        <button type="button" class="btn btn-primary btn-sm" id="copy-search-btn" onclick="copyDocText()">
+        <button type="button" class="btn btn-primary" id="copy-search-btn" onclick="copyDocText()">
           Copy Text (c)
         </button>
 
         <input type="text" id="content-search" class="input-sm form-control ms-5" placeholder="Find text within the page (f)" />
-        <button type="button" class="btn btn-sm btn-primary" id="content-search-btn" onclick="selectContent()">
+        <button type="button" class="btn btn-primary" id="content-search-btn" onclick="selectContent()">
           <i class="fas fa-search"></i>
         </button>
 
@@ -64,7 +64,7 @@
   </div>
 
     <!-- Tool History -->
-    <div id="tool-history" class="card" style="max-height: 30%; overflow-y: auto;">
+    <!-- <div id="tool-history" class="card" style="max-height: 30%; overflow-y: auto;">
 
       <div class="card-header bg-info">
         <h6>Tool History</h6>
@@ -81,7 +81,7 @@
       '
       >
     </iframe>
-    </div>
+    </div> -->
 
   </div>
 </div>

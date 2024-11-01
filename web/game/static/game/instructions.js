@@ -1,7 +1,6 @@
 const toolContainer = document.getElementById('toolbox-container');
 
-const instructionSpace = document.getElementById('instruction-space');
-const instructions = document.getElementById('model-instructions');
+const instructions = document.getElementById('instructions-container');
 
 const instructionHeader = document.getElementById('instruction-header');
 const instructionCollapse = document.getElementById('instruction-collapse');
@@ -21,6 +20,7 @@ const calculatorToolInput = document.getElementById('calc-expression');
 const googleToolInput = document.getElementById('google-query');
 const contentSelectorToolInput = document.getElementById('content-search');
 
+const instructionsFrame = document.getElementById('instruction-frame');
 const docViewer = document.getElementById('doc-viewer');
 const docContent = document.getElementById('view-page-collapse')
 
@@ -29,16 +29,299 @@ const statusText = document.getElementById('status-text');
 const copySearchBtn = document.getElementById('copy-search-btn');
 const copyMathBtn = document.getElementById('calculator-tool-result');
 
+function toggleFollowCheckbox(isVisible) {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const followPlanDiv = iframeDoc.getElementById('follow-plan-div');
+  if (followPlanDiv) {
+    if (isVisible && followPlanDiv.style.visibility === 'hidden') {
+      followPlanDiv.style.visibility = '';
+      followPlanDiv.checked = false;
+    } else {
+      followPlanDiv.style.visibility = isVisible ? '' : 'hidden';
+    }
+  }
+}
+
 function parseInstructions(instr_object) {
     steps = instr_object['steps'];
     steps_html = '<ol>' + steps.map(item => `<li>${item}</li>`).join('') + '</ol>';
     return steps_html;
 }
 
-function populateInstructions(input_instructions) {
-    steps_html = parseInstructions(input_instructions);
-    instructions.innerHTML = steps_html;
+function closeLastButton() {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+  if (container) {
+    const newLastStep = container.querySelector('.step-div:first-child');
+    if (newLastStep) {
+      const closeButton = newLastStep.querySelector('.close-btn');
+      if (closeButton) {
+        closeButton.click();
+      }
+    }
+  }
 }
+
+function focusLastInstruction() {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+  if (container) {
+    const newLastStep = container.querySelector('.step-div:first-child');
+    if (newLastStep) {
+      const textArea = newLastStep.querySelector('textarea');
+      textArea.focus();
+    }
+  }
+}
+
+function addBlankInstruction() {
+
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+
+  const currentLastStep = container.querySelector('.step-div:first-child .close-btn');
+  if (currentLastStep) {
+    currentLastStep.remove();
+  }
+
+  const lastIndex = container.querySelectorAll('.step-div').length;
+  const lastInstruction = "Edit this step to fit your needs"
+
+  const shouldEdit = true;
+
+  const stepDiv = iframeDoc.createElement('div');
+  stepDiv.className = 'p-4 mb-2 border bg-light position-relative step-div';
+  stepDiv.id = `step-div-${lastIndex + 1}`
+
+  stepDiv.innerHTML = `
+  <button type="button" class="close-btn" style="position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
+  <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit" contenteditable="${shouldEdit}">${lastInstruction}</span></p>
+  <div class="input-group">
+    <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+    <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+      <i class="bi bi-copy"></i> Copy
+    </button>
+  </div>
+`;
+
+container.prepend(stepDiv);
+
+const closeButton = stepDiv.querySelector('.close-btn');
+closeButton.addEventListener('click', () => {
+  removeStep(stepDiv, false);
+});
+
+const clipboardButtons = stepDiv.querySelectorAll('.copy-btn');
+clipboardButtons.forEach(button => {
+  button.addEventListener('click', function() {
+    const inputId = this.getAttribute('data-copy-id');
+    const textToCopy = iframeDoc.getElementById(inputId).value;
+    copyTextToClipboard(textToCopy);
+  });
+});
+}
+
+
+function clearInstructions() {
+  console.log('clearing instructions!')
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+  container.innerHTML = '';
+}
+
+function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
+
+  console.log('full instructions:', inputInstructions);
+
+  
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+  const container = iframeDoc.getElementById('instructions-container');
+  container.innerHTML = ''; // Clear existing instructions
+
+  inputInstructions['steps'].forEach((instruction, index) => {
+    const stepDiv = iframeDoc.createElement('div');
+    stepDiv.className = 'p-3 mb-2 border bg-light position-relative step-div';
+    stepDiv.id = `step-div-${index + 1}`
+    stepDiv.setAttribute('is-custom', false);
+
+    stepDiv.innerHTML = `
+      <p style="margin-bottom: 5px;"><strong>Step ${index + 1}: </strong><span id="step-${index + 1}" class="instructions-edit">${instruction}</span></p>
+      <div class="input-group">
+        <textarea id="answer-step-${index + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+        <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${index + 1}">
+          <i class="bi bi-copy"></i> Copy
+        </button>
+      </div>
+    `;
+
+    // Check if this is the last step and if addCloseBtn is true
+    if (addCloseBtn && index === inputInstructions['steps'].length - 1 && index !== 0) {
+      console.log('close button!');
+      const closeButton = iframeDoc.createElement('button');
+      closeButton.type = 'button';
+      closeButton.className = 'close-btn';
+      closeButton.innerHTML = '&times;';
+      closeButton.style.position = 'absolute';
+      closeButton.style.top = '0px';
+      closeButton.style.right = '0px';
+      closeButton.style.border = 'none';
+      closeButton.style.background = 'none';
+      closeButton.style.fontSize = '20px';
+      closeButton.style.cursor = 'pointer';
+
+      closeButton.addEventListener('click', () => {
+        removeStep(stepDiv, isLastStep);
+      });
+
+      // Append the close button to the last stepDiv
+      stepDiv.appendChild(closeButton);
+    }
+
+    container.prepend(stepDiv);
+  });
+}
+
+function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
+
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+
+  const currentLastStep = container.querySelector('.step-div:first-child .close-btn');
+  if (currentLastStep) {
+    currentLastStep.remove();
+  }
+
+  const lastIndex = container.querySelectorAll('.step-div').length;
+  const lastInstruction = inputInstructions['steps'][inputInstructions['steps'].length - 1];
+
+  const stepDiv = iframeDoc.createElement('div');
+  stepDiv.className = 'p-4 mb-2 border bg-light position-relative step-div';
+  stepDiv.id = `step-div-${lastIndex + 1}`
+
+  if (stepNum === 1) {
+    stepDiv.innerHTML = `
+      <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
+      <div class="input-group">
+        <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+        <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+          <i class="bi bi-copy"></i> Copy
+        </button>
+      </div>
+    `;
+  } else {
+    stepDiv.innerHTML = `
+    <button type="button" class="close-btn" style="position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
+    <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
+    <div class="input-group">
+      <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+      <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+        <i class="bi bi-copy"></i> Copy
+      </button>
+    </div>
+  `;
+  }
+
+  container.prepend(stepDiv);
+
+  if (stepNum !== 1) {
+    const closeButton = stepDiv.querySelector('.close-btn');
+    closeButton.addEventListener('click', () => {
+      removeStep(stepDiv, isLastStep);
+    });
+  }
+
+  const clipboardButtons = stepDiv.querySelectorAll('.copy-btn');
+  clipboardButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const inputId = this.getAttribute('data-copy-id');
+      const textToCopy = iframeDoc.getElementById(inputId).value;
+      copyTextToClipboard(textToCopy);
+    });
+  });
+}
+
+function getSubanswers() {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+
+  const textareas = container.querySelectorAll('textarea.form-control');
+  const subanswers = Array.from(textareas).map(textarea => textarea.value).reverse();
+
+  return subanswers;
+}
+
+function sendSubanswers(isCorrect) {
+
+  const instructionFrame = document.getElementById('instruction-frame')
+  const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
+  const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+
+  sendRequest('send_subanswers', {'subanswers': getSubanswers(), 'is_correct': isCorrect, 'followed_plan': !checkbox.checked});
+}
+
+function reassignCloseButton() {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+
+  const newLastStep = container.querySelector('.step-div:first-child');
+  if (newLastStep) {
+    const textArea = newLastStep.querySelector('textarea');
+    if (!newLastStep.querySelector('.close-btn') && textArea.id !== 'answer-step-1') {
+      const closeButton = iframeDoc.createElement('button');
+      closeButton.type = 'button';
+      closeButton.className = 'close-btn';
+      closeButton.style.cssText = 'position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;';
+      closeButton.innerHTML = '&times;';
+
+      newLastStep.appendChild(closeButton);
+
+      closeButton.addEventListener('click', () => {
+        removeStep(newLastStep, false);
+      });
+    }
+  }
+}
+
+function removeStep(stepElement, isLastStep) {
+  stepElement.remove();
+  reassignCloseButton();
+  if (isLastStep) {
+    stepBtn.style.display = '';
+    stepBtn.style.visibility = 'visible';
+  }
+  sendRequest("decrease_steps");
+}
+
+function populateSubanswers(subanswers) {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+  subanswers.forEach((answer, index) => {
+    const textArea = iframeDoc.getElementById(`answer-step-${index + 1}`);
+    if (textArea) {
+      textArea.value = answer;
+    }
+  });
+}
+
+function populateInstructions(inputInstructions, stepNum, isLastStep, addCloseBtn) {
+  if (stepNum === -1) {
+      parseFullInstructions(inputInstructions, addCloseBtn, isLastStep)
+    } else {
+      parseInstructionsBox(inputInstructions, isLastStep, stepNum);
+    }
+}
+
 
 function updateTools(use_calc, use_doc, use_web) {
     
@@ -56,8 +339,6 @@ function updateTools(use_calc, use_doc, use_web) {
 }
 
 function clearFields(should_clear_document) {
-
-    clearToolHistory();
 
     calculatorToolInput.value = '';
     googleToolInput.value = '';
@@ -117,8 +398,7 @@ function updateDoc(use_doc, doc_content) {
     }
 }
 
-function updateStatus(status, player, answer) {
-    showButtonsForState(status);
+function updateStatus(status, player, answer, allowSwaps) {
     gameState = status;
     if (status === "compare") {
         statusText.innerHTML = `Status: <span class=text-secondary>Complete the <span class=text-primary>pairwise comparison</span> to continue...</span>`;
@@ -131,92 +411,75 @@ function updateStatus(status, player, answer) {
         if (answer !== "") {
             statusText.innerHTML = `Status: <span class=text-secondary>The correct answer is: <span class=text-primary>${answer}</span>. Hit "next" to continue... </span>`;
             reportBtn.style.display = '';
+            sendSubanswers(false);
         } else {
             statusText.innerHTML = `Status: <span class=text-secondary>Hit "next" to continue...</span>`;
             reportBtn.style.display = 'none';
         }
     } else if (status === "instruct") {
-        statusText.innerHTML = 'Status: <span class=text-primary>Read the question + instructions</span>';
+        statusText.innerHTML = 'Status: <span class=text-primary>Read the question</span>';
         //statusText.scrollIntoView({ block: 'start' });
     } else if (status === "playing") {
         statusText.innerHTML = 'Status: <span class=text-secondary>Waiting for buzzes...</span>';
     } else if (status === "contest") {
-        statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> has buzzed</span>`;
+        statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed</span>`;
     } else if (status === "buzz_correct") {
-        statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> buzzed </span><span class=text-success>correctly</span> with <span class=text-success>"${answer}"</span></span>`;
-    } else if (status === "buzz_incorrect") {
-        statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>`;
+        statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-success>correctly</span> with <span class=text-success>"${answer}"</span></span>`;
+        sendSubanswers(true);
+        gameState = 'idle';
+      } else if (status === "buzz_incorrect") {
+        statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>`;
+        gameState = 'playing';
     } else if (status === "buzz_abstain") {
-        statusText.innerHTML = `Status: <span class=text-secondary>Player <span class=text-primary>${player}</span> buzzed and </span><span class=text-danger>did not answer</span>`;
+        statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed and </span><span class=text-danger>did not answer</span>`;
+        gameState = 'playing';
     }
+    showButtonsForState(gameState, allowSwaps);
 }
 
 function copyMathResult() {
-    const iframe = document.getElementById('tool-history-frame');
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    const toolEntryContainer = iframeDoc.getElementById('tool-entry-container');
 
-    const expression = calculatorToolInput.value;
     const mathRes = calculatorResult.value;
-
     if (mathRes === '' || mathRes === 'Please enter an equation.' || mathRes === 'ERROR') {
       return;
     }
 
-    const newToolEntry = iframeDoc.createElement('div');
-    newToolEntry.className = 'mb-2 p-2 border rounded';
-    newToolEntry.innerHTML = `
-      <div style="position: relative;">
-        <button class="close-btn" style="position: absolute; top: 0; right: 10px; border: none; background: none; font-size: 16px; cursor: pointer;">X</button>
-      </div>
-      <div>
-        <strong>Calc Input:</strong> ${expression}
-        <button class="copy-btn" data-copy="${expression}" style="border: none; background: none; cursor: pointer;">
-          <i class="bi bi-copy"></i>
-        </button>
-      </div>
-      <div>
-        <strong>Calc Output:</strong> ${mathRes}
-        <button class="copy-btn" data-copy="${mathRes}" style="border: none; background: none; cursor: pointer;">
-          <i class="bi bi-copy"></i>
-        </button>
-      </div>
-    `;
+    copyTextToClipboard(mathRes);
 
-    toolEntryContainer.insertBefore(newToolEntry, toolEntryContainer.firstChild);
-    const closeButton = newToolEntry.querySelector('.close-btn');
-    closeButton.addEventListener('click', function() {
-      newToolEntry.remove();
-    });
+    const instructionIframe = document.getElementById('instruction-frame');
+    const instructionDoc = instructionIframe.contentDocument || instructionIframe.contentWindow.document;
     
-    const clipboardButtons = newToolEntry.querySelectorAll('.copy-btn');
-    clipboardButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const textToCopy = this.getAttribute('data-copy');
-    
-        const tempInput = iframeDoc.createElement('textarea');
-        tempInput.value = textToCopy;
-        iframeDoc.body.appendChild(tempInput);
-        tempInput.select();
-        iframeDoc.execCommand('copy');
-        iframeDoc.body.removeChild(tempInput);
-    
-      });
-    });
-    
+    const answerFields = instructionDoc.querySelectorAll('[id^="answer-step-"]');
+    if (answerFields.length > 0) {
+        const lastAnswerField = answerFields[0];
+        lastAnswerField.value = mathRes;
+        lastAnswerField.style.height = 'auto';
+        lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
+    }
+
+    next_step();
+  }
+
+function copyTextToClipboard(textToCopy) {
+  const tempInput = document.createElement('textarea');
+  tempInput.value = textToCopy;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
 }
 
 function copyDocText(elementText='') {
 
-    const web_query = googleToolInput.value;
-    const find_query = contentSelectorToolInput.value;
-    if (!web_query && !find_query) {
-        return;
-    }
+    // const web_query = googleToolInput.value;
+    // const find_query = contentSelectorToolInput.value;
+    // if (!web_query && !find_query) {
+    //     return;
+    // }
 
-    const iframe = document.getElementById('tool-history-frame');
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    const toolEntryContainer = iframeDoc.getElementById('tool-entry-container');
+    // const iframe = document.getElementById('tool-history-frame');
+    // const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    // const toolEntryContainer = iframeDoc.getElementById('tool-entry-container');
 
     if (elementText === '') {
 
@@ -231,72 +494,20 @@ function copyDocText(elementText='') {
         elementText = highlightedElement.innerText || highlightedElement.textContent;
     }
 
-    const newToolEntry = iframeDoc.createElement('div');
-    newToolEntry.className = 'mb-2 p-2 border rounded';
+    copyTextToClipboard(elementText);
 
-    if (web_query && find_query) {
-
-        newToolEntry.innerHTML = `
-        <div style="position: relative;">
-          <button class="close-btn" style="position: absolute; top: 0; right: 10px; border: none; background: none; font-size: 16px; cursor: pointer;">X</button>
-        </div>
-        <div>
-          <div><strong>Web Input:</strong> ${web_query}
-          <button class="copy-btn" data-copy="${web_query}" style="border: none; background: none; cursor: pointer;">
-            <i class="bi bi-copy"></i>
-          </button>
-        </div>
-        <div>
-          <div><strong>Search Input:</strong> ${find_query}
-          <button class="copy-btn" data-copy="${find_query}" style="border: none; background: none; cursor: pointer;">
-            <i class="bi bi-copy"></i>
-          </button>
-        </div>
-        <div>
-          <strong>Search Output:</strong> ${elementText}
-          <button class="copy-btn" data-copy="${elementText}" style="border: none; background: none; cursor: pointer;">
-            <i class="bi bi-copy"></i>
-          </button>
-        </div>
-      `;
-    } else if (web_query) {
-        newToolEntry.innerHTML = `
-        <div style="position: relative;">
-          <button class="close-btn" style="position: absolute; top: 0; right: 10px; border: none; background: none; font-size: 16px; cursor: pointer;">X</button>
-        </div>
-        <div>
-          <div><strong>Search Input:</strong> ${web_query}
-          <button class="copy-btn" data-copy="${web_query}" style="border: none; background: none; cursor: pointer;">
-            <i class="bi bi-copy"></i>
-          </button>
-        </div>
-        <div>
-          <strong>Search Output:</strong> ${elementText}
-          <button class="copy-btn" data-copy="${elementText}" style="border: none; background: none; cursor: pointer;">
-            <i class="bi bi-copy"></i>
-          </button>
-        </div>
-      `;
-    } else if (find_query) {
-        newToolEntry.innerHTML = `
-        <div style="position: relative;">
-          <button class="close-btn" style="position: absolute; top: 0; right: 10px; border: none; background: none; font-size: 16px; cursor: pointer;">X</button>
-        </div>
-        <div>
-          <div><strong>Search Input:</strong> ${find_query}
-          <button class="copy-btn" data-copy="${find_query}" style="border: none; background: none; cursor: pointer;">
-            <i class="bi bi-copy"></i>
-          </button>
-        </div>
-        <div>
-          <strong>Search Output:</strong> ${elementText}
-          <button class="copy-btn" data-copy="${elementText}" style="border: none; background: none; cursor: pointer;">
-            <i class="bi bi-copy"></i>
-          </button>
-        </div>
-      `;
+    const instructionIframe = document.getElementById('instruction-frame');
+    const instructionDoc = instructionIframe.contentDocument || instructionIframe.contentWindow.document;
+    
+    const answerFields = instructionDoc.querySelectorAll('[id^="answer-step-"]');
+    if (answerFields.length > 0) {
+        const lastAnswerField = answerFields[0];
+        lastAnswerField.value = elementText;
+        lastAnswerField.style.height = 'auto';
+        lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
     }
-    toolEntryContainer.insertBefore(newToolEntry, toolEntryContainer.firstChild);
+
+    next_step();
   }
 
 function clearToolHistory() {
@@ -343,7 +554,6 @@ docContent.addEventListener('load', function() {
     iframeDocument.addEventListener('copy', function(event) {
         event.preventDefault();
         const copiedText = iframeDocument.getSelection().toString();
-        console.log(copiedText);
         copyDocText(copiedText);
         if (event.clipboardData) {
             event.clipboardData.setData('text/plain', copiedText);
@@ -351,4 +561,41 @@ docContent.addEventListener('load', function() {
             window.clipboardData.setData('Text', copiedText);
         }
     });
+
+    iframeDocument.addEventListener("keypress", (e) => {
+      handleKeyPress(e);
+    });
+    
+    iframeDocument.addEventListener("keydown", function (e) {
+      handleKeyDown(e);
+    });
+    
+});
+
+docContent.addEventListener("keypress", (e) => {
+  handleKeyPress(e);
+});
+docContent.addEventListener("keydown", (e) => {
+  handleKeyDown(e);
+});
+
+instructionsFrame.addEventListener("keypress", (e) => {
+  handleKeyPress(e);
+});
+instructionsFrame.addEventListener("keydown", (e) => {
+  handleKeyDown(e);
+});
+
+
+instructionsFrame.addEventListener('load', function() {
+  const iframeDocument = this.contentDocument || this.contentWindow.document;
+
+  iframeDocument.addEventListener("keypress", (e) => {
+    handleKeyPress(e);
+  });
+  
+  iframeDocument.addEventListener("keydown", function (e) {
+    handleKeyDown(e);
+  });
+  
 });

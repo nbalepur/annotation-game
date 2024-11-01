@@ -129,6 +129,14 @@ class Room(models.Model):
 
     instruction_map = models.JSONField(null=True, blank=True)
 
+    curr_instructions_letter = models.TextField(max_length=1, null=True)
+
+    curr_subanswers_a = models.JSONField(null=True, blank=True)
+    curr_subanswers_b = models.JSONField(null=True, blank=True)
+
+    steps_seen_a = models.IntegerField(default=0, blank=True)
+    steps_seen_b = models.IntegerField(default=0, blank=True)
+
     buzz_player = models.OneToOneField(
         'Player',
         on_delete=models.SET_NULL,
@@ -292,6 +300,28 @@ class ReportIssue(models.Model):
 
     feedback = models.TextField(max_length=1000)
 
+class AnswerData(models.Model):
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    question_id = models.IntegerField()
+
+    final_instructions_letter = models.TextField(max_length=1)
+
+    instructions_a = models.JSONField()
+    instructions_b = models.JSONField()
+
+    subanswers_a = models.JSONField()
+    subanswers_b = models.JSONField()
+
+    steps_seen_a = models.IntegerField()
+    steps_seen_b = models.IntegerField()
+
+    did_comparison = models.BooleanField()
+    followed_plan = models.BooleanField()
+
+    is_correct = models.BooleanField()
+
+
 class LeaderboardLog(models.Model):
 
     log_id = models.AutoField(primary_key=True)
@@ -299,6 +329,7 @@ class LeaderboardLog(models.Model):
     question_id = models.IntegerField()
     correctness_score = models.FloatField()
     seconds_taken = models.IntegerField()
+    did_comparison = models.BooleanField()
 
 class ToolLog(models.Model):
     """Record the user's tool usage"""
@@ -446,11 +477,9 @@ class QuestionFeedback(models.Model):
                 or
                 (self.initial_submission_datetime != None and self.is_submitted and not self.solicit_additional_feedback))
 
-    
     @database_sync_to_async
     def aget_player(self):
         return self.playere
-
 
     class Meta:
         # Indicate a composite key for player and question

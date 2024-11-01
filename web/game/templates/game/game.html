@@ -17,11 +17,13 @@
       <div class="col">
         <div class="row">
           <div class="d-flex justify-content-between align-items-center w-100">
-            <input type="text" id="request-content" class="form-control" maxlength="200">
+            <input type="text" id="request-content" class="form-control me-4" maxlength="200">
             <div class="d-flex align-items-center" id="left-buttons">
-              <button id="next-btn" class="btn btn-info btn me-2"title="Shortcut: N">Next (n)</button>
-              <button id="buzz-btn" class="btn btn-danger btn me-2"">Buzz (space)</button>
-                <button id="report-btn" class="btn btn-warning btn me-2" data-bs-toggle="modal" data-bs-target="#reportModal" style="display: none;">Report</button>
+              <button id="next-btn" class="btn btn-info btn me-2" title="Shortcut: N">Next (n)</button>
+              <button id="swap-btn" class="btn btn-dark btn me-2" title="Shortcut: S" style="display: none;">Swap Plan (s)</button>
+              <button id="step-btn" class="btn btn-warning btn me-2" title="Shortcut: N" style="display: none;">Next Step (n)</button>
+              <button id="buzz-btn" class="btn btn-danger btn me-5" style="display: none;">Buzz (space)</button>
+                <button id="report-btn" class="btn btn-outline-danger btn me-2" data-bs-toggle="modal" data-bs-target="#reportModal" style="display: none;">Report</button>
               <button id="settings-btn" class="btn btn-secondary btn" data-bs-toggle="offcanvas"
                 data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings"
                 title="Shortcut: [">Settings (Tab)</button>
@@ -68,18 +70,18 @@
 
         <!-- Instructions -->
         {% if room.uses_instructions %}
-        <div class="mb-3">
+        <div class="d-flex flex-column flex-grow-1">
           {% include "game/instructions.html" %}
         </div>
         {% endif %}
       
         <!-- Scratchpad -->
-        <div class="card mb-3">
+        <!-- <div class="card mb-3">
           <div class="card-header">
             <h6>Scratchpad (s)</h6>
           </div>
             <textarea id="user-notes" placeholder="Write any notes here..." class="form-control flex-grow-1" rows="4"></textarea>
-        </div>
+        </div> -->
       
       </div>
 

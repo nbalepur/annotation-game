@@ -86,12 +86,18 @@ class ComparisonFeedback(ImportExportModelAdmin, ExportActionMixin):
 
 @admin.register(LeaderboardLog)
 class LeaderboardLog(ImportExportModelAdmin, ExportActionMixin):
-    list_display = ['log_id', 'user', 'question_id', 'correctness_score', 'seconds_taken']
+    list_display = ['log_id', 'user', 'question_id', 'correctness_score', 'seconds_taken', 'did_comparison']
     actions = ['export_as_csv']
     resource_class = MessageResource
 
 @admin.register(ReportIssue)
 class ReportIssue(ImportExportModelAdmin, ExportActionMixin):
     list_display = ['report_id', 'user', 'question_id', 'is_bad_question', 'is_bad_instruction', 'is_bad_answer_verifier', 'feedback']
+    actions = ['export_as_csv']
+    resource_class = MessageResource
+
+@admin.register(AnswerData)
+class AnswerData(ImportExportModelAdmin, ExportActionMixin):
+    list_display = ['user', 'question_id', 'instructions_a', 'instructions_b', 'subanswers_a', 'subanswers_b', 'steps_seen_a', 'steps_seen_b', 'did_comparison', 'is_correct']
     actions = ['export_as_csv']
     resource_class = MessageResource

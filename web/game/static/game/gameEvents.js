@@ -20,6 +20,8 @@ const difficultySelect = document.getElementById("difficulty-select");
 // const skipBtn = document.getElementById('skip-btn');
 const nextBtn = document.getElementById("next-btn");
 const buzzBtn = document.getElementById("buzz-btn");
+const stepBtn = document.getElementById("step-btn");
+const swapBtn = document.getElementById("swap-btn");
 const reportBtn = document.getElementById("report-btn");
 const settingsBtn = document.getElementById("settings-btn");
 const chatBtn = document.getElementById("chat-btn");
@@ -107,7 +109,8 @@ optOutInput.addEventListener("click", function optOut() {
   setUserData();
 });
 
-document.addEventListener("keypress", (e) => {
+function handleKeyPress(e) {
+  // console.log('key press:', e);
   if (feedbackRow.style.display === "") {
     if (e.key === "[") {
       selectPlan("A");
@@ -117,12 +120,16 @@ document.addEventListener("keypress", (e) => {
       selectPlan("Tie");
     }
   } else if (
-    e.target.tagName != "INPUT" &&
-    e.target.tagName != "TEXTAREA" &&
-    e.target.id != "user-notes"
+    e.target.tagName !== "INPUT" &&
+    e.target.tagName !== "TEXTAREA" &&
+    !e.target.classList.contains('instructions-edit')
   ) {
     if (e.key == "n") {
-      next();
+      if (nextBtn.style.display === '' && (nextBtn.style.visibility === '' || nextBtn.style.visibility === 'visible')) {
+        next();
+      } else if (stepBtn.style.display === '' && (stepBtn.style.visibility === '' || stepBtn.style.visibility === 'visible')) {
+        next_step();
+      }
     } else if (e.key == " ") {
       buzz();
       e.preventDefault();
@@ -135,34 +142,53 @@ document.addEventListener("keypress", (e) => {
     } else if (e.key == "f") {
       focusTextInput("content-search");
       e.preventDefault();
-    } else if (e.key == "s") {
-      focusTextInput("user-notes");
-      e.preventDefault();
-    }
-  }
-});
-
-document.addEventListener("keydown", function (e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === "f") {
-    focusTextInput("content-search");
-    e.preventDefault();
-  } else if ((e.ctrlKey || e.metaKey) && e.key === "c" && (e.target.tagName != "TEXTAREA")) {
+    } else if (e.key === "c") {
       if (copyMathBtn.style.display === "") {
         copyMathResult();
       } else if (copySearchBtn.style.display === "") {
         copyDocText();
       }
+    } else if (e.key === "s") {
+      if (swapBtn.style.display === '') {
+        swap_plan();
+        e.preventDefault();
+      }
+    } else if (e.key === "p") {
+      focusLastInstruction();
       e.preventDefault();
-  } else if (e.key === "c") {
-    if (copyMathBtn.style.display === "") {
-      copyMathResult();
-    } else if (copySearchBtn.style.display === "") {
-      copyDocText();
     }
-  } else if (e.key === "Tab") {
-    settings();
+    // else if (e.key == "s") {
+    //   focusTextInput("user-notes");
+    //   e.preventDefault();
+    // }
+  }
+}
+
+function handleKeyDown(e) {
+  // console.log('key down:', e);
+if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+  focusTextInput("content-search");
+  e.preventDefault();
+} else if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+  closeLastButton();
+  e.preventDefault();
+} else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+  if (swapBtn.style.display === '' && swapBtn.style.visibility == 'visible') {
+    swap_plan();
     e.preventDefault();
   }
+} else if (e.key === "Tab") {
+  settings();
+  e.preventDefault();
+}
+}
+
+document.addEventListener("keypress", (e) => {
+  handleKeyPress(e);
+});
+
+document.addEventListener("keydown", function (e) {
+  handleKeyDown(e);
 });
 
 requestContentInput.addEventListener("keypress", (e) => {
@@ -265,3 +291,6 @@ nextBtn.addEventListener("click", next);
 // resetBtn.addEventListener('click', resetScore);
 // chatBtn.addEventListener('click', chatInit);
 //speedSlider.addEventListener('change', setSpeed);
+stepBtn.addEventListener("click", next_step);
+
+swapBtn.addEventListener("click", swap_plan)

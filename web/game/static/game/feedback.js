@@ -6,7 +6,7 @@ let planA = document.getElementById('plan-a-body');
 let planB = document.getElementById('plan-b-body');
 
 function selectPlan(selected_plan) {
-    console.log('selected plan:', selected_plan);
+    // console.log('selected plan:', selected_plan);
     sendRequest("log_comparison", selected_plan);
 }
 
