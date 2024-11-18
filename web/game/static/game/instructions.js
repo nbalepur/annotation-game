@@ -103,7 +103,7 @@ function addBlankInstruction() {
   <div class="input-group">
     <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
     <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
-      <i class="bi bi-copy"></i> Copy
+      <i class="bi bi-copy"></i> Copy to Tool
     </button>
   </div>
 `;
@@ -120,7 +120,7 @@ clipboardButtons.forEach(button => {
   button.addEventListener('click', function() {
     const inputId = this.getAttribute('data-copy-id');
     const textToCopy = iframeDoc.getElementById(inputId).value;
-    copyTextToClipboard(textToCopy);
+    copyTextToTool(textToCopy);
   });
 });
 }
@@ -138,32 +138,33 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
 
   console.log('full instructions:', inputInstructions);
 
-  
   const iframe = document.getElementById('instruction-frame');
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
   const container = iframeDoc.getElementById('instructions-container');
-  container.innerHTML = ''; // Clear existing instructions
+  container.innerHTML = '';
 
   inputInstructions['steps'].forEach((instruction, index) => {
     const stepDiv = iframeDoc.createElement('div');
     stepDiv.className = 'p-3 mb-2 border bg-light position-relative step-div';
-    stepDiv.id = `step-div-${index + 1}`
+    stepDiv.id = `step-div-${index + 1}`;
     stepDiv.setAttribute('is-custom', false);
+
+    const buttonHTML = isLastStep && index === inputInstructions['steps'].length - 1
+      ? `<button type="button" class="btn btn-sm btn-danger buzz-btn">Buzz (Enter)</button>`
+      : `<button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${index + 1}">
+           <i class="bi bi-copy"></i> Copy to Tool
+         </button>`;
 
     stepDiv.innerHTML = `
       <p style="margin-bottom: 5px;"><strong>Step ${index + 1}: </strong><span id="step-${index + 1}" class="instructions-edit">${instruction}</span></p>
       <div class="input-group">
         <textarea id="answer-step-${index + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
-        <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${index + 1}">
-          <i class="bi bi-copy"></i> Copy
-        </button>
+        ${buttonHTML}
       </div>
     `;
 
-    // Check if this is the last step and if addCloseBtn is true
     if (addCloseBtn && index === inputInstructions['steps'].length - 1 && index !== 0) {
-      console.log('close button!');
       const closeButton = iframeDoc.createElement('button');
       closeButton.type = 'button';
       closeButton.className = 'close-btn';
@@ -180,13 +181,46 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
         removeStep(stepDiv, isLastStep);
       });
 
-      // Append the close button to the last stepDiv
       stepDiv.appendChild(closeButton);
+    }
+
+    const textarea = stepDiv.querySelector('textarea');
+    textarea.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (isLastStep && index === inputInstructions['steps'].length - 1) {
+          const guessText = textarea.value;
+          buzz(guessText);
+        } else {
+          next_step();
+          textarea.blur();
+        }
+      }
+    });
+
+    if (isLastStep && index === inputInstructions['steps'].length - 1) {
+      const buzzButton = stepDiv.querySelector('.buzz-btn');
+      if (buzzButton) {
+        buzzButton.addEventListener('click', () => {
+          const guessText = textarea.value;
+          buzz(guessText);
+        });
+      }
+    } else {
+      const copyButton = stepDiv.querySelector('.copy-btn');
+      if (copyButton) {
+        copyButton.addEventListener('click', function() {
+          const inputId = this.getAttribute('data-copy-id');
+          const textToCopy = iframeDoc.getElementById(inputId).value;
+          copyTextToTool(textToCopy);
+        });
+      }
     }
 
     container.prepend(stepDiv);
   });
 }
+
 
 function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
 
@@ -204,29 +238,41 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
 
   const stepDiv = iframeDoc.createElement('div');
   stepDiv.className = 'p-4 mb-2 border bg-light position-relative step-div';
-  stepDiv.id = `step-div-${lastIndex + 1}`
+  stepDiv.id = `step-div-${lastIndex + 1}`;
 
   if (stepNum === 1) {
     stepDiv.innerHTML = `
       <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
       <div class="input-group">
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
-        <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
-          <i class="bi bi-copy"></i> Copy
-        </button>
+        ${isLastStep ? `
+          <button type="button" class="btn btn-sm btn-danger buzz-btn">
+            Buzz (Enter)
+          </button>
+        ` : `
+          <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+            <i class="bi bi-copy"></i> Copy to Tool
+          </button>
+        `}
       </div>
     `;
   } else {
     stepDiv.innerHTML = `
-    <button type="button" class="close-btn" style="position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
-    <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
-    <div class="input-group">
-      <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
-      <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
-        <i class="bi bi-copy"></i> Copy
-      </button>
-    </div>
-  `;
+      <button type="button" class="close-btn" style="position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
+      <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
+      <div class="input-group">
+        <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+        ${isLastStep ? `
+          <button type="button" class="btn btn-sm btn-danger buzz-btn">
+            Buzz
+          </button>
+        ` : `
+          <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+            <i class="bi bi-copy"></i> Copy to Tool
+          </button>
+        `}
+      </div>
+    `;
   }
 
   container.prepend(stepDiv);
@@ -238,13 +284,47 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     });
   }
 
-  const clipboardButtons = stepDiv.querySelectorAll('.copy-btn');
-  clipboardButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      const inputId = this.getAttribute('data-copy-id');
-      const textToCopy = iframeDoc.getElementById(inputId).value;
-      copyTextToClipboard(textToCopy);
+  const textarea = stepDiv.querySelector('textarea');
+  textarea.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (isLastStep) {
+        const guessText = textarea.value;
+        buzz(guessText);
+      } else {
+        next_step();
+        textarea.blur();
+      }
+    }
+  });
+
+  if (!isLastStep) {
+    const clipboardButtons = stepDiv.querySelectorAll('.copy-btn');
+    clipboardButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const inputId = this.getAttribute('data-copy-id');
+        const textToCopy = iframeDoc.getElementById(inputId).value;
+        copyTextToTool(textToCopy);
+      });
     });
+  } else {
+    const buzzButton = stepDiv.querySelector('.buzz-btn');
+    if (buzzButton) {
+      buzzButton.addEventListener('click', () => {
+        const guessText = textarea.value;
+        buzz(guessText);
+      });
+    }
+  }
+}
+
+function toggleCloseButtonVisibility(shouldShow) {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const closeButtons = iframeDoc.querySelectorAll('.close-btn');
+  
+  closeButtons.forEach(button => {
+    button.style.display = shouldShow ? 'block' : 'none';
   });
 }
 
@@ -336,6 +416,27 @@ function updateTools(use_calc, use_doc, use_web) {
     contentSelectorToolBtn.style.display = use_doc ? '' : 'none';
 
     calculatorResultBtn.style.display = use_calc ? '' : 'none';
+}
+
+function clear_math() {
+  calculatorToolInput.value = '';
+}
+
+function clear_search() {
+  googleToolInput.value = '';
+}
+
+function clear_find() {
+  contentSelectorToolInput.value = '';
+}
+
+function clearRogueCheckbox() {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentWindow.document;
+  const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+  if (checkbox) {
+    checkbox.checked = false;
+  }
 }
 
 function clearFields(should_clear_document) {
@@ -457,8 +558,21 @@ function copyMathResult() {
         lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
     }
 
-    next_step();
+    //next_step();
   }
+
+function copyTextToTool(textToCopy) {
+  if (textToCopy === '') {
+    return;
+  }
+  copyTextToClipboard(textToCopy);
+  if (calculatorToolInput.style.display === '') {
+    calculatorToolInput.value = textToCopy;
+  }
+  if (googleToolInput.style.display === '') {
+    googleToolInput.value = textToCopy;
+  }
+}
 
 function copyTextToClipboard(textToCopy) {
   const tempInput = document.createElement('textarea');
@@ -507,7 +621,7 @@ function copyDocText(elementText='') {
         lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
     }
 
-    next_step();
+    //next_step();
   }
 
 function clearToolHistory() {
@@ -548,6 +662,20 @@ function clearToolHistory() {
     contentSelectorToolInput.blur();
     sendRequest("content_select", query);
   }
+
+function toggleRogueCheckbox(checkbox) {
+  if (checkbox.checked) {
+    // TODO: should we hide the plan info?
+    buzzBtn.style.display = '';
+    swapBtn.style.display = 'none';
+    stepBtn.style.display = 'none';
+  } else {
+    buzzBtn.style.display = 'none';
+    swapBtn.style.display = '';
+    stepBtn.style.display = '';
+  }
+  toggleCloseButtonVisibility(!checkbox.checked);
+}
 
 docContent.addEventListener('load', function() {
     const iframeDocument = this.contentDocument || this.contentWindow.document;
@@ -599,3 +727,4 @@ instructionsFrame.addEventListener('load', function() {
   });
   
 });
+

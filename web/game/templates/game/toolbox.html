@@ -6,6 +6,9 @@
       <i class="fas fa-calculator"></i>
     </button>
     <input type="text" id="calc-expression" class="form-control" placeholder="Calculate a math equation (m)" />
+    <button type="button" class="btn btn-secondary" id="calc-clear-btn" onclick="clear_math()">
+      Clear
+    </button>
   </div>
 
   <div class="input-group mb-3" id="calculator-tool-result">
@@ -21,6 +24,9 @@
       <i class="fas fa-globe"></i>
     </button>
     <input type="text" id="google-query" class="form-control" placeholder="Web Search (w)" />
+    <button type="button" class="btn btn-secondary" id="search-clear-btn" onclick="clear_search()">
+      Clear
+    </button>
   </div>
 
   <!-- Document Viewer -->
@@ -32,14 +38,19 @@
 
     <div id="doc-viewer-content" class="d-flex flex-column flex-grow-1">
       <div class="input-group mt-2" id="content-selector-tool">
-        <button type="button" class="btn btn-primary" id="copy-search-btn" onclick="copyDocText()">
+        <button type="button" class="btn btn-info" id="copy-search-btn" onclick="copyDocText()">
           Copy Text (c)
         </button>
 
-        <input type="text" id="content-search" class="input-sm form-control ms-5" placeholder="Find text within the page (f)" />
-        <button type="button" class="btn btn-primary" id="content-search-btn" onclick="selectContent()">
+
+        <button type="button" class="btn btn-primary ms-5" id="content-search-btn" onclick="selectContent()">
           <i class="fas fa-search"></i>
         </button>
+        <input type="text" id="content-search" class="input-sm form-control " placeholder="Find text within the page (f)" />
+        <button type="button" class="btn btn-secondary" id="find-clear-btn" onclick="clear_find()">
+          Clear
+        </button>
+
 
       </div>
       <hr style="margin-top: 10px; margin-bottom: 10px; margin-right: 0px; margin-left: 0px"></hr>

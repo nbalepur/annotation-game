@@ -130,7 +130,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data['request_type'] == 'send_subanswers':
                 self.send_subanswers(room=room, player=p, subanswers=data['content']['subanswers'], is_correct=data['content']['is_correct'], followed_plan=data['content']['followed_plan'])
             elif data['request_type'] == 'buzz_init':
-                self.buzz_init(room, p)
+                self.buzz_init(room, p, data['content'])
             elif data['request_type'] == 'buzz_answer':
                 self.buzz_answer(room, p, data['content'])
             elif data['request_type'] == 'no_buzz':
@@ -489,7 +489,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             room.state = Room.GameState.IDLE
             room.save()
 
-    def buzz_init(self, room: Room, p: Player):
+    def buzz_init(self, room: Room, p: Player, guess: str):
         """Initialize buzz
         """
 
@@ -516,6 +516,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             self.send_json({
                 'response_type': 'buzz_grant',
+                'guess': guess, 
             })
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -574,7 +575,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
                 room.save() 
                 self.log_leaderboard(room, player)
-                self.log_answers(room, player, True)
+                #self.log_answers(room, player, True)
             else:
 
                 # if room.max_players == 1:
@@ -1223,7 +1224,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 m.player.banned = True
                 m.player.save()
 
-    def log_answers(self, room: Room, player: Player, is_correct: bool, followed_plan:bool):
+    def log_answers(self, room: Room, player: Player, is_correct: bool, followed_plan: bool):
         """Log the user's progress on completing the instructions"""
         AnswerData.objects.create(
             user=player.user,
@@ -1673,7 +1674,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         if room.state == Room.GameState.PLAYING:
             self.log_tool_use(room, player, '', dict(), 'no_buzz', 'start')
             self.log_leaderboard(room, player)
-            self.log_answers(room, player, False)
+            #self.log_answers(room, player, False)
 
             # curr_answer = ''
             # if not room.show_comparisons_before:

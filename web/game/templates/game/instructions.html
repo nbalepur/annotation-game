@@ -9,16 +9,39 @@
 
     <body>
       <div style="display: flex; justify-content: right; margin: 10px; visibility: hidden" id="follow-plan-div">
-
         <div class="form-check" id="edit-instructions-container">
-          <input class="form-check-input" type="checkbox" value="" id="edit-instructions-checkbox" onclick="parent.makeInstructionsEditable(this)">
+          <input class="form-check-input" type="checkbox" value="" id="edit-instructions-checkbox" onclick="parent.toggleRogueCheckbox(this)">
           <label class="form-check-label" for="edit-instructions-checkbox">
-            I will not follow any plan
+            I will not follow any plan and will buzz on my own
           </label>
         </div>
       </div>
 
-      <div id="instructions-container" style="margin: 10px;"> </div>
+      <div id="instructions-container" style="margin: 10px;">
+      </div>
+
+      <script>
+        document.addEventListener("keydown", function(event) {
+          if (event.key === "Escape") {
+            const activeElement = document.activeElement;
+            if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
+              activeElement.blur(); // Remove focus from the input field
+            }
+          } else {
+            parent.handleKeyDown(event);
+          }
+        });
+        document.addEventListener("keypress", function(event) {
+          if (event.key === "Escape") {
+            const activeElement = document.activeElement;
+            if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
+              activeElement.blur(); // Remove focus from the input field
+            }
+          } else {
+            parent.handleKeyPress(event);
+          }
+        });
+      </script>
     </body>
   '>
   </iframe>

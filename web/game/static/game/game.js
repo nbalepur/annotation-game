@@ -257,10 +257,12 @@ gamesock.onmessage = message => {
 
   } else if (data['response_type'] === "buzz_grant") {
 
+    console.log(data);
+
     // Grant local client buzz
     currentAction = 'buzz';
 
-    requestContentInput.value = '';
+    requestContentInput.value = data['guess'];
     requestContentInput.style.display = '';
     buzzPassedTime = 0;
 
@@ -374,13 +376,17 @@ function hideButtons() {
 }
 
 function showButtonsForState(currGameState, allowSwaps) {
+
+
   console.log('updating buttons', currGameState);
   switch (currGameState) {
     case 'compare':
       reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
       stepBtn.style.display = 'none';
+
       buzzBtn.style.display = 'none';
+      
       swapBtn.style.display = 'none';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'hidden';
@@ -408,10 +414,10 @@ function showButtonsForState(currGameState, allowSwaps) {
       break;
     case 'playing':
       // skipBtn.style.display = '';
-      reportBtn.style.display = 'none';
+      reportBtn.style.display = '';
       nextBtn.style.display = 'none';
       stepBtn.style.display = '';
-      buzzBtn.style.display = '';
+      buzzBtn.style.display = 'none';
       swapBtn.style.display = '';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'hidden';
@@ -571,9 +577,9 @@ function setUserData() {
   sendRequest("set_user_data", {'user_name': nameInput.value, 'user_email': emailInput.value});
 }
 
-function buzz() {
+function buzz(guess = '') {
   if (!lockedOut && gameState === 'playing') {
-    sendRequest("buzz_init");
+    sendRequest("buzz_init", guess);
   }
 }
 

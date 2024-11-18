@@ -251,37 +251,34 @@ docSearchInput.addEventListener("keydown", (e) => {
   }
 });
 
-document
-  .getElementById("submitReportBtn")
-  .addEventListener("click", function () {
-    const isBadQuestion = document.getElementById("issue1").checked;
-    const isBadInstructions = document.getElementById("issue2").checked;
-    const isBadAnswerVerifier = document.getElementById("issue3").checked;
-    const textFeedback = document.getElementById("feedback").value;
+document.getElementById("submitReportBtn").addEventListener("click", function () {
+  const isBadQuestion = document.getElementById("issue1").checked;
+  const isBadInstructions = document.getElementById("issue2").checked;
+  const isBadAnswerVerifier = document.getElementById("issue3").checked;
+  const textFeedback = document.getElementById("feedback").value;
 
-    if (
-      textFeedback.length === 0 &&
-      !isBadQuestion &&
-      !isBadInstructions &&
-      !isBadAnswerVerifier
-    ) {
-      alert("You must leave feedback to report a question!");
-      return;
-    }
+  if (!textFeedback && !isBadQuestion && !isBadInstructions && !isBadAnswerVerifier) {
+    alert("You must leave feedback to report a question!");
+    return;
+  }
 
-    const reportData = {
-      is_bad_question: isBadQuestion,
-      is_bad_instruction: isBadInstructions,
-      is_bad_answer_verifier: isBadAnswerVerifier,
-      feedback: textFeedback,
-    };
+  const reportData = {
+    is_bad_question: isBadQuestion,
+    is_bad_instruction: isBadInstructions,
+    is_bad_answer_verifier: isBadAnswerVerifier,
+    feedback: textFeedback,
+  };
 
-    sendRequest("report_issue", reportData);
-    const modal = bootstrap.Modal.getInstance(
-      document.getElementById("reportModal")
-    );
-    modal.hide();
-  });
+  sendRequest("report_issue", reportData);
+
+  const btn = document.getElementById('report-issue-close');
+  btn.click();
+
+  if (gameState === 'playing') {
+    updateStatus('idle', '', '', true);
+  }
+});
+
 
 // categorySelect.addEventListener('change', setCategory);
 // difficultySelect.addEventListener('change', setDifficulty);
