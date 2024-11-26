@@ -28,19 +28,28 @@ createdb -U postgres -h localhost -p 5432 kuiperbowl
 Configure `web/.env.local` from `.env` with proper credentials.
 
 ### Run the application
-Set up a virtual environment if desired and run:
+Set up a virtual environment if desired:
+
+```
+conda create -n helpfulness       
+conda activate helpfulness
+conda install pip
+```
+
+Then, run:
 
 ```
 cd web
 
 pip install -r "requirements.txt"
 python manage.py migrate
-python manage.py loaddata fixtures/default_rooms.json
-python manage.py loaddata fixtures/sample.json
 
 # Start redist cache for channel layer
 # https://channels.readthedocs.io/en/stable/tutorial/part_2.html#enable-a-channel-layer
 docker run -p 6379:6379 -d redis:5
+
+python manage.py loaddata fixtures/question_fixtures.json
+python manage.py loaddata fixtures/document_fixtures.json
 
 python manage.py runserver --insecure
 ```

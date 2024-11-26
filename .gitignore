@@ -1,2 +1,4 @@
 web/static
 .env
+*.DS_Store
+Datadir/*
