@@ -6,6 +6,7 @@ const instructionHeader = document.getElementById('instruction-header');
 const instructionCollapse = document.getElementById('instruction-collapse');
 
 const calculatorTool = document.getElementById('calculator-tool');
+const calculatorOperators = document.getElementById('calculator-operators');
 const googleTool = document.getElementById('google-tool');
 const contentSelectorTool = document.getElementById('content-selector-tool');
 
@@ -408,6 +409,7 @@ function updateTools(use_calc, use_doc, use_web) {
     toolContainer.style.display = (use_calc || use_doc || use_web) ? '' : 'none';
     
     calculatorTool.style.display = use_calc ? '' : 'none';
+    calculatorOperators.style.display = use_calc ? '' : 'none';
     googleTool.style.display = use_web ? '' : 'none';
     contentSelectorTool.style.display = use_doc ? '' : 'none';
     
