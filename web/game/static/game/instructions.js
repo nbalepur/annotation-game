@@ -643,6 +643,20 @@ function clearToolHistory() {
     sendRequest("calculate", expression);
   }
 
+
+  function insertOperator(op) {
+    const calculatorToolInput = document.getElementById('calc-expression');
+    if (!calculatorToolInput) return;
+
+    // Insert the operator symbol at the current cursor position or at the end
+    const currentValue = calculatorToolInput.value;
+    // You could also do more clever insertion if you want to respect cursor position, but a simple append is fine for most cases:
+    calculatorToolInput.value = currentValue + op;
+
+    // Set focus back to the input for convenience
+    calculatorToolInput.focus();
+  }
+
   function webSearch() {
     const query = googleToolInput.value;
     if (!query) {

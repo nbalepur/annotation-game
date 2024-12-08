@@ -17,6 +17,14 @@
     </button>
     <input type="text" id="calc-result" class="form-control" placeholder="Results will come here!" readonly>
   </div>
+  
+  <div id="calculator-operators" class="btn-group mb-3" role="group">
+    <button type="button" class="btn btn-secondary" onclick="insertOperator('+')">+</button>
+    <button type="button" class="btn btn-secondary" onclick="insertOperator('-')">-</button>
+    <button type="button" class="btn btn-secondary" onclick="insertOperator('*')">×</button>
+    <button type="button" class="btn btn-secondary" onclick="insertOperator('/')">÷</button>
+    <button type="button" class="btn btn-primary" onclick="calculate()">=</button>
+  </div>
 
   <!-- Google Tool -->
   <div class="input-group mb-3" id="google-tool">
