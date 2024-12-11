@@ -111,7 +111,7 @@ optOutInput.addEventListener("click", function optOut() {
 
 function handleKeyPress(e) {
   // console.log('key press:', e);
-  if (feedbackRow.style.display === "") {
+  if (feedbackRow && feedbackRow.style.display === "") {
     if (e.key === "[") {
       selectPlan("A");
     } else if (e.key === "]") {
@@ -131,8 +131,10 @@ function handleKeyPress(e) {
         next_step();
       }
     } else if (e.key == " ") {
-      buzz();
-      e.preventDefault();
+      if (buzzBtn.style.display === "") {
+        buzz();
+        e.preventDefault();
+      }
     } else if (e.key == "m") {
       focusTextInput("calc-expression");
       e.preventDefault();
@@ -166,18 +168,18 @@ function handleKeyPress(e) {
 
 function handleKeyDown(e) {
   // console.log('key down:', e);
-if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+if ((e.ctrlKey || e.metaKey) && e.key === "f" && gameState !== 'contest') {
   focusTextInput("content-search");
   e.preventDefault();
-} else if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+} else if ((e.ctrlKey || e.metaKey) && e.key === "z" && gameState !== 'contest') {
   closeLastButton();
   e.preventDefault();
-} else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+} else if ((e.ctrlKey || e.metaKey) && e.key === "s" && gameState !== 'contest') {
   if (swapBtn.style.display === '' && swapBtn.style.visibility == 'visible') {
     swap_plan();
     e.preventDefault();
   }
-} else if (e.key === "Tab") {
+} else if (e.key === "Tab" && gameState !== 'contest') {
   settings();
   e.preventDefault();
 }
@@ -255,9 +257,10 @@ document.getElementById("submitReportBtn").addEventListener("click", function ()
   const isBadQuestion = document.getElementById("issue1").checked;
   const isBadInstructions = document.getElementById("issue2").checked;
   const isBadAnswerVerifier = document.getElementById("issue3").checked;
+  const isFrustrated = document.getElementById("issue4").checked;
   const textFeedback = document.getElementById("feedback").value;
 
-  if (!textFeedback && !isBadQuestion && !isBadInstructions && !isBadAnswerVerifier) {
+  if (!textFeedback && !isBadQuestion && !isBadInstructions && !isBadAnswerVerifier && !isFrustrated) {
     alert("You must leave feedback to report a question!");
     return;
   }
@@ -266,6 +269,7 @@ document.getElementById("submitReportBtn").addEventListener("click", function ()
     is_bad_question: isBadQuestion,
     is_bad_instruction: isBadInstructions,
     is_bad_answer_verifier: isBadAnswerVerifier,
+    is_frustrated: isFrustrated,
     feedback: textFeedback,
   };
 
@@ -273,10 +277,6 @@ document.getElementById("submitReportBtn").addEventListener("click", function ()
 
   const btn = document.getElementById('report-issue-close');
   btn.click();
-
-  if (gameState === 'playing') {
-    updateStatus('idle', '', '', true);
-  }
 });
 
 

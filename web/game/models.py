@@ -60,6 +60,9 @@ class Question(models.Model):
     class GenerationMethod(models.TextChoices):
         HUMAN = "human", _("Human-written")
         AI = "ai", _("AI-generated") 
+        ATTENTION_SWAP = "attention_s", _("attention_s")
+        ATTENTION_PAIRWISE = "attention_p", _("attention_p")
+        TUTORIAL = "tutorial", _("tutorial")
 
     question_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField(null=True)
@@ -114,6 +117,8 @@ class Room(models.Model):
     uses_instructions = models.BooleanField(default=False)
     max_players = models.IntegerField(default=20, validators=[MinValueValidator(0)])
     state = models.CharField(max_length=9, choices=GameState.choices, default=GameState.IDLE)
+
+    curr_query = models.CharField(max_length=100, null=True)
     
     show_comparisons_before = models.BooleanField(null=True)
 
@@ -277,7 +282,6 @@ class Room(models.Model):
         } for m in valid_messages.order_by('timestamp').reverse()[:30]]
 
         return chrono_messages
-    
 
 class User(models.Model):
 
@@ -297,6 +301,7 @@ class ReportIssue(models.Model):
     is_bad_question = models.BooleanField()
     is_bad_instruction = models.BooleanField()
     is_bad_answer_verifier = models.BooleanField()
+    is_frustrated = models.BooleanField()
 
     feedback = models.TextField(max_length=1000)
 
@@ -304,6 +309,7 @@ class AnswerData(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     question_id = models.IntegerField()
+    category = models.TextField(default=Question.Category.EVERYTHING) 
 
     final_instructions_letter = models.TextField(max_length=1)
 
@@ -321,12 +327,12 @@ class AnswerData(models.Model):
 
     is_correct = models.BooleanField()
 
-
 class LeaderboardLog(models.Model):
 
     log_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     question_id = models.IntegerField()
+    category = models.TextField(default=Question.Category.EVERYTHING)
     correctness_score = models.FloatField()
     seconds_taken = models.IntegerField()
     did_comparison = models.BooleanField()

@@ -1,0 +1,201 @@
+[
+    {
+        "model": "game.question",
+        "pk": 10001,
+        "fields": {
+            "category": "Math",
+            "difficulty": "HS",
+            "content": "Liam has 15 marbles. He wins 8 more marbles in a game. Then he loses 5 marbles, but later he finds 6 more marbles under his bed. How many marbles does Liam have now?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                24.0
+            ],
+            "answer": 24.0,
+            "generation_method": "tutorial",
+            "instructions_a": {
+                "steps": [
+                    "Find the total number of marbles Liam has after winning the game",
+                    "Find the total number of marbles Liam has after losing 5 marbles",
+                    "Find the final number of marbles Liam ends up with after finding more marbles under his bed"
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Find the total number of marbles Liam has after winning them in the game and finding more under his bed",
+                    "Find the final number of marbles Liam has after losing 5 marbles"
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": ""
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 10002,
+        "fields": {
+            "category": "Multi-Hop",
+            "difficulty": "HS",
+            "content": "What is the capital of the state that contains the tallest mountain in the United States?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Juneau"
+            ],
+            "answer": "Juneau",
+            "generation_method": "tutorial",
+            "instructions_a": {
+                "steps": [
+                    "Find the tallest mountain in the United States",
+                    "Find the state that contains this mountain",
+                    "Find the capital of this state"
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Find the city that contains the tallest mountain in the United States",
+                    "Find the state that contains this city",
+                    "Find the capital of this state"
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": ""
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 10003,
+        "fields": {
+            "category": "Multi-Hop",
+            "difficulty": "HS",
+            "content": "What is the name of the local transportation agency in the city where the first American Library was founded?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "SEPTA"
+            ],
+            "answer": "SEPTA",
+            "generation_method": "attention_p",
+            "instructions_a": {
+                "steps": [
+                    "Find out what was the first American Library",
+                    "Find the city where this library was located",
+                    "Find the local transportation agency in this city"
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Find out what was the second British Labratory",
+                    "Find the country where this labratory was located",
+                    "Find the local utilities agency in this country"
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": ""
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 10004,
+        "fields": {
+            "category": "Multi-Hop",
+            "difficulty": "HS",
+            "content": "Who is the husband of the scientist that discovered the element with atomic number 84?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                "Pierre Curie"
+            ],
+            "answer": "Pierre Curie",
+            "generation_method": "attention_s",
+            "instructions_a": {
+                "steps": [
+                    "Type \"Polonium\" for this step",
+                    "Type \"Marie Curie\" for this step",
+                    "Type \"Pierre Curie\" for this step and answer"
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Type \"Polonium\" for this step",
+                    "Type \"Marie Curie\" for this step",
+                    "Type \"Pierre Curie\" for this step and answer"
+                ]
+            },
+            "uses_calculator": false,
+            "uses_web_search": true,
+            "uses_doc_search": true,
+            "document_context": ""
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 10005,
+        "fields": {
+            "category": "Math",
+            "difficulty": "HS",
+            "content": "Sophia is saving money for a new bike. She starts with $20 in her piggy bank. Her parents give her $15 for doing chores. Then, she spends $8 on snacks. How much money does Sophia have now?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                27.0
+            ],
+            "answer": 27.0,
+            "generation_method": "attention_p",
+            "instructions_a": {
+                "steps": [
+                    "Calculate the amount of money Sophia has after doing chores",
+                    "Calculate the amount of money Sophia has after buying snacks"
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Calculate the amount of toys Johnny has after buying some at the store",
+                    "Calculate the amount of toys Johnny has after donating his old toys"
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": ""
+        }
+    },
+    {
+        "model": "game.question",
+        "pk": 10006,
+        "fields": {
+            "category": "Math",
+            "difficulty": "HS",
+            "content": "Ethan is building a birdhouse. He cuts 12 pieces of wood for the walls and roof. He uses 7 pieces to assemble the birdhouse. Then, he cuts 4 more pieces for extra decorations. How many pieces of wood does Ethan have now?",
+            "clue_list": [],
+            "length": 0,
+            "answer_accept": [
+                9.0
+            ],
+            "answer": 9.0,
+            "generation_method": "attention_s",
+            "instructions_a": {
+                "steps": [
+                    "Type \"5\" for this step",
+                    "Type \"9\" for this step and answer"
+                ]
+            },
+            "instructions_b": {
+                "steps": [
+                    "Type \"5\" for this step",
+                    "Type \"9\" for this step and answer"
+                ]
+            },
+            "uses_calculator": true,
+            "uses_web_search": false,
+            "uses_doc_search": false,
+            "document_context": ""
+        }
+    }
+]

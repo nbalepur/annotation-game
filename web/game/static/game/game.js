@@ -14,6 +14,7 @@ let userName;
 let userEmail;
 let lockedOut;
 
+let allowSwapsGlobal = null; // true/false
 let gameState = 'idle'; // idle, playing, contest
 let currentAction = 'idle'; // idle, buzz, chat, 
 
@@ -25,10 +26,10 @@ let buzzPassedTime = 0;
 let graceTime = 3;
 let buzzTime = 8;
 
-let readingTime = 3;
+let readingTime = 3; // seconds to read the question
 let readingPassedTime = 0;
 
-let questionTime = 180;
+let questionTime = 180; // secconds to answer the question
 let questionPassedTime = 0;
 
 let question;
@@ -113,7 +114,12 @@ function update() {
     case 'playing':
 
       // Update if game is going
-      contentProgress.style.width = (100 * (1.05 * questionPassedTime / questionTime)).toFixed(4) + '%';
+      const passed_prop = (1.05 * questionPassedTime / questionTime)
+      contentProgress.style.width = (100 * passed_prop).toFixed(4) + '%';
+
+      if (passed_prop > 0.5) {
+        reportBtn.style.display = '';
+      }
 
       buzzPassedTime = 0;
       currentTime += 0.1;
@@ -214,7 +220,7 @@ gamesock.onmessage = message => {
     }
     populateInstructions(data['instructions'], data['step_num'], data['is_last_step'], false);
     if (data['is_last_step']) {
-      stepBtn.style.visibility = 'hidden';
+      stepBtn.style.display = 'none';
     }
   } else if (data['response_type'] === 'update_swapped_instructions') {
     clearInstructions();
@@ -223,9 +229,9 @@ gamesock.onmessage = message => {
       populateSubanswers(data['subanswers']);
     }
     if (data['is_last_step']) {
-      stepBtn.style.visibility = 'hidden';
+      stepBtn.style.display = 'none';
     } else {
-      stepBtn.style.visibility = 'visible';
+      stepBtn.style.display = '';
     }
   } else if (data['response_type'] === "populate_comparison") {
     populateComparisonPane(data['question'], data['instructions_a'], data['instructions_b']);
@@ -256,8 +262,6 @@ gamesock.onmessage = message => {
     lockedOut = data['locked_out'];
 
   } else if (data['response_type'] === "buzz_grant") {
-
-    console.log(data);
 
     // Grant local client buzz
     currentAction = 'buzz';
@@ -322,8 +326,14 @@ function setQuestion(question_text, state) {
 //   answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : 'Answer:';
 // }
 
+
 function setCalculation(res) {
   calculatorResult.value = res;
+  
+  calculatorResult.classList.add('flash-highlight');
+  setTimeout(() => {
+    calculatorResult.classList.remove('flash-highlight');
+  }, 500);
 }
 
 function setWebSearch(res) {
@@ -375,18 +385,33 @@ function hideButtons() {
   //chatBtn.style.display = 'none';
 }
 
+function resetTime() {
+  readingPassedTime = 0;
+  questionPassedTime = 0;
+  buzzPassedTime = 0;
+}
+
+function shouldShowStepBtn() {
+  const instructionFrame = document.getElementById('instruction-frame')
+  const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
+  const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+  if (checkbox.checked) {
+    return false;
+  }
+
+  const container = iframeDoc.getElementById('instructions-container');
+  const lastStep = container.querySelector('.step-div:first-child');
+  return (lastStep.querySelector('#step-buzz-btn') === null);
+}
+
 function showButtonsForState(currGameState, allowSwaps) {
-
-
-  console.log('updating buttons', currGameState);
+  allowSwapsGlobal = allowSwaps;
   switch (currGameState) {
     case 'compare':
       reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
       stepBtn.style.display = 'none';
-
       buzzBtn.style.display = 'none';
-      
       swapBtn.style.display = 'none';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'hidden';
@@ -414,11 +439,15 @@ function showButtonsForState(currGameState, allowSwaps) {
       break;
     case 'playing':
       // skipBtn.style.display = '';
-      reportBtn.style.display = '';
+
+      // is it time for the next step or to buzz?
+      const shouldShowStep = shouldShowStepBtn();
+
+      reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
-      stepBtn.style.display = '';
-      buzzBtn.style.display = 'none';
-      swapBtn.style.display = '';
+      stepBtn.style.display = shouldShowStep ? '' : 'none';
+      buzzBtn.style.display = shouldShowStep ? 'none' : '';
+      swapBtn.style.display = allowSwaps ? '' : 'none';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'hidden';
       toggleFollowCheckbox(true);
@@ -434,6 +463,7 @@ function showButtonsForState(currGameState, allowSwaps) {
       settingsBtn.style.visibility = 'visible';
       reportBtn.style.display = '';
       toggleFollowCheckbox(false);
+      resetTime();
       //chatBtn.style.display = '';
       break;
     case 'contest':
@@ -577,9 +607,23 @@ function setUserData() {
   sendRequest("set_user_data", {'user_name': nameInput.value, 'user_email': emailInput.value});
 }
 
-function buzz(guess = '') {
+function buzz() {
   if (!lockedOut && gameState === 'playing') {
+
+    const iframe = document.getElementById('instruction-frame');
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    const container = iframeDoc.getElementById('instructions-container');
+
+    if (container.style.display === 'none') {
+      sendRequest("buzz_init", '');
+      return;
+    }
+
+    const currentLastStep = container.querySelector('.step-div:first-child');
+    const guess = currentLastStep.querySelector('textarea').value;
     sendRequest("buzz_init", guess);
+
+    toggleCloseButtonVisibility(false);
   }
 }
 
@@ -587,12 +631,13 @@ function answer() {
   if (gameState === 'contest') {
 
     showButtons();
+
     requestContentInput.style.display = 'none';
     // gameState = 'playing';
     currentAction = 'idle';
-
     sendRequest("buzz_answer", requestContentInput.value);
     getShownQuestion();
+    
   }
 }
 
@@ -686,7 +731,6 @@ function toggleTools() {
 
 function next() {
   emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  console.log('game state:', gameState);
   if (userName && (optOutInput.checked || (userEmail && emailRegex.test(userEmail)))) {
     if (gameState === 'idle') {
       statusText.scrollIntoView({ block: 'start' });
@@ -706,6 +750,7 @@ function next_step() {
 function swap_plan() {
   subanswers = getSubanswers();
   sendRequest("swap_plan", subanswers);
+  showButtonsForState(gameState, true);
 }
 
 function getAnswer() {

@@ -1,7 +1,5 @@
 const toolContainer = document.getElementById('toolbox-container');
 
-const instructions = document.getElementById('instructions-container');
-
 const instructionHeader = document.getElementById('instruction-header');
 const instructionCollapse = document.getElementById('instruction-collapse');
 
@@ -15,13 +13,14 @@ const calculatorToolBtn = document.getElementById('calc-expression-btn');
 const googleToolBtn = document.getElementById('google-query-btn');
 const contentSelectorToolBtn = document.getElementById('content-search-btn');
 
-const calculatorResult = document.getElementById('calc-result')
+const calculatorResult = document.getElementById('calc-result');
 
 const calculatorToolInput = document.getElementById('calc-expression');
 const googleToolInput = document.getElementById('google-query');
 const contentSelectorToolInput = document.getElementById('content-search');
 
 const instructionsFrame = document.getElementById('instruction-frame');
+
 const docViewer = document.getElementById('doc-viewer');
 const docContent = document.getElementById('view-page-collapse')
 
@@ -31,7 +30,7 @@ const copySearchBtn = document.getElementById('copy-search-btn');
 const copyMathBtn = document.getElementById('calculator-tool-result');
 
 function toggleFollowCheckbox(isVisible) {
-  const iframe = document.getElementById('instruction-frame');
+  const iframe = instructionsFrame;
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
   const followPlanDiv = iframeDoc.getElementById('follow-plan-div');
   if (followPlanDiv) {
@@ -102,7 +101,7 @@ function addBlankInstruction() {
   <button type="button" class="close-btn" style="position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
   <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit" contenteditable="${shouldEdit}">${lastInstruction}</span></p>
   <div class="input-group">
-    <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+    <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
     <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
       <i class="bi bi-copy"></i> Copy to Tool
     </button>
@@ -128,7 +127,6 @@ clipboardButtons.forEach(button => {
 
 
 function clearInstructions() {
-  console.log('clearing instructions!')
   const iframe = document.getElementById('instruction-frame');
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
   const container = iframeDoc.getElementById('instructions-container');
@@ -136,8 +134,6 @@ function clearInstructions() {
 }
 
 function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
-
-  console.log('full instructions:', inputInstructions);
 
   const iframe = document.getElementById('instruction-frame');
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -152,7 +148,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     stepDiv.setAttribute('is-custom', false);
 
     const buttonHTML = isLastStep && index === inputInstructions['steps'].length - 1
-      ? `<button type="button" class="btn btn-sm btn-danger buzz-btn">Buzz (Enter)</button>`
+      ? `<button type="button" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">Buzz</button>`
       : `<button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${index + 1}">
            <i class="bi bi-copy"></i> Copy to Tool
          </button>`;
@@ -160,7 +156,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     stepDiv.innerHTML = `
       <p style="margin-bottom: 5px;"><strong>Step ${index + 1}: </strong><span id="step-${index + 1}" class="instructions-edit">${instruction}</span></p>
       <div class="input-group">
-        <textarea id="answer-step-${index + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+        <textarea id="answer-step-${index + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${buttonHTML}
       </div>
     `;
@@ -190,8 +186,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
       if (event.key === 'Enter') {
         event.preventDefault();
         if (isLastStep && index === inputInstructions['steps'].length - 1) {
-          const guessText = textarea.value;
-          buzz(guessText);
+          buzz();
         } else {
           next_step();
           textarea.blur();
@@ -200,13 +195,13 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     });
 
     if (isLastStep && index === inputInstructions['steps'].length - 1) {
-      const buzzButton = stepDiv.querySelector('.buzz-btn');
-      if (buzzButton) {
-        buzzButton.addEventListener('click', () => {
-          const guessText = textarea.value;
-          buzz(guessText);
+      const stepBuzzButton = stepDiv.querySelector('.buzz-btn');
+      if (stepBuzzButton) {
+        stepBuzzButton.addEventListener('click', () => {
+          buzz();
         });
       }
+      buzzBtn.style.display = '';
     } else {
       const copyButton = stepDiv.querySelector('.copy-btn');
       if (copyButton) {
@@ -216,6 +211,8 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
           copyTextToTool(textToCopy);
         });
       }
+
+      buzzBtn.style.display = 'none';
     }
 
     container.prepend(stepDiv);
@@ -245,10 +242,10 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     stepDiv.innerHTML = `
       <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
       <div class="input-group">
-        <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+        <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
-          <button type="button" class="btn btn-sm btn-danger buzz-btn">
-            Buzz (Enter)
+          <button type="button" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">
+            Buzz
           </button>
         ` : `
           <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
@@ -262,9 +259,9 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
       <button type="button" class="close-btn" style="position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
       <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
       <div class="input-group">
-        <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here (Optional)" rows="1"></textarea>
+        <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
-          <button type="button" class="btn btn-sm btn-danger buzz-btn">
+          <button type="button" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">
             Buzz
           </button>
         ` : `
@@ -290,8 +287,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     if (event.key === 'Enter') {
       event.preventDefault();
       if (isLastStep) {
-        const guessText = textarea.value;
-        buzz(guessText);
+        buzz();
       } else {
         next_step();
         textarea.blur();
@@ -308,14 +304,15 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         copyTextToTool(textToCopy);
       });
     });
+    buzzBtn.style.display = 'none';
   } else {
-    const buzzButton = stepDiv.querySelector('.buzz-btn');
-    if (buzzButton) {
-      buzzButton.addEventListener('click', () => {
-        const guessText = textarea.value;
-        buzz(guessText);
+    const stepBuzzButton = stepDiv.querySelector('.buzz-btn');
+    if (stepBuzzButton) {
+      stepBuzzButton.addEventListener('click', () => {
+        buzz();
       });
     }
+    buzzBtn.style.display = '';
   }
 }
 
@@ -378,7 +375,7 @@ function removeStep(stepElement, isLastStep) {
   reassignCloseButton();
   if (isLastStep) {
     stepBtn.style.display = '';
-    stepBtn.style.visibility = 'visible';
+    buzzBtn.style.display = 'none';
   }
   sendRequest("decrease_steps");
 }
@@ -403,7 +400,6 @@ function populateInstructions(inputInstructions, stepNum, isLastStep, addCloseBt
     }
 }
 
-
 function updateTools(use_calc, use_doc, use_web) {
     
     toolContainer.style.display = (use_calc || use_doc || use_web) ? '' : 'none';
@@ -418,6 +414,12 @@ function updateTools(use_calc, use_doc, use_web) {
     contentSelectorToolBtn.style.display = use_doc ? '' : 'none';
 
     calculatorResultBtn.style.display = use_calc ? '' : 'none';
+    calculatorResult.style.display = use_calc ? '' : 'none';
+    copyMathBtn.style.display = use_calc ? '' : 'none';
+
+    calculatorTool.style.display = use_calc ? '' : 'none';
+    googleTool.style.display = use_web ? '' : 'none';
+    contentSelectorTool.style.display = use_doc ? '' : 'none';
 }
 
 function clear_math() {
@@ -432,14 +434,18 @@ function clear_find() {
   contentSelectorToolInput.value = '';
 }
 
-function clearRogueCheckbox() {
-  const iframe = document.getElementById('instruction-frame');
-  const iframeDoc = iframe.contentWindow.document;
-  const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
-  if (checkbox) {
-    checkbox.checked = false;
-  }
-}
+// function clearRogueCheckbox() {
+//   const iframe = instructionsFrame;
+//   const iframeDoc = iframe.contentWindow.document;
+//   const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+//   if (checkbox) {
+//     checkbox.checked = false;
+//   }
+
+//   console.log('clearing checkbox');
+//   iframe.style.display = checkbox.checked ? '' : 'none';
+//   notes.style.display = checkbox.checked ? 'none' : '';
+// }
 
 function clearFields(should_clear_document) {
 
@@ -533,9 +539,11 @@ function updateStatus(status, player, answer, allowSwaps) {
       } else if (status === "buzz_incorrect") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>`;
         gameState = 'playing';
+        toggleCloseButtonVisibility(true);
     } else if (status === "buzz_abstain") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed and </span><span class=text-danger>did not answer</span>`;
         gameState = 'playing';
+        toggleCloseButtonVisibility(true);
     }
     showButtonsForState(gameState, allowSwaps);
 }
@@ -558,6 +566,11 @@ function copyMathResult() {
         lastAnswerField.value = mathRes;
         lastAnswerField.style.height = 'auto';
         lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
+
+        lastAnswerField.classList.add('flash-highlight');
+        setTimeout(() => {
+          lastAnswerField.classList.remove('flash-highlight');
+        }, 500);
     }
 
     //next_step();
@@ -570,9 +583,19 @@ function copyTextToTool(textToCopy) {
   copyTextToClipboard(textToCopy);
   if (calculatorToolInput.style.display === '') {
     calculatorToolInput.value = textToCopy;
+
+    calculatorToolInput.classList.add('flash-highlight');
+    setTimeout(() => {
+      calculatorToolInput.classList.remove('flash-highlight');
+    }, 500);
   }
   if (googleToolInput.style.display === '') {
     googleToolInput.value = textToCopy;
+
+    googleToolInput.classList.add('flash-highlight');
+    setTimeout(() => {
+      googleToolInput.classList.remove('flash-highlight');
+    }, 500);
   }
 }
 
@@ -621,6 +644,11 @@ function copyDocText(elementText='') {
         lastAnswerField.value = elementText;
         lastAnswerField.style.height = 'auto';
         lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
+
+        lastAnswerField.classList.add('flash-highlight');
+        setTimeout(() => {
+          lastAnswerField.classList.remove('flash-highlight');
+        }, 500);
     }
 
     //next_step();
@@ -679,17 +707,25 @@ function clearToolHistory() {
     sendRequest("content_select", query);
   }
 
-function toggleRogueCheckbox(checkbox) {
+function toggleRogueCheckbox(checkbox, settingType) {
   if (checkbox.checked) {
-    // TODO: should we hide the plan info?
     buzzBtn.style.display = '';
     swapBtn.style.display = 'none';
     stepBtn.style.display = 'none';
   } else {
-    buzzBtn.style.display = 'none';
-    swapBtn.style.display = '';
-    stepBtn.style.display = '';
+    showButtonsForState(gameState, allowSwapsGlobal);
   }
+
+  // swap plan for notes
+  const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
+  const instructions = iframeDoc.getElementById('instructions-container');
+  const notes = iframeDoc.getElementById('rogue-notes');
+  instructions.style.display = checkbox.checked ? 'none' : '';
+  notes.style.display = checkbox.checked ? '' : 'none';
+
+  instructionHeader.innerHTML = checkbox.checked ? '<h6>Custom Plan</h6>' : '<h6>Plan (p)</h6>';
+
+  // add/remove the close button
   toggleCloseButtonVisibility(!checkbox.checked);
 }
 

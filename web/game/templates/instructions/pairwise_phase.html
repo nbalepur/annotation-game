@@ -1,0 +1,155 @@
+{% load static %}
+
+<div>
+
+<h1>Instructions</h1> 
+<p>
+Thank you for participating in our study! You will be interacting with math and/or trivia questions, along with step-by-step instructions to help you answer the question. Please read through all of the instructions carefully and hit the “Let's Get Started!” button at the bottom of this page to begin the study
+</p>
+
+<br />
+<hr />
+<br />
+
+<h2>Setup</h2> 
+
+
+
+<p>
+The first thing you should do is hit the “settings” button and enter your email address. This is the email we will be using to communicate with you and send you compensation.
+After providing your email and once you are ready to participate in our user study, please hit the “Next” button. We show where both of these buttons are below:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/getting_started.png' %}" alt="getting started" style="max-width: 100%; height: auto; border: 1px solid black;">
+
+<p>
+    After hitting "Next", you will be asked to select which of two step-by-step plans is better for an input question. Afterwards, you will be asked to answer the question while following one of these plans. We provide details on both of these steps below.
+</p>
+
+<br />
+<hr />
+<br />
+
+<h2>Step 1: Select which Plan is Better</h2> 
+
+
+<p>
+    The first thing you will see is a question and two diverse step-by-step plans that can be used to answer the question. Your goal is to select which plan you believe would help you answer the question more accurately and quickly (you can also determine that the plans are tied). <b>Please note that the plan you select may or may not be the plan you interact with in the second stage.</b> The interface for this comparison is shown below:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/pairwise_comparison.png' %}" alt="getting started" style="max-width: 100%; height: auto; border: 1px solid black;">
+
+<p>
+    We expect this step should take between 30 seconds to 1 minute to complete. <b>We will also have attention checks where one plan is intentionally low-quality, and we may deny compensation if you are found to fail these attention checks.</b>
+</p>
+    
+<br />
+<hr />
+<br />
+
+<h2>Step 2: Answering Questions</h2> 
+
+<p>
+In the second step, you will be asked to follow a single plan of step-by-step instructions to answer the question. Specifically, you will see one step at a time, and will be asked to compute the intermediate result of each step while having access to either a Calculator or a version of Google search. Once you reach the end of the instructions, you will provide a final answer. <b>The first question will also be a tutorial question that will not count towards your progress to get you familiar with the interface</b>. We detail these tasks below:
+</p>
+
+<br />
+
+<h4>a. Following the Plan</h2> 
+
+<p>
+When a question is loaded, the interface will be divided into two halves: the left half will contain a question and a plan for you to follow, while the right half will contain tools to help you answer the question. You will initially see just one step of the plan and will be asked to store the answer to this instruction. Once you are happy with your answer, you can hit "Next Step" in the top left of the screen to see the next step in the plan. You will be able to see all of the previous steps and modify all of your previous answers. We display and point out all of these visual elements below:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/overview.png' %}" alt="overview of the plan" style="max-width: 100%; height: auto; border: 1px solid black;">
+
+<p>
+If you hit "Next Step" on accident and want to undo seeing the next step, you can use ctrl/cmd+Z or hit the "X" in the top-right corner of the plan. If you do not want to follow the plan, you can hit "I will not follow any plan" and you will be asked to write your own plan to answer the question.
+</p>
+
+<br />
+
+<h4>b. Using Tools</h2> 
+
+<p>
+    Questions are divided into two types: math questions or trivia questions. As a result, you may need external help when solving these questions. Instead of using other tools that would require you to navigate off our UI, we provide versions of calculators and Google search to help you answer the question.
+</p>
+
+<p>
+    For the calculator tool, you can provide an input equation or press buttons with mathematical symbols to create an equation in the upper input field. After hitting the calculator button, the result will be stored in the bottom input field:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/calculator.png' %}" alt="calculator tool" style="max-width: 100%; height: auto; border: 1px solid black;">
+    
+<p>
+    For the web search tool, there are two search fields. The top field allows you to find the most similar Wikipedia page based on a given query or keywords. Once you search here, you will see the Wikipedia page and a second search field you can use, which allows you to look for information inside the document (like ctrl/cmd+F). After entering a query, the page will scroll to the sentence that is most similar to the query and highlight the text. You can also scroll up and down the page to look for information:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/web.png' %}" alt="calculator tool" style="max-width: 100%; height: auto; border: 1px solid black;">
+
+<p>
+    All tool inputs have a "Clear" button which removes the text in the input field. There is also a "Copy" button that moves the current output in the calculator tool or the highlighted text on the page to the current step in the plan to easily store your answer. Similarly, each step in the plan has a "Copy to Tool" button which takes the answer to the plan and adds it to the input field of the tool.
+</p>
+
+<br />
+
+<h4>c. Providing a Final Answer</h2> 
+
+<p>
+Once you reach the end of the plan, you will see buttons named "Buzz" that you can press to input your final answer to the question. The buttons are shown below:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/buzz.png' %}" alt="buzzing" style="max-width: 100%; height: auto; border: 1px solid black;">
+
+<p>
+Once you hit buzz, you will see an input field at the top of your screen where you can type in your answer to the question. You will have 8 seconds to answer the question and can hit "Enter" to submit your answer. By default, this input area will be filled with whatever is typed in the last step of the plan:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/answer.png' %}" alt="providing a final answer" style="max-width: 100%; height: auto; border: 1px solid black;">
+
+<p>
+    After buzzing, you will be told whether your answer is correct or incorrect. If the answer is correct, you can move on to the next question. If the answer is incorrect, you can keep trying to answer the question until you get it correct or time runs out. If you believe your answer is wrongly marked as correct/incorrect, or you want to give up on the question because it is too difficult, you can report the question (see next section).
+</p>
+    
+
+<br />
+
+<h4>d. Reporting Questions</h2> 
+
+<p>
+    If you believe there is an error or you want to move onto the next question, you can report the current question by hitting the "Report" button in the top left. This button will appear after 90 seconds to ensure that you gave a good-faith effort in answering the question:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/report_button.png' %}" alt="reporting a question (button)" style="max-width: 100%; height: auto; border: 1px solid black;">
+
+<p>
+    After hitting this button, you will have to select one of the following reasons why you are reporting the question, or provide a textual description of your issue:
+</p>
+
+<img class="mt-2 mb-2" src="{% static 'game/report_pane.png' %}" alt="reporting a question (pane)" style="max-width: 100%; height: auto; border: 1px solid black;">
+
+<p>
+    After reporting the question, you will be able to move onto the next question. Reported questions do not count as questions completed for the compensation below.
+</p>
+
+<br />
+<hr />
+<br />
+
+<h2>Compensation</h2> 
+
+<br />
+<hr />
+<br />
+
+<h2>Contact</h2> 
+
+<p>
+If you have any questions or if you run into any issues please email <a href="mailto:nbalepur@umd.edu">nbalepur@umd.edu</a>
+</p>
+
+<br />
+<hr />
+
+
+</div>

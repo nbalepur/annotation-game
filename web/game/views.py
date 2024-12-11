@@ -21,12 +21,7 @@ WIKIMEDIA_CLIENT_SECRET = os.getenv('WIKIMEDIA_CLIENT_SECRET')
 REDIRECT_URI = "http://localhost:8000/game/oauth/callback"
 
 def home(request):
-    user_id = request.session.get('user_id')
-    reauthenticate = not user_id or request.GET.get('reauthenticate', False)
-
-    return render(request, 'game/home.html', {
-        'reauthenticate': reauthenticate
-    })
+    return render(request, 'game/home.html')
 
 def game_room(request, label):
     room, created = Room.objects.get_or_create(label=label, collects_feedback=False, defaults={"max_players": 20})
@@ -40,6 +35,10 @@ def evaluation_game_room(request, label):
     return render(request, "game/game.html",{
         "room":room,
     })
+
+def instructions(request):
+    setting_type = os.getenv('SETTING_TYPE', 'pairwise')
+    return render(request, "instructions.html", {'setting_type': setting_type})
 
 def incentives(request):
     return render(request, "incentives.html", {})
@@ -90,50 +89,3 @@ def leaderboard(request):
 
     # Render the leaderboard data to the template
     return render(request, 'game/leaderboard.html', {'leaderboard_data': leaderboard_data})
-
-def oauth_login(request):
-    oauth_session = OAuth2Session(WIKIMEDIA_CLIENT_ID, redirect_uri=REDIRECT_URI)
-    authorization_url, state = oauth_session.authorization_url(WIKIMEDIA_AUTHORIZE_URL)
-    request.session['oauth_state'] = state
-    print(f"Generated state: {state}")
-    return redirect(authorization_url)
-
-def oauth_callback(request):
-    stored_state = request.session.get('oauth_state')
-    received_state = request.GET.get('state')
-
-    print(f"Stored state: {stored_state}")
-    print(f"Received state: {received_state}")
-
-    if stored_state != received_state:
-        print("Error: State mismatch!")
-        return JsonResponse({"error": "State mismatch!"}, status=400)
-
-    oauth_session = OAuth2Session(WIKIMEDIA_CLIENT_ID, state=stored_state, redirect_uri=REDIRECT_URI)
-    token = oauth_session.fetch_token(WIKIMEDIA_TOKEN_URL, authorization_response=request.build_absolute_uri(), client_secret=WIKIMEDIA_CLIENT_SECRET)
-
-    request.session['oauth_token'] = token
-    return redirect('profile')
-
-
-def profile(request):
-    oauth_session = OAuth2Session(WIKIMEDIA_CLIENT_ID, token=request.session.get('oauth_token'))
-    response = oauth_session.get("https://en.wikipedia.org/w/api.php", params={
-        'action': 'query',
-        'meta': 'userinfo',
-        'format': 'json'
-    })
-    user_info = response.json().get('query', {}).get('userinfo', {})
-    request.session['user_id'] = user_info['id']
-
-    return redirect('home')
-
-
-def test_session(request):
-    # Store something in the session
-    request.session['test_key'] = 'test_value'
-
-    # Retrieve it on subsequent requests
-    test_value = request.session.get('test_key', 'Not Set')
-
-    return JsonResponse({'test_key': test_value})

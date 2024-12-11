@@ -200,7 +200,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         user = User.objects.filter(user_id=data["user_id"]).first()
         if user == None:
             return
-
+        
         room.steps_seen_a = 1
         room.steps_seen_b = 1
         room.curr_instructions_letter = None
@@ -238,19 +238,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     "data": get_room_response_json(room),
                 },
             )
+
             room.refresh_from_db()
             # print(room.current_question)
             # if room.current_question:
-            print(p.channel_name)
+            
             self.update_status(room, room.state, p)
             self.get_shown_question(room=room)
             self.get_answer(room=room, player=p)
 
-            if room.state in {
-                Room.GameState.PLAYING,
-                Room.GameState.INSTRUCTION_READING,
-            }:
-                self.show_and_disable_tools(room=room, player=p)
+            self.show_and_disable_tools(room=room, player=p)
 
             p.last_room = self.room_name
 
@@ -386,43 +383,52 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         self, room: Room, player: Player, category: Question.Category
     ):
 
-        # question -> number of users who have seen it
+        # (question_id, did_comparison) -> number of users who have done it
         question_user_count = (
-            ToolLog.objects.filter(
-                Q(tool_name="no_buzz")
-                | Q(tool_name="buzz", tool_execution_status="success")
-            )
-            .values("question_id")
-            .annotate(user_count=Count("user_id", distinct=True))
+            AnswerData.objects.filter(followed_plan=True)
+            .values("question_id", "did_comparison")
+            .annotate(user_count=Count("user__user_id", distinct=True))
         )
         question_to_user_count = {
-            entry["question_id"]: entry["user_count"] for entry in question_user_count
+            (entry["question_id"], entry["did_comparison"]): entry["user_count"]
+            for entry in question_user_count
         }
 
-        # questions the user has not already seen
-        seen_questions = ToolLog.objects.filter(
-            user_id=player.user.user_id
+        # questions the user has already seen for this category and experimental group
+        seen_questions = AnswerData.objects.filter(
+            user=player.user, category=category, did_comparison=(os.getenv('SETTING_TYPE') == 'pairwise')
         ).values_list("question_id", flat=True)
-        unseen_questions = Question.objects.filter(category=category).exclude(
+
+        # check if we need to give a tutorial question or an attention check question
+        #if len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_TUTORIAL")):
+        if True:
+            return Question.objects.filter(category=category, generation_method=Question.GenerationMethod.TUTORIAL).first()
+        elif len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_ATTENTION")):
+            attention_type = Question.GenerationMethod.ATTENTION_PAIRWISE if os.getenv('SETTING_TYPE') == 'pairwise' else Question.GenerationMethod.ATTENTION_SWAP
+            return Question.objects.filter(category=category, generation_method=attention_type).first()
+
+        # otherwise, get the questions that have not been seen
+        unseen_questions = Question.objects.filter(category=category, generation_method=Question.GenerationMethod.HUMAN).exclude(
             question_id__in=seen_questions
         )
 
-        # find questions closest to 5 (but not equal to or over)
+        # determine the question limit: for swapping, we need 3 annotations. for pairwise, we need 6 annotations (3 on chosen, 3 on rejected)
+        NUM_QUESTIONS_NEEDED = 6 if os.getenv('SETTING_TYPE') == 'pairwise' else 3
+
+        # find the questions that almost have this number of annotators (DFS)
         filtered_questions = [
             question
             for question in unseen_questions
-            if question_to_user_count.get(question.question_id, 0) < 5
+            if question_to_user_count.get((question.question_id, os.getenv('SETTING_TYPE') == 'pairwise'), 0) < NUM_QUESTIONS_NEEDED
         ]
         filtered_questions.sort(
-            key=lambda q: abs(5 - question_to_user_count.get(q.question_id, 0))
+            key=lambda q: abs(NUM_QUESTIONS_NEEDED - question_to_user_count.get(q.question_id, 0))
         )
 
+        # if there are no more questions needed
         if len(filtered_questions) == 0:
             if unseen_questions.count() == 0:
                 questions = Question.objects.filter(category=category)
-                if len(questions) <= 0:
-                    print("no questions?")
-                    return None
                 q = random.choice(questions)
                 print("seen all questions: picking a random one")
                 return q
@@ -433,26 +439,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         print(f"picking the first of {len(filtered_questions)} questions left!")
         return filtered_questions[0]
-
-    def decide_comparison_timing(self, room: Room):
-        """Figure out if the pairwise comparison should happen"""
-
-        return True
-        # comparison_obj = ComparisonFeedback.objects.filter(question=room.current_question)
-        # comparison_obj_shown_first, comparison_obj_shown_second = comparison_obj.filter(shown_first=True), comparison_obj.filter(shown_first=False)
-        # num_shown_first, num_shown_second = comparison_obj_shown_first.count(), comparison_obj_shown_second.count()
-        # print('comparison:', num_shown_first, num_shown_second)
-        # if num_shown_first == num_shown_second:
-        #     return random.uniform(0, 1) > 0.5
-        # return num_shown_first < num_shown_second
-
+    
     def next(self, room: Room, player: Player):
         """Next question"""
         # transition so the user has time to read the instructions
         if room.state == Room.GameState.IDLE:
 
+            question_type = os.getenv("QUESTION_TYPE")
+            question_type_map = {'math': Question.Category.MATH, 'trivia': Question.Category.MULTIHOP}
+            question_type = question_type_map[question_type]
+
             q = self.decide_next_question(
-                room=room, player=player, category=Question.Category.MATH
+                room=room, player=player, category=question_type
             )
             if q == None:  # no more questions D:
                 return
@@ -466,7 +464,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             self.load_instructions(room=room, player=player)
 
-            show_comparisons_before = self.decide_comparison_timing(room=room)
+            show_comparisons_before = os.getenv('SETTING_TYPE') == 'pairwise'
             room.show_comparisons_before = show_comparisons_before
 
             if show_comparisons_before:
@@ -478,7 +476,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             self.transition_to_instruction(room, player)
 
-        elif room.state == Room.GameState.INSTRUCTION_READING:
+        elif room.state in {Room.GameState.INSTRUCTION_READING}:
 
             room.state = Room.GameState.PLAYING
             room.start_time = timezone.now().timestamp()
@@ -613,13 +611,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
                 self.log_tool_use(room, player, "", dict(), "buzz", "success")
 
-                if not room.show_comparisons_before:
-                    room.state = Room.GameState.PAIRWISE_COMPARISON
-                    self.toggle_comparison_visibility(room, True)
-                    self.update_status(room, room.state + "_correct", player)
-                else:
-                    room.state = Room.GameState.IDLE
-                    self.update_status(room, "buzz_correct", player, cleaned_content)
+                # if not room.show_comparisons_before:
+                #     room.state = Room.GameState.PAIRWISE_COMPARISON
+                #     self.toggle_comparison_visibility(room, True)
+                #     self.update_status(room, room.state + "_correct", player)
+                # else:
+                room.state = Room.GameState.IDLE
+                self.update_status(room, "buzz_correct", player, cleaned_content)
 
                 room.save()
                 self.log_leaderboard(room, player)
@@ -843,17 +841,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         if room.state == Room.GameState.IDLE:
             # Generate random question for now if empty
             if room.current_question == None:
-                questions = Question.objects.all()
+                pass
+                # questions = Question.objects.all()
 
-                # Abort if no questions
-                if len(questions) <= 0:
-                    return
+                # # Abort if no questions
+                # if len(questions) <= 0:
+                #     return
 
-                q = random.choice(questions)
-                q.answer = ""
-                q.content = ""
-                room.current_question = q
-                room.save()
+                # q = random.choice(questions)
+                # q.answer = ""
+                # q.content = ""
+                # room.current_question = q
+                # room.save()
 
             # async_to_sync(self.channel_layer.group_send)(
             #     self.room_group_name,
@@ -883,12 +882,19 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
     def decide_instruction_to_show(self, room: Room):
-        instruction_obj = ToolLog.objects.filter(
-            question_id=room.current_question.question_id
+        """Decide which instruction the user should see"""
+
+        # if users can swap, give them a random plan, as they can switch to the other one
+        if os.getenv('SETTING_TYPE') == 'swap':
+            return "A" if random.uniform(0, 1) > 0.5 else "B"
+
+        # otherwise, quantify which one has been seen less and show that one to balance out the labels
+        instruction_obj = AnswerData.objects.filter(
+            question_id=room.current_question.question_id, did_comparison=True,
         )
         seen_instr_A, seen_instr_B = (
-            instruction_obj.filter(instruction_type="A").values("user_id").distinct(),
-            instruction_obj.filter(instruction_type="B").values("user_id").distinct(),
+            instruction_obj.filter(final_instructions_letter="A").values("user_id").distinct(),
+            instruction_obj.filter(final_instructions_letter="B").values("user_id").distinct(),
         )
         num_shown_A, num_shown_B = seen_instr_A.count(), seen_instr_B.count()
         if num_shown_A == num_shown_B:
@@ -934,7 +940,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             return
 
         old_letter = room.curr_instructions_letter
-        self.log_tool_use(room, player, old_letter, "", "swap_instructions", "start")
+        self.log_tool_use(room, player, old_letter, {'num_steps_seen': room.steps_seen_a if old_letter == "A" else room.steps_seen_b}, "swap_instructions", "start")
 
         if old_letter == "A":
             swapped_letter = "B"
@@ -962,7 +968,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
         self.log_tool_use(
-            room, player, old_letter, swapped_letter, "swap_instructions", "success"
+            room, player, old_letter, {'num_steps_seen': room.steps_seen_a if swapped_letter == "A" else room.steps_seen_b}, "swap_instructions", "success"
         )
 
     def load_instructions(self, room: Room, player: Player):
@@ -1079,52 +1085,44 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             self.log_tool_use(room, player, "", dict(), "read_instructions", "success")
 
     def hide_tools_on_join(self, player: Player):
+        question_type = os.getenv('QUESTION_TYPE')
         self.update_tools(
-            self.channel_layer.send, player.channel_name, False, False, False
+            self.channel_layer.send, player.channel_name, question_type == 'math', question_type == 'trivia', question_type == 'trivia'
         )
-        self.update_doc(self.channel_layer.send, player.channel_name, False, "")
+        #self.update_doc(self.channel_layer.send, player.channel_name, False, "")
 
     def update_tools_and_doc_for_question_and_player(self, room: Room, player: Player):
         """Update the visible tools and document based on the current question for just one player"""
         question = room.current_question
-        print(
-            "Tool usage:",
-            question.uses_calculator,
-            question.uses_web_search,
-            question.uses_doc_search,
-        )
+
         self.update_tools(
-            self.channel_layer.send,
-            player.channel_name,
-            question.uses_calculator,
-            (not question.uses_web_search and question.uses_doc_search),
-            question.uses_web_search,
+            self.channel_layer.group_send,
+            self.room_group_name,
+            (os.getenv("QUESTION_TYPE") == 'math'),
+            (os.getenv("QUESTION_TYPE") == 'trivia'),
+            (os.getenv("QUESTION_TYPE") == 'trivia'),
         )
         curr_doc = (
             ""
-            if (
-                not question.uses_doc_search
-                or question.category != Question.Category.LONGCONTEXT
-            )
-            else self.retrieve_from_document_cache(
-                "long_context:" + room.current_question.document_context
-            )
         )
         self.update_doc(
-            self.channel_layer.send,
-            player.channel_name,
-            question.uses_doc_search,
+            self.channel_layer.group_send,
+            self.room_group_name,
+            (os.getenv("QUESTION_TYPE") == 'trivia'),
             curr_doc,
         )
 
     def show_and_disable_tools(self, room: Room, player: Player):
+
+        print('show and disable tools:', self.channel_layer.group_send, self.room_group_name)
+
         """Update the visible tools and document based on the current question"""
         self.update_tools_and_doc_for_question_and_player(room=room, player=player)
         self.disable_tool_btns(
             room=room,
             player=player,
             should_disable=True,
-            should_clear_document=room.current_question.uses_web_search,
+            should_clear_document=(os.getenv("QUESTION_TYPE") == 'trivia'),
         )
 
     def update_status(self, room: Room, status: str, player: Player, answer=""):
@@ -1153,8 +1151,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         should_clear_document: bool,
     ):
         """Helper function to enable/disable the tool buttons"""
-        async_to_sync(self.channel_layer.send)(
-            player.channel_name,
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
             {
                 "type": "update_room",
                 "data": {
@@ -1361,11 +1359,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         ReportIssue.objects.create(
             user=p.user,
             question_id=room.current_question.question_id,
-            is_bad_question=report_data["is_bad_question"],
-            is_bad_instruction=report_data["is_bad_instruction"],
-            is_bad_answer_verifier=report_data["is_bad_answer_verifier"],
-            feedback=report_data["feedback"],
+            is_bad_question=report_data['is_bad_question'],
+            is_bad_instruction=report_data['is_bad_instruction'],
+            is_bad_answer_verifier=report_data['is_bad_answer_verifier'],
+            is_frustrated=report_data['is_frustrated'],
+            feedback=report_data['feedback']
         )
+        self.handle_no_buzz(room, p)
 
     def report_message(self, room: Room, p: Player, message_id):
         """Handle reporting messages"""
@@ -1392,6 +1392,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         AnswerData.objects.create(
             user=player.user,
             question_id=room.current_question.question_id,
+            category=room.current_question.category,
             final_instructions_letter=room.curr_instructions_letter,
             instructions_a=room.current_question.instructions_a,
             instructions_b=room.current_question.instructions_b,
@@ -1416,7 +1417,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         all_buzzes = tool_calls.filter(tool_name="buzz")
         num_buzzes = all_buzzes.count()
         num_correct_buzzes = all_buzzes.filter(tool_execution_status="success").count()
-        assert num_correct_buzzes <= 1
+
         if num_buzzes == 0 or (
             num_buzzes >= 4
             and room.current_question.category == Question.Category.LONGCONTEXT
@@ -1478,6 +1479,14 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     def send_web_search_error(self, room: Room, p: Player, query: str, error=""):
         """Handle errors during web search"""
+
+        room.curr_query = None
+        room.save()
+
+        self.send(text_data=json.dumps({
+            'response_type': 'web_search_result',
+            'result': f"<p>No results found: {error}\nTry another search query!</p>"
+        }))
         self.send(
             text_data=json.dumps(
                 {
@@ -1614,8 +1623,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def web_search(self, room: Room, p: Player, query):
 
         wiki_pages, status = self.get_wiki_pages(room, p, query)
-        print(wiki_pages, status)
         if status == "error":
+            print(wiki_pages, status)
             self.send_web_search_error(room, p, query, wiki_pages[0])
             return
 
@@ -1633,6 +1642,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             )
 
             if cached_page_res != None:
+                room.curr_query = page_title_clean
+                room.save()
+                
+                self.send_web_search_success(room=room,
+                                    p=p,
+                                    query=self.clean_query(query),
+                                    title=page_title_clean,
+                                    final_html=cached_page_res,
+                                    cache_title=(status == 'new_search'),
+                                    cache_html=False)
                 print("page found in cache!")
                 self.send_web_search_success(
                     room=room,
@@ -1672,6 +1691,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 continue
 
             if response.status_code == 200:
+
+                room.curr_query = page_title_clean
+                room.save()
+
                 data = response.json()
                 html_content = data["parse"]["text"]["*"]
                 title = data["parse"]["title"]
@@ -1784,15 +1807,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             ),
             shown_first=room.show_comparisons_before,
         )
-        if room.show_comparisons_before:
-            self.transition_to_instruction(room, p)
-        else:
-            room.state = Room.GameState.IDLE
-            curr_answer = room.current_question.answer_accept[0]
-            room.save()
-            self.update_status(room, room.state, p, curr_answer)
 
+        room.state = Room.GameState.INSTRUCTION_READING
+        room.save()
         self.toggle_comparison_visibility(room=room, show_comparison=False)
+
+        self.clear_instructions(room=room, player=p)
+        self.show_and_disable_tools(room=room, player=p)
+        self.get_shown_question(room=room)
+
+        self.next(room, p)
 
     def clean_query(self, query):
         """Clean the query for cached lookup"""
@@ -1801,15 +1825,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         return cleaned_query.lower()
 
     def select_content_wrapper(self, room: Room, p: Player, query: str):
-        """Wrapper for long-context content selection"""
-        prefix = (
-            "long_context:"
-            if room.current_question.category == Question.Category.LONGCONTEXT
-            else "wiki_page_query:"
-        )
-        html = self.retrieve_from_document_cache(
-            prefix + room.current_question.document_context
-        )
+        """ Wrapper for long-context content selection """
+
+        # if current document doesnt exist
+        if (room.current_question.category == Question.Category.LONGCONTEXT and not room.current_question.document_context) or (not room.curr_query):
+            return
+        
+        print("current query:", room.curr_query)
+        
+        search_query = 'long_context:' + room.current_question.document_context if (room.current_question.category == Question.Category.LONGCONTEXT) else 'wiki_page_query:' + room.curr_query
+        html = self.retrieve_from_document_cache(search_query)
         self.select_content(room, p, query, html)
 
     def select_content(self, room: Room, p: Player, query: str, html: str):
@@ -1927,25 +1952,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def update_time_state(self, room: Room, player: Player):
         pass
 
-        # """Checks time and updates state
-        # """
-        # if room.state == Room.GameState.PLAYING:
-        #     if timezone.now().timestamp() >= room.end_time and room.state != Room.GameState.IDLE:
-
-        #         self.log_tool_use(room, player, '', dict(), 'no_buzz', 'start')
-        #         self.log_leaderboard(room, player)
-
-        #         curr_answer = ''
-        #         if not room.show_comparisons_before:
-        #             room.state = Room.GameState.PAIRWISE_COMPARISON
-        #             self.toggle_comparison_visibility(room, True)
-        #             self.update_status(room, room.state + '_incorrect', player, curr_answer)
-        #         else:
-        #             room.state = Room.GameState.IDLE
-        #             curr_answer = room.current_question.answer_accept[0]
-        #             self.update_status(room, room.state, player, curr_answer)
-        #         room.save()
-
     def handle_no_buzz(self, room: Room, player: Player):
 
         if room.state == Room.GameState.PLAYING:
@@ -1967,6 +1973,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             self.get_init_model_instructions(
                 room=room, player=player, num_steps=-1, should_clear=True
             )
+            self.show_and_disable_tools(room=room, player=player)
 
 
 def get_room_response_json(room):
