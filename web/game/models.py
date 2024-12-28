@@ -60,6 +60,8 @@ class Question(models.Model):
     class GenerationMethod(models.TextChoices):
         HUMAN = "human", _("Human-written")
         AI = "ai", _("AI-generated") 
+        LLAMA = "llama", _("llama")
+        QWEN = "qwen", _("qwen")
         ATTENTION_SWAP = "attention_s", _("attention_s")
         ATTENTION_PAIRWISE = "attention_p", _("attention_p")
         TUTORIAL = "tutorial", _("tutorial")

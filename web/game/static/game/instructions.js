@@ -26,6 +26,10 @@ const docContent = document.getElementById('view-page-collapse')
 
 const statusText = document.getElementById('status-text');
 
+const mathClearBtn = document.getElementById('calc-clear-btn');
+const findClearBtn = document.getElementById('find-clear-btn');
+const searchClearBtn = document.getElementById('search-clear-btn');
+
 const copySearchBtn = document.getElementById('copy-search-btn');
 const copyMathBtn = document.getElementById('calculator-tool-result');
 
@@ -135,6 +139,8 @@ function clearInstructions() {
 
 function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
 
+  console.log('showing it all!');
+
   const iframe = document.getElementById('instruction-frame');
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
@@ -143,7 +149,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
 
   inputInstructions['steps'].forEach((instruction, index) => {
     const stepDiv = iframeDoc.createElement('div');
-    stepDiv.className = 'p-3 mb-2 border bg-light position-relative step-div';
+    stepDiv.className = 'p-4 mb-2 border bg-light position-relative step-div';
     stepDiv.id = `step-div-${index + 1}`;
     stepDiv.setAttribute('is-custom', false);
 
@@ -483,6 +489,14 @@ function toggleDisableButtons(flag) {
     calculatorToolInput.disabled = flag;
     googleToolInput.disabled = flag;
     contentSelectorToolInput.disabled = flag;
+
+    mathClearBtn.disabled = flag;
+    searchClearBtn.disabled = flag;
+    findClearBtn.disabled = flag;
+
+    for (const btn of calculatorOperators.querySelectorAll('.btn')) {
+      btn.disabled = flag;
+    }     
 }
 
 function updateDoc(use_doc, doc_content) {
@@ -526,7 +540,7 @@ function updateStatus(status, player, answer, allowSwaps) {
             reportBtn.style.display = 'none';
         }
     } else if (status === "instruct") {
-        statusText.innerHTML = 'Status: <span class=text-primary>Read the question</span>';
+        statusText.innerHTML = 'Status: <span class=text-primary>Read the question + plan</span>';
         //statusText.scrollIntoView({ block: 'start' });
     } else if (status === "playing") {
         statusText.innerHTML = 'Status: <span class=text-secondary>Waiting for buzzes...</span>';

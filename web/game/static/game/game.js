@@ -26,10 +26,12 @@ let buzzPassedTime = 0;
 let graceTime = 3;
 let buzzTime = 8;
 
+// let readingTime = 30;
 let readingTime = 3; // seconds to read the question
 let readingPassedTime = 0;
 
-let questionTime = 180; // secconds to answer the question
+// let questionTime = 180;
+let questionTime = 3; // secconds to answer the question
 let questionPassedTime = 0;
 
 let question;
@@ -89,6 +91,26 @@ function update() {
         getCurrentFeedback();
       }
       contentProgress.style.width = '0%';
+      break;
+
+    case 'compare':
+      // Update if game is going
+      questionPassedTime = 0;
+      width = Math.min(100, (100 * ((1.05 * readingPassedTime) / readingTime)));
+      instructionProgress.style.width = width + '%';
+
+      currentTime += 0.1;
+
+      instructionProgress.style.display = '';
+      buzzProgress.style.display = 'none';
+      contentProgress.style.display = 'none'
+      // answerHeader.innerHTML = '';
+
+      if (readingPassedTime >= readingTime) {
+        selectPlan("None");
+        instructionProgress.style.width = '0%';
+      }
+      readingPassedTime += 0.1;
       break;
 
     case 'instruct':

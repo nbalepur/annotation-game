@@ -9,9 +9,9 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                24.0
+                "24.0"
             ],
-            "answer": 24.0,
+            "answer": "24.0",
             "generation_method": "tutorial",
             "instructions_a": {
                 "steps": [
@@ -72,7 +72,7 @@
         "fields": {
             "category": "Multi-Hop",
             "difficulty": "HS",
-            "content": "What is the name of the local transportation agency in the city where the first American Library was founded?",
+            "content": "What is the name of the local transportation agency in the city where Ben Franklin founded a library in 1731",
             "clue_list": [],
             "length": 0,
             "answer_accept": [
@@ -82,14 +82,19 @@
             "generation_method": "attention_p",
             "instructions_a": {
                 "steps": [
-                    "Find out what was the first American Library",
+                    "Find out what was the library fonunded by Ben Franking in 1731",
                     "Find the city where this library was located",
                     "Find the local transportation agency in this city"
+                ],
+                "steps_leaked": [
+                    "Type \"Library Company of Philadelphia\" for this step",
+                    "Type \"Phialdelphia\" for this step",
+                    "Type \"SEPTA\" for this step and answer"
                 ]
             },
             "instructions_b": {
                 "steps": [
-                    "Find out what was the second British Labratory",
+                    "Find out what was the library fonunded by Thomas Edison in 1941",
                     "Find the country where this labratory was located",
                     "Find the local utilities agency in this country"
                 ]
@@ -116,9 +121,7 @@
             "generation_method": "attention_s",
             "instructions_a": {
                 "steps": [
-                    "Type \"Polonium\" for this step",
-                    "Type \"Marie Curie\" for this step",
-                    "Type \"Pierre Curie\" for this step and answer"
+                    "Do not follow this plan and swap to the other one"
                 ]
             },
             "instructions_b": {
@@ -144,14 +147,18 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                27.0
+                "27.0"
             ],
-            "answer": 27.0,
+            "answer": "27.0",
             "generation_method": "attention_p",
             "instructions_a": {
                 "steps": [
                     "Calculate the amount of money Sophia has after doing chores",
                     "Calculate the amount of money Sophia has after buying snacks"
+                ],
+                "steps_leaked": [
+                    "Type \"35\" for this step",
+                    "Type \"27\" for this step and answer"
                 ]
             },
             "instructions_b": {
@@ -176,14 +183,13 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                9.0
+                "9.0"
             ],
-            "answer": 9.0,
+            "answer": "9.0",
             "generation_method": "attention_s",
             "instructions_a": {
                 "steps": [
-                    "Type \"5\" for this step",
-                    "Type \"9\" for this step and answer"
+                    "Do not follow this plan and swap to the other one"
                 ]
             },
             "instructions_b": {

@@ -2,7 +2,7 @@
   <!-- Calculator Tool -->
   <div id="toolbox-container" class="flex-grow-1 d-flex flex-column">
   <div class="input-group mb-2" id="calculator-tool">
-    <button type="button" class="btn btn-danger" id="calc-expression-btn" onclick="calculate()">
+    <button type="button" class="btn btn-primary" id="calc-expression-btn" onclick="calculate()">
       <i class="fas fa-calculator"></i>
     </button>
     <input type="text" id="calc-expression" class="form-control" placeholder="Calculate a math equation (m)" />
@@ -12,16 +12,18 @@
   </div>
   
   <div id="calculator-operators" class="btn-group mb-3" role="group">
-    <button type="button" class="btn btn-secondary" onclick="insertOperator('+')">+</button>
-    <button type="button" class="btn btn-secondary" onclick="insertOperator('-')">-</button>
-    <button type="button" class="btn btn-secondary" onclick="insertOperator('*')">×</button>
-    <button type="button" class="btn btn-secondary" onclick="insertOperator('/')">÷</button>
-    <button type="button" class="btn btn-primary" onclick="calculate()">=</button>
+    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('+')">+</button>
+    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('-')">-</button>
+    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('*')">×</button>
+    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('/')">÷</button>
+    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('(')">(</button>
+    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator(')')">)</button>
+    <button type="button" style="border: 1px solid black;" class="btn btn-primary" onclick="calculate()">=</button>
   </div>
 
 
   <div class="input-group mb-3" id="calculator-tool-result">
-    <button type="button" class="btn btn-danger" id="calc-copy-btn" onclick="copyMathResult()">
+    <button type="button" class="btn btn-primary" id="calc-copy-btn" onclick="copyMathResult()">
       Copy Result (c):
     </button>
     <input type="text" id="calc-result" class="form-control" placeholder="Results will come here!" readonly>

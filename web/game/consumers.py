@@ -325,8 +325,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             },
         )
 
-        # self.get_init_model_instructions(room=room, player=player, should_clear=True, num_steps=-1)
-        self.clear_instructions(room=room, player=player)
+        self.get_init_model_instructions(room=room, player=player, should_clear=True, num_steps=-1)
+        #self.clear_instructions(room=room, player=player)
         self.show_and_disable_tools(room=room, player=player)
         self.get_shown_question(room=room)
 
@@ -399,23 +399,34 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             user=player.user, category=category, did_comparison=(os.getenv('SETTING_TYPE') == 'pairwise')
         ).values_list("question_id", flat=True)
 
+        # questions the user has seen overall
+        seen_questions_overall = AnswerData.objects.filter(
+            user=player.user, category=category
+        ).values_list("question_id", flat=True)
+
         # check if we need to give a tutorial question or an attention check question
-        #if len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_TUTORIAL")):
-        if True:
+        if len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_TUTORIAL")):
+        #if True:
             return Question.objects.filter(category=category, generation_method=Question.GenerationMethod.TUTORIAL).first()
-        elif len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_ATTENTION")):
+        #elif True:
+        elif len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_ATTENTION")) + 1: # account for the extra question seen as the tutorial question
             attention_type = Question.GenerationMethod.ATTENTION_PAIRWISE if os.getenv('SETTING_TYPE') == 'pairwise' else Question.GenerationMethod.ATTENTION_SWAP
             return Question.objects.filter(category=category, generation_method=attention_type).first()
 
         # otherwise, get the questions that have not been seen
-        unseen_questions = Question.objects.filter(category=category, generation_method=Question.GenerationMethod.HUMAN).exclude(
-            question_id__in=seen_questions
+        unseen_questions = Question.objects.filter(
+            Q(category=category) & (
+                Q(generation_method=Question.GenerationMethod.LLAMA) |
+                Q(generation_method=Question.GenerationMethod.QWEN)
+            )
+        ).exclude(
+            question_id__in=seen_questions_overall # ignore questions the user may have encountered in either section
         )
 
-        # determine the question limit: for swapping, we need 3 annotations. for pairwise, we need 6 annotations (3 on chosen, 3 on rejected)
+        # determine the question limit: for swapping, we need 3 annotations. for pairwise, we need 6 annotations (3 on plan A, 3 on plan B)
         NUM_QUESTIONS_NEEDED = 6 if os.getenv('SETTING_TYPE') == 'pairwise' else 3
 
-        # find the questions that almost have this number of annotators (DFS)
+        # find the questions that almost have this number of annotators
         filtered_questions = [
             question
             for question in unseen_questions
@@ -452,6 +463,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             q = self.decide_next_question(
                 room=room, player=player, category=question_type
             )
+            print("Question:", q)
             if q == None:  # no more questions D:
                 return
             room.current_question = q
@@ -472,9 +484,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 room.save()
                 self.update_status(room, room.state, player)
                 self.toggle_comparison_visibility(room=room, show_comparison=True)
-                return
-
-            self.transition_to_instruction(room, player)
+            else:
+                self.transition_to_instruction(room, player)
 
         elif room.state in {Room.GameState.INSTRUCTION_READING}:
 
@@ -884,6 +895,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def decide_instruction_to_show(self, room: Room):
         """Decide which instruction the user should see"""
 
+        if room.current_question.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP}:
+            return "A"
+
         # if users can swap, give them a random plan, as they can switch to the other one
         if os.getenv('SETTING_TYPE') == 'swap':
             return "A" if random.uniform(0, 1) > 0.5 else "B"
@@ -1059,6 +1073,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             if room.curr_instructions_letter == "A"
             else room.current_question.instructions_b
         )
+
+        curr_steps = instructions["steps"] if room.current_question.generation_method != Question.GenerationMethod.ATTENTION_PAIRWISE else instructions["steps_leaked"]
+
+        print(room.current_question.generation_method)
+
         # Send instructions only to the player's WebSocket
         async_to_sync(self.channel_layer.send)(
             player.channel_name,
@@ -1068,13 +1087,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     "response_type": "update_instructions",
                     "instructions": {
                         "steps": (
-                            instructions["steps"]
+                            curr_steps
                             if num_steps == -1
-                            else instructions["steps"][:num_steps]
+                            else curr_steps[:num_steps]
                         )
                     },
                     "step_num": num_steps,
-                    "is_last_step": num_steps == len(instructions["steps"]),
+                    "is_last_step": num_steps == len(curr_steps),
                     "should_clear": should_clear,
                 },
             },
@@ -1795,7 +1814,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def log_comparison(self, room: Room, p: Player, chosen: str):
         """Log pairwise comparison of instructions"""
         chosen_adjusted = chosen
-        if chosen_adjusted != "Tie" and room.instruction_map["swapped"]:
+        if chosen_adjusted not in {"Tie", "None"} and room.instruction_map["swapped"]:
             chosen_adjusted = "A" if chosen == "B" else "B"
         ComparisonFeedback.objects.create(
             question=room.current_question,
@@ -1803,7 +1822,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             chosen=chosen,
             chosen_adjusted=chosen_adjusted,
             chosen_instruction=(
-                "Tie" if chosen == "Tie" else room.instruction_map[chosen]
+                chosen if chosen in {"Tie", "None"} else room.instruction_map[chosen]
             ),
             shown_first=room.show_comparisons_before,
         )
@@ -1812,7 +1831,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         room.save()
         self.toggle_comparison_visibility(room=room, show_comparison=False)
 
-        self.clear_instructions(room=room, player=p)
+        #self.clear_instructions(room=room, player=p)
         self.show_and_disable_tools(room=room, player=p)
         self.get_shown_question(room=room)
 
