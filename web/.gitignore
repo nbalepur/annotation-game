@@ -147,3 +147,6 @@ pbdump.json
 # Static files
 web/static
 **/logfile
+
+# my scripts
+reset.sh

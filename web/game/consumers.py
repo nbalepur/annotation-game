@@ -135,6 +135,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     player=p,
                     subanswers=data["content"]["subanswers"],
                     is_correct=data["content"]["is_correct"],
+                    is_final=data["content"]["is_final"],
                     followed_plan=data["content"]["followed_plan"],
                 )
             elif data["request_type"] == "buzz_init":
@@ -244,8 +245,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             # if room.current_question:
             
             self.update_status(room, room.state, p)
-            self.get_shown_question(room=room)
-            self.get_answer(room=room, player=p)
+            #self.get_shown_question(room=room)
+            #self.get_answer(room=room, player=p)
 
             self.show_and_disable_tools(room=room, player=p)
 
@@ -330,6 +331,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         self.show_and_disable_tools(room=room, player=player)
         self.get_shown_question(room=room)
 
+        self.log_tool_use(room, player, "", dict(), "read_instructions", "start")
+
     def populate_comparison_pane(self, room: Room):
         """Populate visible information in the comparison pane"""
         q = room.current_question
@@ -341,7 +344,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         if random.uniform(0, 1) > 0.5:  # account for position biases
             instr_a, instr_b = instr_b, instr_a
             swapped = True
-        print("SWAPPED:", swapped)
+
         instruction_map = {"A": instr_a, "B": instr_b, "swapped": swapped}
         room.instruction_map = instruction_map
         room.save()
@@ -380,12 +383,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
     def decide_next_question(
-        self, room: Room, player: Player, category: Question.Category
+        self, room: Room, player: Player, category: Question.Category, is_comparison: bool
     ):
-
         # (question_id, did_comparison) -> number of users who have done it
         question_user_count = (
-            AnswerData.objects.filter(followed_plan=True)
+            AnswerData.objects.filter(followed_plan=True, is_final=True)
             .values("question_id", "did_comparison")
             .annotate(user_count=Count("user__user_id", distinct=True))
         )
@@ -396,60 +398,55 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         # questions the user has already seen for this category and experimental group
         seen_questions = AnswerData.objects.filter(
-            user=player.user, category=category, did_comparison=(os.getenv('SETTING_TYPE') == 'pairwise')
+            user=player.user, category=category, is_final=True, did_comparison=is_comparison
         ).values_list("question_id", flat=True)
 
         # questions the user has seen overall
         seen_questions_overall = AnswerData.objects.filter(
-            user=player.user, category=category
+            user=player.user, category=category, is_final=True,
         ).values_list("question_id", flat=True)
 
         # check if we need to give a tutorial question or an attention check question
         if len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_TUTORIAL")):
-        #if True:
             return Question.objects.filter(category=category, generation_method=Question.GenerationMethod.TUTORIAL).first()
-        #elif True:
         elif len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_ATTENTION")) + 1: # account for the extra question seen as the tutorial question
-            attention_type = Question.GenerationMethod.ATTENTION_PAIRWISE if os.getenv('SETTING_TYPE') == 'pairwise' else Question.GenerationMethod.ATTENTION_SWAP
+            attention_type = Question.GenerationMethod.ATTENTION_PAIRWISE if is_comparison else Question.GenerationMethod.ATTENTION_SWAP
             return Question.objects.filter(category=category, generation_method=attention_type).first()
 
         # otherwise, get the questions that have not been seen
-        unseen_questions = Question.objects.filter(
+        all_questions = Question.objects.filter(
             Q(category=category) & (
                 Q(generation_method=Question.GenerationMethod.LLAMA) |
                 Q(generation_method=Question.GenerationMethod.QWEN)
             )
-        ).exclude(
+        )
+        unseen_questions = all_questions.exclude(
             question_id__in=seen_questions_overall # ignore questions the user may have encountered in either section
         )
 
         # determine the question limit: for swapping, we need 3 annotations. for pairwise, we need 6 annotations (3 on plan A, 3 on plan B)
-        NUM_QUESTIONS_NEEDED = 6 if os.getenv('SETTING_TYPE') == 'pairwise' else 3
+        NUM_QUESTIONS_NEEDED = 6 if is_comparison else 3
 
         # find the questions that almost have this number of annotators
         filtered_questions = [
             question
             for question in unseen_questions
-            if question_to_user_count.get((question.question_id, os.getenv('SETTING_TYPE') == 'pairwise'), 0) < NUM_QUESTIONS_NEEDED
+            if question_to_user_count.get((question.question_id, is_comparison), 0) < NUM_QUESTIONS_NEEDED
         ]
         filtered_questions.sort(
-            key=lambda q: abs(NUM_QUESTIONS_NEEDED - question_to_user_count.get(q.question_id, 0))
+            key=lambda q: abs(NUM_QUESTIONS_NEEDED - question_to_user_count.get((q.question_id, is_comparison), 0))
         )
 
-        # if there are no more questions needed
+        # if all questions have been annotated
         if len(filtered_questions) == 0:
             if unseen_questions.count() == 0:
-                questions = Question.objects.filter(category=category)
-                q = random.choice(questions)
-                print("seen all questions: picking a random one")
+                q = random.choice(all_questions) # if the user has seen all questions, give them one they have already seen
                 return q
             else:
-                print("all questions have been annotated: showing an unseen one")
-                q = random.choice(unseen_questions)
+                q = random.choice(unseen_questions) # if there are still some left, pick one of those
             return q
 
-        print(f"picking the first of {len(filtered_questions)} questions left!")
-        return filtered_questions[0]
+        return filtered_questions[0] # return the question closest to being fully annotated
     
     def next(self, room: Room, player: Player):
         """Next question"""
@@ -461,10 +458,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             question_type = question_type_map[question_type]
 
             q = self.decide_next_question(
-                room=room, player=player, category=question_type
+                room=room, player=player, category=question_type, is_comparison=(os.getenv("SETTING_TYPE") == 'pairwise')
             )
-            print("Question:", q)
-            if q == None:  # no more questions D:
+            if q == None:  # no questions available D:
                 return
             room.current_question = q
 
@@ -473,8 +469,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             room.curr_instructions_letter = None
             room.curr_subanswers_a = None
             room.curr_subanswers_b = None
-
+            room.last_guess = None
             self.load_instructions(room=room, player=player)
+
+            # get this logging party started
+            self.log_tool_use(room, player, "", dict(), "question", "start")
 
             show_comparisons_before = os.getenv('SETTING_TYPE') == 'pairwise'
             room.show_comparisons_before = show_comparisons_before
@@ -484,6 +483,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 room.save()
                 self.update_status(room, room.state, player)
                 self.toggle_comparison_visibility(room=room, show_comparison=True)
+                self.log_tool_use(room, player, "", dict(), "pairwise_comparison", "start")
             else:
                 self.transition_to_instruction(room, player)
 
@@ -529,6 +529,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     "data": get_room_response_json(room),
                 },
             )
+
+            self.log_tool_use(room, p, "", dict(), 
+                              "pairwise_comparison" if room.show_comparisons_before else "read_instructions", 
+                              "success")
 
     def skip(self, room: Room, player: Player):
         """Skip question while it's playing."""
@@ -601,7 +605,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 cleaned_content, room.current_question
             )
             # answered_correctly: bool = judge_answer_kuiperbowl(cleaned_content, room.current_question.answer)
-            words_to_show: int = room.compute_words_to_show()
+            #words_to_show: int = room.compute_words_to_show()
+
+            room.last_guess = cleaned_content
+            room.save()
 
             if answered_correctly:
                 player.score += 10  # TODO: do not hardcode points
@@ -673,29 +680,29 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.log_tool_use(room, player, "", dict(), "buzz", "failure")
                 self.update_status(room, "buzz_incorrect", player, cleaned_content)
 
-            current_question: Question = room.current_question
-            try:
-                feedback = QuestionFeedback.objects.get(
-                    question=current_question, player=player
-                )
-            except QuestionFeedback.DoesNotExist:
-                feedback = QuestionFeedback.objects.create(
-                    question=current_question,
-                    player=player,
-                    guessed_answer=cleaned_content,
-                    submitted_clue_list=current_question.clue_list,
-                    submitted_clue_order=list(range(current_question.length)),
-                    submitted_factual_mask_list=[0.5] * current_question.length,
-                    answered_correctly=answered_correctly,
-                    buzzed=True,
-                    buzz_position_word=words_to_show,
-                    buzz_position_norm=words_to_show
-                    / len(current_question.content.split()),
-                    buzz_datetime=timezone.now(),
-                )
-                feedback.save()
-            except ValidationError as e:
-                pass
+            # current_question: Question = room.current_question
+            # try:
+            #     feedback = QuestionFeedback.objects.get(
+            #         question=current_question, player=player
+            #     )
+            # except QuestionFeedback.DoesNotExist:
+            #     feedback = QuestionFeedback.objects.create(
+            #         question=current_question,
+            #         player=player,
+            #         guessed_answer=cleaned_content,
+            #         submitted_clue_list=current_question.clue_list,
+            #         submitted_clue_order=list(range(current_question.length)),
+            #         submitted_factual_mask_list=[0.5] * current_question.length,
+            #         answered_correctly=answered_correctly,
+            #         buzzed=True,
+            #         buzz_position_word=words_to_show,
+            #         buzz_position_norm=words_to_show
+            #         / len(current_question.content.split()),
+            #         buzz_datetime=timezone.now(),
+            #     )
+            #     feedback.save()
+            # except ValidationError as e:
+            #     pass
 
             self.get_shown_question(room=room)
 
@@ -904,7 +911,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         # otherwise, quantify which one has been seen less and show that one to balance out the labels
         instruction_obj = AnswerData.objects.filter(
-            question_id=room.current_question.question_id, did_comparison=True,
+            question_id=room.current_question.question_id, did_comparison=True, is_final=True
         )
         seen_instr_A, seen_instr_B = (
             instruction_obj.filter(final_instructions_letter="A").values("user_id").distinct(),
@@ -929,6 +936,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         player: Player,
         subanswers: List[str],
         is_correct: bool,
+        is_final: bool,
         followed_plan: bool,
     ):
         """Log the subanswers"""
@@ -944,7 +952,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         room.refresh_from_db()
 
         self.log_answers(
-            room=room, player=player, is_correct=is_correct, followed_plan=followed_plan
+            room=room, player=player, is_correct=is_correct, is_final=is_final, followed_plan=followed_plan, true_answer=room.current_question.answer_accept, guessed_answer=room.last_guess,
         )
 
     def swap_plan(self, room: Room, player: Player, subanswers: List[str]):
@@ -1098,10 +1106,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 },
             },
         )
-
-        # instructions are being read
-        if num_steps == -1:
-            self.log_tool_use(room, player, "", dict(), "read_instructions", "success")
 
     def hide_tools_on_join(self, player: Player):
         question_type = os.getenv('QUESTION_TYPE')
@@ -1405,7 +1409,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 m.player.save()
 
     def log_answers(
-        self, room: Room, player: Player, is_correct: bool, followed_plan: bool
+        self, room: Room, player: Player, is_correct: bool, is_final: bool, followed_plan: bool, guessed_answer: str, true_answer: str
     ):
         """Log the user's progress on completing the instructions"""
         AnswerData.objects.create(
@@ -1425,34 +1429,52 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             steps_seen_b=room.steps_seen_b,
             did_comparison=room.show_comparisons_before,
             is_correct=is_correct,
+            is_final=is_final,
             followed_plan=followed_plan,
+            true_answer=true_answer,
+            guessed_answer=guessed_answer,
         )
 
     def log_leaderboard(self, room: Room, p: Player):
         """Log the stats on this question for the leaderboard"""
-        tool_calls = ToolLog.objects.filter(
-            user_id=p.user.user_id, question_id=room.current_question.question_id
-        ).order_by("queried_at")
+
+        # find the last time the user looked at the question
+        last_question_call = ToolLog.objects.filter(
+            user_id=p.user.user_id,
+            question_id=room.current_question.question_id,
+            tool_name="question"
+        ).order_by("-queried_at").first()
+
+        # get all subsequent tool calls
+        if last_question_call:
+            tool_calls = ToolLog.objects.filter(
+                user_id=p.user.user_id,
+                question_id=room.current_question.question_id,
+                queried_at__gte=last_question_call.queried_at
+            ).order_by("queried_at")
+        else:
+            print("ERROR: Question was never logged")
+            return
+
         all_buzzes = tool_calls.filter(tool_name="buzz")
-        num_buzzes = all_buzzes.count()
+        num_buzzes = all_buzzes.count() // 2
         num_correct_buzzes = all_buzzes.filter(tool_execution_status="success").count()
 
-        if num_buzzes == 0 or (
-            num_buzzes >= 4
-            and room.current_question.category == Question.Category.LONGCONTEXT
-        ):
+        if num_buzzes == 0:
             correctness = 0.0
         else:
             correctness = (1.0 * num_correct_buzzes) / num_buzzes
 
+        print("Tools:", [(t.tool_name, t.tool_execution_status, t.queried_at) for t in tool_calls])
+
         tool_calls = list(tool_calls)
         total_time_taken = (
-            tool_calls[-1].queried_at - tool_calls[0].queried_at
+            tool_calls[-1].queried_at - tool_calls[2].queried_at
         ).total_seconds()
         if tool_calls[-1].tool_name == "no_buzz":
-            tool_calls_noninstruct = tool_calls[1:-1]
+            tool_calls_noninstruct = tool_calls[3:-1]
         else:
-            tool_calls_noninstruct = tool_calls[1:]
+            tool_calls_noninstruct = tool_calls[3:]
 
         tool_runtime = 0
         for idx in range(len(tool_calls_noninstruct) // 2):
@@ -1460,10 +1482,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 tool_calls_noninstruct[2 * idx],
                 tool_calls_noninstruct[2 * idx + 1],
             )
-            print(tool_start.tool_name, tool_end.tool_name)
-            print(tool_start.tool_execution_status, tool_end.tool_execution_status)
-            # assert(tool_start.tool_name == tool_end.tool_name)
-            # assert(tool_start.tool_execution_status == 'start')
             tool_runtime += (
                 tool_end.queried_at - tool_start.queried_at
             ).total_seconds()
@@ -1472,7 +1490,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             user=p.user,
             question_id=room.current_question.question_id,
             correctness_score=correctness,
-            seconds_taken=total_time_taken - tool_runtime,
+            total_time_taken=total_time_taken,
+            tool_runtime=tool_runtime,
+            seconds_taken=(total_time_taken - tool_runtime),
             did_comparison=room.show_comparisons_before,
         )
 
@@ -1489,7 +1509,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         ToolLog.objects.create(
             user_id=p.user.user_id,
             question_id=room.current_question.question_id,
-            instruction_type="A",
+            instruction_type=room.curr_instructions_letter,
             tool_name=tool_name,
             tool_query=tool_query,
             tool_result=tool_result,
@@ -1834,7 +1854,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         #self.clear_instructions(room=room, player=p)
         self.show_and_disable_tools(room=room, player=p)
         self.get_shown_question(room=room)
-
         self.next(room, p)
 
     def clean_query(self, query):

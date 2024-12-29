@@ -17,7 +17,7 @@ const categoryHeader = document.getElementById("category-header");
 const categorySelect = document.getElementById("category-select");
 const difficultySelect = document.getElementById("difficulty-select");
 //const speedSlider = document.getElementById('speed-slider');
-// const skipBtn = document.getElementById('skip-btn');
+const skipBtn = document.getElementById('skip-btn');
 const nextBtn = document.getElementById("next-btn");
 const buzzBtn = document.getElementById("buzz-btn");
 const stepBtn = document.getElementById("step-btn");
@@ -151,6 +151,10 @@ function handleKeyPress(e) {
         copyDocText();
       }
     } else if (e.key === "s") {
+      if (skipBtn.style.display === '') {
+        skip();
+        e.preventDefault();
+      }
       if (swapBtn.style.display === '') {
         swap_plan();
         e.preventDefault();
@@ -286,6 +290,7 @@ buzzBtn.addEventListener("click", buzz);
 // skipBtn.addEventListener('click', skip);
 nextBtn.addEventListener("click", next);
 // resetBtn.addEventListener('click', resetScore);
+skipBtn.addEventListener("click", skip);
 // chatBtn.addEventListener('click', chatInit);
 //speedSlider.addEventListener('change', setSpeed);
 stepBtn.addEventListener("click", next_step);

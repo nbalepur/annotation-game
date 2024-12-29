@@ -97,8 +97,13 @@ class Question(models.Model):
     document_context = models.TextField(default="")
 
     def save(self, *args, **kwargs):
+
+        if self.clue_list is None:
+            self.length = 0
+            self.clue_list = []
+
         # Tokenize content into sentences and save to content_sentences
-        if self.content and not (self.clue_list or len(self.clue_list) ):
+        elif self.content and not (self.clue_list or len(self.clue_list) ):
             sentences = nltk.sent_tokenize(self.content)
             self.clue_list = sentences
             self.length = len(sentences)
@@ -143,6 +148,8 @@ class Room(models.Model):
 
     steps_seen_a = models.IntegerField(default=0, blank=True)
     steps_seen_b = models.IntegerField(default=0, blank=True)
+
+    last_guess = models.TextField(max_length=128, null=True)
 
     buzz_player = models.OneToOneField(
         'Player',
@@ -291,9 +298,6 @@ class User(models.Model):
     name = models.CharField(max_length=100) # Wikipedia username
     email = models.CharField(default="", blank=True, max_length=320)
     
-    def __str__(self):
-        return self.name
-    
 class ReportIssue(models.Model):
 
     report_id = models.AutoField(primary_key=True)
@@ -328,6 +332,10 @@ class AnswerData(models.Model):
     followed_plan = models.BooleanField()
 
     is_correct = models.BooleanField()
+    is_final = models.BooleanField()
+
+    guessed_answer = models.JSONField(null=True)
+    true_answer = models.JSONField(null=True)
 
 class LeaderboardLog(models.Model):
 
@@ -336,7 +344,9 @@ class LeaderboardLog(models.Model):
     question_id = models.IntegerField()
     category = models.TextField(default=Question.Category.EVERYTHING)
     correctness_score = models.FloatField()
-    seconds_taken = models.IntegerField()
+    total_time_taken = models.FloatField()
+    tool_runtime = models.FloatField()
+    seconds_taken = models.FloatField()
     did_comparison = models.BooleanField()
 
 class ToolLog(models.Model):
@@ -407,9 +417,9 @@ class ComparisonFeedback(models.Model):
         on_delete=models.CASCADE
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    chosen = models.CharField(default="", max_length=30)
-    chosen_adjusted = models.CharField(default="", max_length=30)
-    chosen_instruction = models.JSONField(null=True, blank=True)
+    chosen = models.CharField(default="", max_length=30) # what the user picked (saw on their screen)
+    chosen_adjusted = models.CharField(default="", max_length=30) # what the user picked when adjusted for random swapping/positional bias
+    chosen_instruction = models.JSONField(null=True, blank=True) # text of the instruction that was chosen (backup)
     shown_first = models.BooleanField()
 
 class QuestionFeedback(models.Model):

@@ -26,12 +26,12 @@ let buzzPassedTime = 0;
 let graceTime = 3;
 let buzzTime = 8;
 
-// let readingTime = 30;
-let readingTime = 3; // seconds to read the question
+let readingTime = 30;
+// let readingTime = 3; // seconds to read the question
 let readingPassedTime = 0;
 
-// let questionTime = 180;
-let questionTime = 3; // secconds to answer the question
+let questionTime = 180;
+// let questionTime = 3; // secconds to answer the question
 let questionPassedTime = 0;
 
 let question;
@@ -39,6 +39,8 @@ let category;
 let players;
 let messages;
 let changeLocked = false;
+
+let logNoneComparison = false;
 
 let isFeedbackLoaded = false;
 
@@ -80,16 +82,17 @@ function update() {
 
     case 'idle':
       lockedOut = false;
+      logNoneComparison = false;
       readingPassedTime = 0;
       
       // if (answerHeader.innerHTML === '') {
       //   getAnswer();
       // }
 
-      if (!isFeedbackLoaded) {
-        isFeedbackLoaded = true;
-        getCurrentFeedback();
-      }
+      // if (!isFeedbackLoaded) {
+      //   isFeedbackLoaded = true;
+      //   getCurrentFeedback();
+      // }
       contentProgress.style.width = '0%';
       break;
 
@@ -106,9 +109,10 @@ function update() {
       contentProgress.style.display = 'none'
       // answerHeader.innerHTML = '';
 
-      if (readingPassedTime >= readingTime) {
+      if (readingPassedTime >= readingTime && !logNoneComparison) {
         selectPlan("None");
         instructionProgress.style.width = '0%';
+        logNoneComparison = true;
       }
       readingPassedTime += 0.1;
       break;
@@ -126,9 +130,9 @@ function update() {
       contentProgress.style.display = 'none'
       // answerHeader.innerHTML = '';
 
-      if (readingPassedTime >= readingTime) {
-        sendRequest('next');
-        instructionProgress.style.width = '0%';
+      if (readingPassedTime >= readingTime && !logNoneComparison) {
+        skip();
+        logNoneComparison = true;
       }
       readingPassedTime += 0.1;
       break;
@@ -432,6 +436,7 @@ function showButtonsForState(currGameState, allowSwaps) {
     case 'compare':
       reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+      skipBtn.style.display = 'none';
       stepBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
       swapBtn.style.display = 'none';
@@ -442,6 +447,7 @@ function showButtonsForState(currGameState, allowSwaps) {
     case 'compare_correct':
         reportBtn.style.display = 'none';
         nextBtn.style.display = 'none';
+        skipBtn.style.display = 'none';
         stepBtn.style.display = 'none';
         buzzBtn.style.display = 'none';
         swapBtn.style.display = 'none';
@@ -452,6 +458,7 @@ function showButtonsForState(currGameState, allowSwaps) {
     case 'compare_incorrect':
       reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+      skipBtn.style.display = 'none';
       stepBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
       swapBtn.style.display = 'none';
@@ -467,6 +474,7 @@ function showButtonsForState(currGameState, allowSwaps) {
 
       reportBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+      skipBtn.style.display = 'none';
       stepBtn.style.display = shouldShowStep ? '' : 'none';
       buzzBtn.style.display = shouldShowStep ? 'none' : '';
       swapBtn.style.display = allowSwaps ? '' : 'none';
@@ -478,6 +486,7 @@ function showButtonsForState(currGameState, allowSwaps) {
     case 'idle':
       // skipBtn.style.display = 'none';
       nextBtn.style.display = '';
+      skipBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
       stepBtn.style.display = 'none';
       swapBtn.style.display = 'none';
@@ -491,6 +500,7 @@ function showButtonsForState(currGameState, allowSwaps) {
     case 'contest':
       // skipBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+      skipBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
       reportBtn.style.display = 'none';
       stepBtn.style.display = 'none';
@@ -503,6 +513,7 @@ function showButtonsForState(currGameState, allowSwaps) {
     case 'instruct':
       // skipBtn.style.display = 'none';
       nextBtn.style.display = 'none';
+      skipBtn.style.display = '';
       buzzBtn.style.display = 'none';
       settingsBtn.style.display = '';
       reportBtn.style.display = 'none';
@@ -515,6 +526,7 @@ function showButtonsForState(currGameState, allowSwaps) {
 
     case 'buzz_correct':
       nextBtn.style.display = '';
+      skipBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
       stepBtn.style.display = '';
       swapBtn.style.display = '';
@@ -714,10 +726,8 @@ function sendChat() {
 }
 
 function skip() {
-  if (gameState === 'playing') {
-    isFeedbackLoaded = false;
-    sendRequest("skip");
-  }
+  sendRequest('next');
+  instructionProgress.style.width = '0%';
 }
 
 function settings() {

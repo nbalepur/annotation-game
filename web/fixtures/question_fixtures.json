@@ -5,24 +5,24 @@
         "fields": {
             "category": "Multi-Hop",
             "difficulty": "HS",
-            "content": "In what year was the company that published the game that won the Game Developers Choice Awards in 2008 founded?",
+            "content": "In what year was the company that published the game that won the Game Developers Choice Awards in 2018 founded?",
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                "1946.0"
+                "1946"
             ],
             "answer": "",
             "generation_method": "qwen",
             "instructions_a": {
                 "steps": [
-                    "Find out which game won the Game Developers Choice Awards in 2008.",
-                    "Determine the company that published the game that won in 2008.",
+                    "Find out which game won the Game Developers Choice Awards in 2018.",
+                    "Determine the company that published the game that won in 2018.",
                     "Find the founding year of the company that published the game."
                 ]
             },
             "instructions_b": {
                 "steps": [
-                    "Identify the company that published the game that won the Game Developers Choice Awards in 2008.",
+                    "Identify the company that published the game that won the Game Developers Choice Awards in 2018.",
                     "Determine the year the company was founded."
                 ]
             },
@@ -1142,7 +1142,7 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                "1924.0"
+                "1924"
             ],
             "answer": "",
             "generation_method": "qwen",
@@ -1319,7 +1319,7 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                "1876.0"
+                "1876"
             ],
             "answer": "",
             "generation_method": "llama",
@@ -3575,7 +3575,7 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                "1945.0"
+                "1945"
             ],
             "answer": "",
             "generation_method": "qwen",
@@ -3644,7 +3644,7 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                "1703.0"
+                "1703"
             ],
             "answer": "",
             "generation_method": "qwen",

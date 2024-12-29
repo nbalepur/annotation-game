@@ -9,9 +9,9 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                "24.0"
+                "24"
             ],
-            "answer": "24.0",
+            "answer": "24",
             "generation_method": "tutorial",
             "instructions_a": {
                 "steps": [
@@ -147,9 +147,9 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                "27.0"
+                "27"
             ],
-            "answer": "27.0",
+            "answer": "27",
             "generation_method": "attention_p",
             "instructions_a": {
                 "steps": [
@@ -183,9 +183,9 @@
             "clue_list": [],
             "length": 0,
             "answer_accept": [
-                "9.0"
+                "9"
             ],
-            "answer": "9.0",
+            "answer": "9",
             "generation_method": "attention_s",
             "instructions_a": {
                 "steps": [

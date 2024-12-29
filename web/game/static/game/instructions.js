@@ -343,13 +343,13 @@ function getSubanswers() {
   return subanswers;
 }
 
-function sendSubanswers(isCorrect) {
+function sendSubanswers(isCorrect, isFinal) {
 
   const instructionFrame = document.getElementById('instruction-frame')
   const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
   const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
 
-  sendRequest('send_subanswers', {'subanswers': getSubanswers(), 'is_correct': isCorrect, 'followed_plan': !checkbox.checked});
+  sendRequest('send_subanswers', {'subanswers': getSubanswers(), 'is_correct': isCorrect, 'is_final': isFinal, 'followed_plan': !checkbox.checked});
 }
 
 function reassignCloseButton() {
@@ -534,13 +534,13 @@ function updateStatus(status, player, answer, allowSwaps) {
         if (answer !== "") {
             statusText.innerHTML = `Status: <span class=text-secondary>The correct answer is: <span class=text-primary>${answer}</span>. Hit "next" to continue... </span>`;
             reportBtn.style.display = '';
-            sendSubanswers(false);
+            sendSubanswers(false, true);
         } else {
             statusText.innerHTML = `Status: <span class=text-secondary>Hit "next" to continue...</span>`;
             reportBtn.style.display = 'none';
         }
     } else if (status === "instruct") {
-        statusText.innerHTML = 'Status: <span class=text-primary>Read the question + plan</span>';
+        statusText.innerHTML = 'Status: <span class=text-primary>Read the question and plan</span>';
         //statusText.scrollIntoView({ block: 'start' });
     } else if (status === "playing") {
         statusText.innerHTML = 'Status: <span class=text-secondary>Waiting for buzzes...</span>';
@@ -548,15 +548,17 @@ function updateStatus(status, player, answer, allowSwaps) {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed</span>`;
     } else if (status === "buzz_correct") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-success>correctly</span> with <span class=text-success>"${answer}"</span></span>`;
-        sendSubanswers(true);
+        sendSubanswers(true, true);
         gameState = 'idle';
       } else if (status === "buzz_incorrect") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>`;
         gameState = 'playing';
+        sendSubanswers(false, false);
         toggleCloseButtonVisibility(true);
     } else if (status === "buzz_abstain") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed and </span><span class=text-danger>did not answer</span>`;
         gameState = 'playing';
+        sendSubanswers(true, false);
         toggleCloseButtonVisibility(true);
     }
     showButtonsForState(gameState, allowSwaps);
