@@ -45,32 +45,31 @@ let logNoneComparison = false;
 let isFeedbackLoaded = false;
 
 // Set up client
-gamesock.onopen = () => {
+document.addEventListener("DOMContentLoaded", () => {
+  gamesock.onopen = () => {
+    // Ensure the DOM is ready and elements exist
+    retrieveUserdata();
 
-  requestContentInput.style.display = 'none';
+    if (userID === undefined) {
+      newUser();
+    } else {
+      join();
+    }
 
-  // set up user
+    nameInput.value = userName ? userName : "";
+    emailInput.value = userEmail ? userEmail : "";
 
-  retrieveUserdata();
-
-  if (userID === undefined) {
-    newUser();
-  } else {
-    join();
-  }
-
-  nameInput.value = userName ? userName : "";
-  emailInput.value = userEmail ? userEmail : "";
-
-  // set up current time if newly joined
-  currentTime = buzzStartTime;
-}
+    // Set up current time if newly joined
+    currentTime = buzzStartTime;
+  };
+});
 
 /**
  * Update game locally
  */
 function update() {
   // console.log(gameState);
+  //console.log('update:', question, gameState);
   if (question === undefined) {
     return;
   }
@@ -132,6 +131,7 @@ function update() {
 
       if (readingPassedTime >= readingTime && !logNoneComparison) {
         skip();
+        instructionProgress.style.width = '0%';
         logNoneComparison = true;
       }
       readingPassedTime += 0.1;
@@ -175,7 +175,7 @@ function update() {
       // auto answer if over buzz time
       if (buzzPassedTime >= buzzTime) {
         answer();
-        contentProgress.style.width = '0%';
+        buzzProgress.style.width = '0%';
       }
       buzzPassedTime += 0.1;
       break;
@@ -268,7 +268,10 @@ gamesock.onmessage = message => {
     if (data['should_disable']) {
       clearFields(data['should_clear_document']);
     }
-  } else if (data['response_type'] === 'update_doc') {
+  } else if (data['response_type'] === 'disable_plan') {
+    disablePlan();
+  }
+  else if (data['response_type'] === 'update_doc') {
     updateDoc(data['use_doc'], data['doc_content']);
   } else if (data['response_type'] === 'update_status') {
     updateStatus(data['status'], data['player'], data['answer'], data['allow_swaps']);
@@ -312,7 +315,7 @@ gamesock.onmessage = message => {
   }
   else if (data['response_type'] === "too_many_players") {
     gamesock.close();
-    alert("Sorry! You can't let you join that room since there are too many active players. Rooms meant for evaluation only allow 2 players. Try joining another room!")
+    alert("Sorry! You can't let you join that room since there are too many active players. Try joining another room!")
     window.location.href = "/"
   }
   /* for tool use */
@@ -776,7 +779,8 @@ function next() {
 }
 
 function next_step() {
-  sendRequest("show_next_step");
+  subanswers = getSubanswers();
+  sendRequest("show_next_step", subanswers);
 }
 
 function swap_plan() {

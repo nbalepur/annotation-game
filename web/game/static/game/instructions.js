@@ -377,13 +377,14 @@ function reassignCloseButton() {
 }
 
 function removeStep(stepElement, isLastStep) {
+  subanswers = getSubanswers();
   stepElement.remove();
   reassignCloseButton();
   if (isLastStep) {
     stepBtn.style.display = '';
     buzzBtn.style.display = 'none';
   }
-  sendRequest("decrease_steps");
+  sendRequest("decrease_steps", subanswers);
 }
 
 function populateSubanswers(subanswers) {
@@ -479,6 +480,15 @@ function clearFields(should_clear_document) {
     }
 }
 
+function disablePlan() {
+  const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
+  const instructions = iframeDoc.getElementById('instructions-container');
+  const buttonsAndTextareas = instructions.querySelectorAll('button, textarea');
+  buttonsAndTextareas.forEach(element => {
+    element.disabled = true;
+  });
+}
+
 function toggleDisableButtons(flag) {
 
     calculatorResultBtn.disabled = flag;
@@ -532,11 +542,11 @@ function updateStatus(status, player, answer, allowSwaps) {
         statusText.innerHTML = `Status: <span class=text-secondary>You <span class=text-danger>ran out of time</span>. Complete the <span class=text-primary>pairwise comparison</span> to continue...</span>`;
     } else if (status === "idle") {
         if (answer !== "") {
-            statusText.innerHTML = `Status: <span class=text-secondary>The correct answer is: <span class=text-primary>${answer}</span>. Hit "next" to continue... </span>`;
+            statusText.innerHTML = `Status: <span class=text-secondary>The correct answer is: <span class=text-primary>${answer}</span>. Hit <span class=text-primary>Next</span> to continue... </span>`;
             reportBtn.style.display = '';
             sendSubanswers(false, true);
         } else {
-            statusText.innerHTML = `Status: <span class=text-secondary>Hit "next" to continue...</span>`;
+            statusText.innerHTML = `Status: <span class=text-secondary>Hit <span class=text-primary>Next</span> to continue...</span>`;
             reportBtn.style.display = 'none';
         }
     } else if (status === "instruct") {
@@ -768,31 +778,53 @@ docContent.addEventListener('load', function() {
     
 });
 
-docContent.addEventListener("keypress", (e) => {
-  handleKeyPress(e);
-});
-docContent.addEventListener("keydown", (e) => {
-  handleKeyDown(e);
-});
-
-instructionsFrame.addEventListener("keypress", (e) => {
-  handleKeyPress(e);
-});
-instructionsFrame.addEventListener("keydown", (e) => {
-  handleKeyDown(e);
-});
-
-
 instructionsFrame.addEventListener('load', function() {
   const iframeDocument = this.contentDocument || this.contentWindow.document;
 
-  iframeDocument.addEventListener("keypress", (e) => {
-    handleKeyPress(e);
+  iframeDocument.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") {
+      const activeElement = iframeDocument.activeElement;
+      if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
+        activeElement.blur(); // Remove focus from the input field
+      }
+    } else {
+      handleKeyDown(event);
+    }
   });
-  
-  iframeDocument.addEventListener("keydown", function (e) {
-    handleKeyDown(e);
+
+  iframeDocument.addEventListener("keypress", function(event) {
+    if (event.key === "Escape") {
+      const activeElement = iframeDocument.activeElement;
+      if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
+        activeElement.blur(); // Remove focus from the input field
+      }
+    } else {
+      handleKeyPress(event);
+    }
+  });
+
+  iframeDocument.getElementById("edit-instructions-checkbox").addEventListener("click", function() {
+    const phase = this.getAttribute("data-phase");
+    parent.toggleRogueCheckbox(this, phase);
   });
   
 });
+
+// docContent.addEventListener("keypress", (e) => {
+//   handleKeyPress(e);
+// });
+// docContent.addEventListener("keydown", (e) => {
+//   handleKeyDown(e);
+// });
+
+// instructionsFrame.addEventListener("keypress", (e) => {
+//   handleKeyPress(e);
+// });
+// instructionsFrame.addEventListener("keydown", (e) => {
+//   handleKeyDown(e);
+// });
+
+// instructionsFrame.addEventListener('click', () => {
+//   iframe.focus();
+// });
 

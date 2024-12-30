@@ -4,8 +4,18 @@
   </div>
 
   <iframe id="instruction-frame" srcdoc='
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+  <!DOCTYPE html>
+  <html lang=&quot;en&quot;>
+
+  <head>
+  <meta charset=&quot;UTF-8&quot;>
+  <meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;>
+  <title>Embedded Page</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  </head>
 
     <body>
       <div style="display: flex; justify-content: right; margin: 10px; visibility: hidden" id="follow-plan-div">
@@ -24,34 +34,6 @@
       <div id="instructions-container" style="margin: 10px;">
       </div>
 
-      <script>
-        document.addEventListener("keydown", function(event) {
-          if (event.key === "Escape") {
-            const activeElement = document.activeElement;
-            if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
-              activeElement.blur(); // Remove focus from the input field
-            }
-          } else {
-            parent.handleKeyDown(event);
-          }
-        });
-        document.addEventListener("keypress", function(event) {
-          if (event.key === "Escape") {
-            const activeElement = document.activeElement;
-            if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
-              activeElement.blur(); // Remove focus from the input field
-            }
-          } else {
-            parent.handleKeyPress(event);
-          }
-        });
-
-        document.getElementById("edit-instructions-checkbox").addEventListener("click", function() {
-          const phase = this.getAttribute("data-phase");
-          parent.toggleRogueCheckbox(this, phase);
-        });
-      </script>
-
       <style>  
         .flash-highlight {
           background-color: #fffca1 !important;
@@ -59,7 +41,7 @@
       </style>
 
     </body>
-
+  </html>
   '>
   </iframe>
 </div>

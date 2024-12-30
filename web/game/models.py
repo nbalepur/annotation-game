@@ -333,6 +333,7 @@ class AnswerData(models.Model):
 
     is_correct = models.BooleanField()
     is_final = models.BooleanField()
+    is_report = models.BooleanField(default=False)
 
     guessed_answer = models.JSONField(null=True)
     true_answer = models.JSONField(null=True)

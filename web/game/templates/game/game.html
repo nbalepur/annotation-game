@@ -17,7 +17,7 @@
       <div class="col">
         <div class="row">
           <div class="d-flex justify-content-between align-items-center w-100">
-            <input type="text" id="request-content" class="form-control me-4" maxlength="200">
+            <input type="text" id="request-content" style="display: none;" class="form-control me-4" maxlength="200">
             <div class="d-flex align-items-center" id="left-buttons">
               <button id="next-btn" class="btn btn-info btn me-2" title="Shortcut: N">Next (n)</button>
               <button id="skip-btn" class="btn btn-primary btn me-2" title="Shortcut: S" style="display: none;">Skip Reading (s)</button>
@@ -30,7 +30,7 @@
                 title="Shortcut: [">Settings (Tab)</button>
             </div>
             <div class="d-flex justify-content-center align-items-center">
-              <h4 id="status-text" class="mb-0">Status: <span style="color:grey;">Hit "next" to continue...</span></h4>
+              <h4 id="status-text" class="mb-0">Status: <span style="color:grey;">Hit <span class=text-primary>Next</span> to continue...</span></h4>
             </div>
           </div>
         </div>

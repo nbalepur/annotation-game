@@ -126,7 +126,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data["request_type"] == "skip":
                 self.skip(room, p)
             elif data["request_type"] == "show_next_step":
-                self.show_next_step(room=room, player=p)
+                self.show_next_step(room=room, player=p, subanswers=data["content"])
             elif data["request_type"] == "swap_plan":
                 self.swap_plan(room=room, player=p, subanswers=data["content"])
             elif data["request_type"] == "send_subanswers":
@@ -143,7 +143,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data["request_type"] == "buzz_answer":
                 self.buzz_answer(room, p, data["content"])
             elif data["request_type"] == "no_buzz":
-                self.handle_no_buzz(room, p)
+                self.handle_no_buzz(room, p, False)
             elif data["request_type"] == "submit_initial_feedback":
                 self.submit_initial_feedback(room, p, data["content"])
             elif data["request_type"] == "submit_additional_feedback":
@@ -171,7 +171,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data["request_type"] == "log_comparison":
                 self.log_comparison(room, p, data["content"])
             elif data["request_type"] == "decrease_steps":
-                self.decrease_steps(room, p)
+                self.decrease_steps(room, p, data['content'])
             else:
                 pass
 
@@ -329,7 +329,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         self.get_init_model_instructions(room=room, player=player, should_clear=True, num_steps=-1)
         #self.clear_instructions(room=room, player=player)
         self.show_and_disable_tools(room=room, player=player)
-        self.get_shown_question(room=room)
+        self.disable_plan()
 
         self.log_tool_use(room, player, "", dict(), "read_instructions", "start")
 
@@ -387,7 +387,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     ):
         # (question_id, did_comparison) -> number of users who have done it
         question_user_count = (
-            AnswerData.objects.filter(followed_plan=True, is_final=True)
+            AnswerData.objects.filter(followed_plan=True, is_final=True, is_report=False)
             .values("question_id", "did_comparison")
             .annotate(user_count=Count("user__user_id", distinct=True))
         )
@@ -403,7 +403,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         # questions the user has seen overall
         seen_questions_overall = AnswerData.objects.filter(
-            user=player.user, category=category, is_final=True,
+            user=player.user, category=category, is_final=True
         ).values_list("question_id", flat=True)
 
         # check if we need to give a tutorial question or an attention check question
@@ -463,6 +463,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             if q == None:  # no questions available D:
                 return
             room.current_question = q
+            # display the question now that we have one
+            self.get_shown_question(room=room)
 
             room.steps_seen_a = 1
             room.steps_seen_b = 1
@@ -627,26 +629,15 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     room,
                 )
 
-                self.log_tool_use(room, player, "", dict(), "buzz", "success")
+                self.log_tool_use(room, player, {'guess': cleaned_content, 'true': room.current_question.answer_accept}, {'prediction': answered_correctly}, "buzz", "success")
 
-                # if not room.show_comparisons_before:
-                #     room.state = Room.GameState.PAIRWISE_COMPARISON
-                #     self.toggle_comparison_visibility(room, True)
-                #     self.update_status(room, room.state + "_correct", player)
-                # else:
                 room.state = Room.GameState.IDLE
                 self.update_status(room, "buzz_correct", player, cleaned_content)
 
                 room.save()
                 self.log_leaderboard(room, player)
-                # self.log_answers(room, player, True)
+                self.show_and_disable_tools(room=room, player=player)
             else:
-
-                # if room.max_players == 1:
-                #     # Quick end question
-                #     room.end_time = room.start_time
-                #     room.state = Room.GameState.IDLE
-                # else:
 
                 # keep playing if it's wrong
                 room.state = Room.GameState.PLAYING
@@ -677,7 +668,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 room.end_time += buzz_duration
                 room.save()
 
-                self.log_tool_use(room, player, "", dict(), "buzz", "failure")
+                self.log_tool_use(room, player, {'guess': cleaned_content, 'true': room.current_question.answer_accept}, {'prediction': answered_correctly}, "buzz", "failure")
                 self.update_status(room, "buzz_incorrect", player, cleaned_content)
 
             # current_question: Question = room.current_question
@@ -911,24 +902,34 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         # otherwise, quantify which one has been seen less and show that one to balance out the labels
         instruction_obj = AnswerData.objects.filter(
-            question_id=room.current_question.question_id, did_comparison=True, is_final=True
+            question_id=room.current_question.question_id, did_comparison=True, is_final=True, is_report=False
         )
         seen_instr_A, seen_instr_B = (
             instruction_obj.filter(final_instructions_letter="A").values("user_id").distinct(),
             instruction_obj.filter(final_instructions_letter="B").values("user_id").distinct(),
         )
         num_shown_A, num_shown_B = seen_instr_A.count(), seen_instr_B.count()
+        print(num_shown_A, num_shown_B)
         if num_shown_A == num_shown_B:
             return "A" if random.uniform(0, 1) > 0.5 else "B"
         return "A" if num_shown_A < num_shown_B else "B"
 
-    def decrease_steps(self, room: Room, player: Player):
+    def decrease_steps(self, room: Room, player: Player, subanswers: List[str]):
         """Decrease the number of steps by 1"""
+
+        self.log_tool_use(
+            room, player, {}, {'curr_subanswers': subanswers}, "decrease_steps", "start"
+        )
+
         if room.curr_instructions_letter == "A":
             room.steps_seen_a -= 1
         elif room.curr_instructions_letter == "B":
             room.steps_seen_b -= 1
         room.save()
+
+        self.log_tool_use(
+            room, player, {}, {'curr_subanswers': subanswers[:-1]}, "decrease_steps", "success"
+        )
 
     def send_subanswers(
         self,
@@ -952,7 +953,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         room.refresh_from_db()
 
         self.log_answers(
-            room=room, player=player, is_correct=is_correct, is_final=is_final, followed_plan=followed_plan, true_answer=room.current_question.answer_accept, guessed_answer=room.last_guess,
+            room=room, 
+            player=player,
+            is_correct=is_correct, 
+            is_final=is_final, 
+            followed_plan=followed_plan, 
+            true_answer=room.current_question.answer_accept, 
+            guessed_answer=room.last_guess
         )
 
     def swap_plan(self, room: Room, player: Player, subanswers: List[str]):
@@ -962,7 +969,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             return
 
         old_letter = room.curr_instructions_letter
-        self.log_tool_use(room, player, old_letter, {'num_steps_seen': room.steps_seen_a if old_letter == "A" else room.steps_seen_b}, "swap_instructions", "start")
+        self.log_tool_use(room, player, old_letter, {'num_steps_seen': room.steps_seen_a if old_letter == "A" else room.steps_seen_b, 'curr_subanswers': subanswers}, "swap_instructions", "start")
 
         if old_letter == "A":
             swapped_letter = "B"
@@ -990,7 +997,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
         self.log_tool_use(
-            room, player, old_letter, {'num_steps_seen': room.steps_seen_a if swapped_letter == "A" else room.steps_seen_b}, "swap_instructions", "success"
+            room, player, old_letter, {'num_steps_seen': room.steps_seen_a if swapped_letter == "A" else room.steps_seen_b, 'curr_subanswers': [''] if new_subanswers == None else new_subanswers}, "swap_instructions", "success"
         )
 
     def load_instructions(self, room: Room, player: Player):
@@ -1000,8 +1007,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         room.save()
         room.refresh_from_db()
 
-    def show_next_step(self, room: Room, player: Player):
+    def show_next_step(self, room: Room, player: Player, subanswers):
         """Show the next step to the user"""
+
+        self.log_tool_use(
+            room, player, {}, {'curr_subanswers': subanswers}, "next_step", "start"
+        )
 
         if room.curr_instructions_letter == None:
             self.load_instructions(room=room, player=player)
@@ -1018,8 +1029,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             else room.current_question.instructions_b
         )
 
-        print("Curr Steps:", curr_steps, len(curr_instr["steps"]))
-
         if curr_steps == len(curr_instr["steps"]):
             return
 
@@ -1032,6 +1041,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         curr_steps += 1
         self.get_init_model_instructions(
             room=room, player=player, num_steps=curr_steps, should_clear=False
+        )
+
+        self.log_tool_use(
+            room, player, {}, {'curr_subanswers': subanswers + ['']}, "next_step", "success"
         )
 
     def updated_swapped_instructions(
@@ -1133,6 +1146,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             self.room_group_name,
             (os.getenv("QUESTION_TYPE") == 'trivia'),
             curr_doc,
+        )
+
+    def disable_plan(self):
+        """Helper function to disable the plan"""
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                "type": "update_room",
+                "data": {
+                    "response_type": "disable_plan",
+                },
+            },
         )
 
     def show_and_disable_tools(self, room: Room, player: Player):
@@ -1388,7 +1413,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             is_frustrated=report_data['is_frustrated'],
             feedback=report_data['feedback']
         )
-        self.handle_no_buzz(room, p)
+        self.handle_no_buzz(room, p, True)
 
     def report_message(self, room: Room, p: Player, message_id):
         """Handle reporting messages"""
@@ -1412,6 +1437,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         self, room: Room, player: Player, is_correct: bool, is_final: bool, followed_plan: bool, guessed_answer: str, true_answer: str
     ):
         """Log the user's progress on completing the instructions"""
+
+        # first, check if the question has already been reported
+        q = ReportIssue.objects.filter(user=player.user, question_id=room.current_question.question_id)
+        is_report = len(q) > 0
+
+        # if not found, log normally
         AnswerData.objects.create(
             user=player.user,
             question_id=room.current_question.question_id,
@@ -1430,6 +1461,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             did_comparison=room.show_comparisons_before,
             is_correct=is_correct,
             is_final=is_final,
+            is_report=is_report,
             followed_plan=followed_plan,
             true_answer=true_answer,
             guessed_answer=guessed_answer,
@@ -1683,14 +1715,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             if cached_page_res != None:
                 room.curr_query = page_title_clean
                 room.save()
-                
-                self.send_web_search_success(room=room,
-                                    p=p,
-                                    query=self.clean_query(query),
-                                    title=page_title_clean,
-                                    final_html=cached_page_res,
-                                    cache_title=(status == 'new_search'),
-                                    cache_html=False)
+
                 print("page found in cache!")
                 self.send_web_search_success(
                     room=room,
@@ -1990,11 +2015,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def update_time_state(self, room: Room, player: Player):
         pass
 
-    def handle_no_buzz(self, room: Room, player: Player):
+    def log_report_answer(self):
+        pass
+
+    def handle_no_buzz(self, room: Room, player: Player, is_report: bool):
 
         if room.state == Room.GameState.PLAYING:
-            self.log_tool_use(room, player, "", dict(), "no_buzz", "start")
-            self.log_leaderboard(room, player)
+
+            if is_report:
+                self.log_tool_use(room, player, "", dict(), "report", "start")
+            else:
+                self.log_tool_use(room, player, "", dict(), "no_buzz", "start")
+                self.log_leaderboard(room, player)
             # self.log_answers(room, player, False)
 
             # curr_answer = ''
@@ -2012,6 +2044,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 room=room, player=player, num_steps=-1, should_clear=True
             )
             self.show_and_disable_tools(room=room, player=player)
+            self.disable_plan()
 
 
 def get_room_response_json(room):

@@ -5,9 +5,9 @@
     <div class="jumbotron">
         <h1 class="display-4 text-center">Leaderboard</h1>
         <p class="lead text-center">
-            Check out who's leading in The Annotation Game! Note: the leaderboard only shows users with 20+ answered questions.
+            Check out who's leading in Planapalooza!
         <p class="text-center">
-            <a href="/incentives">For incentive/compensation details, click here.</a> Users need to answer and provide feedback for 100+ questions to be eligible for incentives. Skipped questions are not counted towards the leaderboard</p>
+            <a href="/incentives">For incentive/compensation details, click here.</a> You must answer 10+ questions to be eligible for incentives ($5 per 5 questions), and we will have extra rewards ($50) for the 5 fastest and most accurate users. Reported questions are not counted towards the leaderboard</p>
 
         <div class="table-responsive">
             <table 
@@ -20,23 +20,24 @@
             >
                 <thead class="thead-dark">
                     <tr class="tr-class-1">
-                        <th data-field="id" scope="col">#</th>
-                        <th data-field="name" scope="col">Name</th>
+                        <th data-field="id" scope="col">Rank <span style="font-size: 1.25rem;">🏆</span></th>
+                        <th data-field="name" scope="col">Player <span style="font-size: 1.25rem;">👾</span></th>
                         <th data-field="turing-score" scope="col" data-sortable="true"> 
-                            <div data-bs-toggle="tooltip" title="Measures how well a user can differentiate AI-generated questions from human-written questions.">
-                                Task Completion Accuracy 🎯
-                            </div>
+                          <div data-bs-toggle="tooltip" title="Measures how accurate you were at answering questions.">
+                            Question Accuracy <span style="font-size: 1.25rem;">🎯</span>
+                          </div>
                         </th>
                         <th data-field="knowledge-score" scope="col" data-sortable="true"> 
-                            <div data-bs-toggle="tooltip" title="Measures how good you were at answering questions correctly.">
-                                Time Spent for Correct Answers ⌛️
-                            </div>
+                          <div data-bs-toggle="tooltip" title="Measures how good you were at answering questions quickly.">
+                            Speed on Correct Answers <span style="font-size: 1.25rem;">🐇</span>
+                          </div>
                         </th>
-                        <!-- <th scope="col">Accuracy</th> -->
-                        <!-- <th scope="col">Precision</th> -->
-                        <!-- <th scope="col">Recall</th> -->
-                        <th data-field="total" scope="col" data-sortable="true">Total Questions Attempted 🤔</th>
-                    </tr>
+                        <th data-field="total" scope="col" data-sortable="true">
+                          <div data-bs-toggle="tooltip" title="Total number of questions attempted by the player.">
+                            Total Questions Attempted <span style="font-size: 1.25rem;">🧠</span>
+                          </div>
+                        </th>
+                      </tr>
                 </thead>
                 <tbody>
                     {% for user in leaderboard_data %}

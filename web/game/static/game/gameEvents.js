@@ -110,7 +110,7 @@ optOutInput.addEventListener("click", function optOut() {
 });
 
 function handleKeyPress(e) {
-  // console.log('key press:', e);
+  console.log('key press:', e);
   if (feedbackRow && feedbackRow.style.display === "") {
     if (e.key === "[") {
       selectPlan("A");
@@ -121,8 +121,7 @@ function handleKeyPress(e) {
     }
   } else if (
     e.target.tagName !== "INPUT" &&
-    e.target.tagName !== "TEXTAREA" &&
-    !e.target.classList.contains('instructions-edit')
+    e.target.tagName !== "TEXTAREA"
   ) {
     if (e.key == "n") {
       if (nextBtn.style.display === '' && (nextBtn.style.visibility === '' || nextBtn.style.visibility === 'visible')) {
@@ -168,25 +167,26 @@ function handleKeyPress(e) {
     //   e.preventDefault();
     // }
   }
+  e.stopPropagation();
 }
 
 function handleKeyDown(e) {
-  // console.log('key down:', e);
-if ((e.ctrlKey || e.metaKey) && e.key === "f" && gameState !== 'contest') {
-  focusTextInput("content-search");
-  e.preventDefault();
-} else if ((e.ctrlKey || e.metaKey) && e.key === "z" && gameState !== 'contest') {
-  closeLastButton();
-  e.preventDefault();
-} else if ((e.ctrlKey || e.metaKey) && e.key === "s" && gameState !== 'contest') {
-  if (swapBtn.style.display === '' && swapBtn.style.visibility == 'visible') {
-    swap_plan();
+  if ((e.ctrlKey || e.metaKey) && e.key === "f" && gameState === 'playing') {
+    focusTextInput("content-search");
+    e.preventDefault();
+  } else if ((e.ctrlKey || e.metaKey) && e.key === "z" && gameState === 'playing') {
+    closeLastButton();
+    e.preventDefault();
+  } else if ((e.ctrlKey || e.metaKey) && e.key === "s" && gameState === 'playing') {
+    if (swapBtn.style.display === '' && swapBtn.style.visibility == 'visible') {
+      swap_plan();
+      e.preventDefault();
+    }
+  } else if (e.key === "Tab" && gameState === 'idle') {
+    settings();
     e.preventDefault();
   }
-} else if (e.key === "Tab" && gameState !== 'contest') {
-  settings();
-  e.preventDefault();
-}
+  e.stopPropagation();
 }
 
 document.addEventListener("keypress", (e) => {

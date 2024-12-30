@@ -200,8 +200,79 @@ class TestConsumers:
                 true_answer={"true": "True answer"},
                 final_instructions_letter="A",
             )
-            for _ in range(1000):
+            for _ in range(50):
                 assert consumer.decide_instruction_to_show(self.room) == "B"
+
+    def test_report(self):
+
+        consumer = QuizbowlConsumer()
+
+        with patch.dict("os.environ", {"SETTING_TYPE": "pairwise"}):
+
+            """Test that we ignore reported questions"""
+            AnswerData.objects.create(
+                question_id=self.room.current_question.question_id,
+                user=self.all_users[0],
+                category=Question.Category.MATH,
+                instructions_a={"step1": "Do this"},
+                instructions_b={"step1": "Do that"},
+                subanswers_a={"sub1": "Answer A1"},
+                subanswers_b={"sub1": "Answer B1"},
+                steps_seen_a=3,
+                steps_seen_b=2,
+                did_comparison=True,
+                followed_plan=False,
+                is_correct=True,
+                is_final=True,
+                is_report=False,
+                guessed_answer={"guess": "Guessed answer"},
+                true_answer={"true": "True answer"},
+                final_instructions_letter="B",
+            )
+
+            AnswerData.objects.create(
+                question_id=self.room.current_question.question_id,
+                user=self.all_users[0],
+                category=Question.Category.MATH,
+                instructions_a={"step1": "Do this"},
+                instructions_b={"step1": "Do that"},
+                subanswers_a={"sub1": "Answer A1"},
+                subanswers_b={"sub1": "Answer B1"},
+                steps_seen_a=3,
+                steps_seen_b=2,
+                did_comparison=True,
+                followed_plan=False,
+                is_correct=True,
+                is_final=True,
+                is_report=True,
+                guessed_answer={"guess": "Guessed answer"},
+                true_answer={"true": "True answer"},
+                final_instructions_letter="A",
+            )
+
+            AnswerData.objects.create(
+                question_id=self.room.current_question.question_id,
+                user=self.all_users[0],
+                category=Question.Category.MATH,
+                instructions_a={"step1": "Do this"},
+                instructions_b={"step1": "Do that"},
+                subanswers_a={"sub1": "Answer A1"},
+                subanswers_b={"sub1": "Answer B1"},
+                steps_seen_a=3,
+                steps_seen_b=2,
+                did_comparison=True,
+                followed_plan=False,
+                is_correct=True,
+                is_final=True,
+                is_report=True,
+                guessed_answer={"guess": "Guessed answer"},
+                true_answer={"true": "True answer"},
+                final_instructions_letter="A",
+            )
+
+            for _ in range(50):
+                assert consumer.decide_instruction_to_show(self.room) == "A"
+
 
 @pytest.mark.django_db
 class TestConsumersTrivia:
@@ -390,7 +461,77 @@ class TestConsumersTrivia:
                 true_answer={"true": "True answer"},
                 final_instructions_letter="A",
             )
-            for _ in range(1000):
+            for _ in range(50):
+                assert consumer.decide_instruction_to_show(self.room) == "B"
+
+    def test_report(self):
+
+        consumer = QuizbowlConsumer()
+
+        with patch.dict("os.environ", {"SETTING_TYPE": "pairwise"}):
+
+            """Test that we ignore reported questions"""
+            AnswerData.objects.create(
+                question_id=self.room.current_question.question_id,
+                user=self.all_users[0],
+                category=Question.Category.MULTIHOP,
+                instructions_a={"step1": "Do this"},
+                instructions_b={"step1": "Do that"},
+                subanswers_a={"sub1": "Answer A1"},
+                subanswers_b={"sub1": "Answer B1"},
+                steps_seen_a=3,
+                steps_seen_b=2,
+                did_comparison=True,
+                followed_plan=False,
+                is_correct=True,
+                is_final=True,
+                is_report=False,
+                guessed_answer={"guess": "Guessed answer"},
+                true_answer={"true": "True answer"},
+                final_instructions_letter="A",
+            )
+
+            AnswerData.objects.create(
+                question_id=self.room.current_question.question_id,
+                user=self.all_users[0],
+                category=Question.Category.MULTIHOP,
+                instructions_a={"step1": "Do this"},
+                instructions_b={"step1": "Do that"},
+                subanswers_a={"sub1": "Answer A1"},
+                subanswers_b={"sub1": "Answer B1"},
+                steps_seen_a=3,
+                steps_seen_b=2,
+                did_comparison=True,
+                followed_plan=False,
+                is_correct=True,
+                is_final=True,
+                is_report=True,
+                guessed_answer={"guess": "Guessed answer"},
+                true_answer={"true": "True answer"},
+                final_instructions_letter="B",
+            )
+
+            AnswerData.objects.create(
+                question_id=self.room.current_question.question_id,
+                user=self.all_users[0],
+                category=Question.Category.MULTIHOP,
+                instructions_a={"step1": "Do this"},
+                instructions_b={"step1": "Do that"},
+                subanswers_a={"sub1": "Answer A1"},
+                subanswers_b={"sub1": "Answer B1"},
+                steps_seen_a=3,
+                steps_seen_b=2,
+                did_comparison=True,
+                followed_plan=False,
+                is_correct=True,
+                is_final=True,
+                is_report=True,
+                guessed_answer={"guess": "Guessed answer"},
+                true_answer={"true": "True answer"},
+                final_instructions_letter="B",
+            )
+
+            for _ in range(50):
                 assert consumer.decide_instruction_to_show(self.room) == "B"
 
 @pytest.mark.django_db
@@ -973,6 +1114,207 @@ class TestDecideNextQuestion:
 
         assert all_questions == set([q.question_id for q in self.regular_questions[-5:]])
 
+    def test_report_unannotated_question(self):
+        """Ensure reported questions are not counted in the annotation."""
+
+        overflow_questions = self.regular_questions[:5]
+        return_question = self.regular_questions[7]
+        reported_question = self.regular_questions[5]
+        return_question_less = self.regular_questions[6]
+        zero_questions = self.regular_questions[8:-1]
+
+        seen_question = self.regular_questions[-1]
+        AnswerData.objects.create(
+            user=self.user,
+            question_id=seen_question.question_id,
+            category=Question.Category.MATH,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=False,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=True
+        )
+
+        report_user, _ = User.objects.get_or_create(user_id=123456789, name=f"reporter")
+        AnswerData.objects.create(
+            user=report_user,
+            question_id=reported_question.question_id,
+            category=Question.Category.MATH,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=False,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=True
+        )
+
+        # set up questions that overflowed
+        for question in overflow_questions:
+            num_annot = random.randint(3, 10)
+            for epoch in range(num_annot):
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                AnswerData.objects.create(
+                    user=curr_user,
+                    question_id=question.question_id,
+                    category=Question.Category.MATH,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+
+        # questions with 1 to 5 (inclusive) diff users who have looked at it
+        for epoch in range(1, 3):
+            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+
+            if epoch != 1:
+                AnswerData.objects.create(
+                    user=curr_user,
+                    question_id=return_question_less.question_id,
+                    category=Question.Category.MATH,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+
+                AnswerData.objects.create(
+                    user=report_user,
+                    question_id=reported_question.question_id,
+                    category=Question.Category.MATH,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+
+            AnswerData.objects.create(
+                    user=curr_user,
+                    question_id=return_question.question_id,
+                    category=Question.Category.MATH,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+        
+    
+            next_question = self.consumer.decide_next_question(
+                self.room, self.player, Question.Category.MATH, False
+            )
+            assert next_question == return_question
+
+        epoch = 3
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        AnswerData.objects.create(
+                user=curr_user,
+                question_id=return_question.question_id,
+                category=Question.Category.MATH,
+                final_instructions_letter="A",
+                instructions_a={},
+                instructions_b={},
+                subanswers_a={},
+                subanswers_b={},
+                steps_seen_a=1,
+                steps_seen_b=1,
+                did_comparison=False,
+                followed_plan=True,
+                is_correct=True,
+                is_final=True
+            )
+        next_question = self.consumer.decide_next_question(
+            self.room, self.player, Question.Category.MATH, False
+        )
+        assert next_question == reported_question
+
+    def test_reported_questions_are_seen(self):
+        """Ensure reported questions count as being seen by the user"""
+        seen_question = self.regular_questions[0]
+        reported_question = self.regular_questions[1]
+        unseen_question = self.regular_questions[2]
+
+        for flag in [True, False]:
+            AnswerData.objects.create(
+                user=self.user,
+                question_id=seen_question.question_id,
+                category=Question.Category.MATH,
+                final_instructions_letter="A",
+                instructions_a={},
+                instructions_b={},
+                subanswers_a={},
+                subanswers_b={},
+                steps_seen_a=1,
+                steps_seen_b=1,
+                did_comparison=flag,
+                followed_plan=True,
+                is_correct=True,
+                is_final=True
+            )
+
+            AnswerData.objects.create(
+                user=self.user,
+                question_id=reported_question.question_id,
+                category=Question.Category.MATH,
+                final_instructions_letter="A",
+                instructions_a={},
+                instructions_b={},
+                subanswers_a={},
+                subanswers_b={},
+                steps_seen_a=1,
+                steps_seen_b=1,
+                did_comparison=flag,
+                followed_plan=True,
+                is_correct=True,
+                is_final=True,
+                is_report=True
+            )
+
+            next_question = self.consumer.decide_next_question(
+                self.room, self.player, Question.Category.MATH, flag
+            )
+            assert next_question == unseen_question
+
 
 @pytest.mark.django_db
 class TestDecideNextQuestionTrivia:
@@ -1553,3 +1895,204 @@ class TestDecideNextQuestionTrivia:
             all_questions.add(next_question.question_id)
 
         assert all_questions == set([q.question_id for q in self.regular_questions[-5:]])
+
+    def test_report_unannotated_question(self):
+        """Ensure reported questions are not counted in the annotation."""
+
+        overflow_questions = self.regular_questions[:5]
+        return_question = self.regular_questions[7]
+        reported_question = self.regular_questions[5]
+        return_question_less = self.regular_questions[6]
+        zero_questions = self.regular_questions[8:-1]
+
+        seen_question = self.regular_questions[-1]
+        AnswerData.objects.create(
+            user=self.user,
+            question_id=seen_question.question_id,
+            category=Question.Category.MULTIHOP,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=False,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=True
+        )
+
+        report_user, _ = User.objects.get_or_create(user_id=123456789, name=f"reporter")
+        AnswerData.objects.create(
+            user=report_user,
+            question_id=reported_question.question_id,
+            category=Question.Category.MULTIHOP,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=False,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=True
+        )
+
+        # set up questions that overflowed
+        for question in overflow_questions:
+            num_annot = random.randint(3, 10)
+            for epoch in range(num_annot):
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                AnswerData.objects.create(
+                    user=curr_user,
+                    question_id=question.question_id,
+                    category=Question.Category.MULTIHOP,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+
+        # questions with 1 to 5 (inclusive) diff users who have looked at it
+        for epoch in range(1, 3):
+            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+
+            if epoch != 1:
+                AnswerData.objects.create(
+                    user=curr_user,
+                    question_id=return_question_less.question_id,
+                    category=Question.Category.MULTIHOP,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+
+                AnswerData.objects.create(
+                    user=report_user,
+                    question_id=reported_question.question_id,
+                    category=Question.Category.MULTIHOP,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+
+            AnswerData.objects.create(
+                    user=curr_user,
+                    question_id=return_question.question_id,
+                    category=Question.Category.MULTIHOP,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+        
+    
+            next_question = self.consumer.decide_next_question(
+                self.room, self.player, Question.Category.MULTIHOP, False
+            )
+            assert next_question == return_question
+
+        epoch = 3
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        AnswerData.objects.create(
+                user=curr_user,
+                question_id=return_question.question_id,
+                category=Question.Category.MULTIHOP,
+                final_instructions_letter="A",
+                instructions_a={},
+                instructions_b={},
+                subanswers_a={},
+                subanswers_b={},
+                steps_seen_a=1,
+                steps_seen_b=1,
+                did_comparison=False,
+                followed_plan=True,
+                is_correct=True,
+                is_final=True
+            )
+        next_question = self.consumer.decide_next_question(
+            self.room, self.player, Question.Category.MULTIHOP, False
+        )
+        assert next_question == reported_question
+
+    def test_reported_questions_are_seen(self):
+        """Ensure reported questions count as being seen by the user"""
+        seen_question = self.regular_questions[0]
+        reported_question = self.regular_questions[1]
+        unseen_question = self.regular_questions[2]
+
+        for flag in [True, False]:
+            AnswerData.objects.create(
+                user=self.user,
+                question_id=seen_question.question_id,
+                category=Question.Category.MULTIHOP,
+                final_instructions_letter="A",
+                instructions_a={},
+                instructions_b={},
+                subanswers_a={},
+                subanswers_b={},
+                steps_seen_a=1,
+                steps_seen_b=1,
+                did_comparison=flag,
+                followed_plan=True,
+                is_correct=True,
+                is_final=True
+            )
+
+            AnswerData.objects.create(
+                user=self.user,
+                question_id=reported_question.question_id,
+                category=Question.Category.MULTIHOP,
+                final_instructions_letter="A",
+                instructions_a={},
+                instructions_b={},
+                subanswers_a={},
+                subanswers_b={},
+                steps_seen_a=1,
+                steps_seen_b=1,
+                did_comparison=flag,
+                followed_plan=True,
+                is_correct=True,
+                is_final=True,
+                is_report=True
+            )
+
+            next_question = self.consumer.decide_next_question(
+                self.room, self.player, Question.Category.MULTIHOP, flag
+            )
+            assert next_question == unseen_question

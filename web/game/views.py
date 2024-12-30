@@ -31,7 +31,7 @@ def game_room(request, label):
     })
 
 def evaluation_game_room(request, label):
-    room, created = Room.objects.get_or_create(label=label, collects_feedback=True, uses_instructions=True, defaults={"max_players": 2})
+    room, created = Room.objects.get_or_create(label=label, collects_feedback=True, uses_instructions=True, defaults={"max_players": 1})
     return render(request, "game/game.html",{
         "room":room,
     })
@@ -83,7 +83,7 @@ def leaderboard(request):
     for idx in combined_rank_idx:
         row = aggregated_data[idx]
         leaderboard_data.append({'username': row['user__name'], 
-                                 'correctness': f"{'%.3f' % (row['avg_correctness'] * 100)}% Success Rate", 
+                                 'correctness': f"{'%.3f' % (row['avg_correctness'] * 100)}% Accuracy", 
                                  'time': 'N/A' if row['avg_seconds_taken'] == None else f"{'%.3f' % row['avg_seconds_taken']} Seconds", 
                                  'num_questions': len(correctness_scores)})
 
