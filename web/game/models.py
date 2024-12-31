@@ -294,9 +294,20 @@ class Room(models.Model):
 
 class User(models.Model):
 
+    class ExperimentGroup(models.TextChoices):
+        PAIRWISE = 'pairwise', _('pairwise')
+        SWAP = 'swap', _('swap')
+
     user_id = models.CharField(max_length=100, unique=True)
-    name = models.CharField(max_length=100) # Wikipedia username
+    name = models.CharField(max_length=100)
     email = models.CharField(default="", blank=True, max_length=320)
+    experiment_group = models.CharField(
+        max_length=10,
+        choices=ExperimentGroup.choices,
+        default=None,
+        blank=True,
+        null=True
+    )
     
 class ReportIssue(models.Model):
 

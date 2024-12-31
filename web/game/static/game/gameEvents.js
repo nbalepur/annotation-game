@@ -4,6 +4,8 @@
 const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");
 const optOutInput = document.getElementById("optOutCheck");
+const instructionAnnotationModal = document.getElementById("instruction-annotation-frame");
+const instructionAnnotationPage = document.getElementById("instruction-annotation-page");
 const requestContentInput = document.getElementById("request-content");
 const buzzProgress = document.getElementById("buzz-progress");
 const contentProgress = document.getElementById("content-progress");
@@ -43,6 +45,30 @@ $(document).ready(() => {
     (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
   );
   $('[data-toggle="popover"]').popover();
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const isModal = urlParams.get('instructions');
+
+  if (isModal === 'false') {
+    return;
+  }
+
+  var welcomeModalElement = document.getElementById('welcomeModal');
+  var welcomeModal = new bootstrap.Modal(welcomeModalElement);
+  welcomeModal.show();
+
+  closeBtn1 = document.getElementById("close-instruction-modal1");
+  closeBtn2 = document.getElementById("close-instruction-modal2");
+
+  closeBtn1.addEventListener('click', function () {
+    welcomeModal.hide();
+  });
+  closeBtn2.addEventListener('click', function () {
+    welcomeModal.hide();
+  });
 });
 
 // Timed events (ms)
@@ -110,7 +136,12 @@ optOutInput.addEventListener("click", function optOut() {
 });
 
 function handleKeyPress(e) {
-  console.log('key press:', e);
+  
+  const modalElement = document.getElementById('welcomeModal');
+  if (modalElement && modalElement.classList.contains('show')) {
+    return;
+  }
+
   if (feedbackRow && feedbackRow.style.display === "") {
     if (e.key === "[") {
       selectPlan("A");
@@ -171,6 +202,12 @@ function handleKeyPress(e) {
 }
 
 function handleKeyDown(e) {
+
+  const modalElement = document.getElementById('welcomeModal');
+  if (modalElement && modalElement.classList.contains('show')) {
+    return;
+  }
+
   if ((e.ctrlKey || e.metaKey) && e.key === "f" && gameState === 'playing') {
     focusTextInput("content-search");
     e.preventDefault();
@@ -296,3 +333,7 @@ skipBtn.addEventListener("click", skip);
 stepBtn.addEventListener("click", next_step);
 
 swapBtn.addEventListener("click", swap_plan)
+
+categorySelect.addEventListener('change', function(event) {
+  sendRequest("change_category", event.target.value);
+});

@@ -17,7 +17,7 @@
       <div class="col">
         <div class="row">
           <div class="d-flex justify-content-between align-items-center w-100">
-            <input type="text" id="request-content" style="display: none;" class="form-control me-4" maxlength="200">
+            <input type="text" id="request-content" style="display: none; width: 75%;" class="form-control me-4" maxlength="200">
             <div class="d-flex align-items-center" id="left-buttons">
               <button id="next-btn" class="btn btn-info btn me-2" title="Shortcut: N">Next (n)</button>
               <button id="skip-btn" class="btn btn-primary btn me-2" title="Shortcut: S" style="display: none;">Skip Reading (s)</button>
@@ -72,7 +72,7 @@
         <!-- Instructions -->
         {% if room.uses_instructions %}
         <div class="d-flex flex-column flex-grow-1">
-          {% include "game/instructions.html" with setting_type=setting_type %}
+          {% include "game/instructions.html" %}
         </div>
         {% endif %}
       
@@ -140,7 +140,23 @@
         </div>
       </div>
 
-      <div class="card mb-4">
+      <div class="card mb-3">
+        <div class="card-header" style="padding-bottom: 10px;">Question Type</div>
+        <div class="card-body">
+          <form>
+            <div class="form-group mb-3">
+              <label for="category-select">Category:</label>
+              <select id="category-select" class="form-control">
+                <option value="Everything">Everything</option>
+                <option value="Math">Math</option>
+                <option value="Trivia">Trivia</option>
+              </select>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card mb-3">
         <div class="card-header" style="padding-bottom: 10px;">Message Log</div>
         <div class="card-body">
           <ul id="message-space" class="list-group"></ul>
@@ -203,6 +219,23 @@
     </div>
   </div>
 
+  <div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen" style="padding: 20px;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="welcomeModalLabel">Read the instructions below before starting!</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-instruction-modal1"></button>
+        </div>
+        <div class="modal-body">
+        <iframe id="instruction-annotation-frame" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="close-instruction-modal2">Got it!</button>
+        </div>
+      </div>
+    </div>
+  </div>  
+  
 
 </div>
 {% endblock %}

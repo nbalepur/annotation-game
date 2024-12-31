@@ -172,6 +172,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.log_comparison(room, p, data["content"])
             elif data["request_type"] == "decrease_steps":
                 self.decrease_steps(room, p, data['content'])
+            elif data["request_type"] == "change_category":
+                self.change_category(room, p, data['content'])
             else:
                 pass
 
@@ -196,11 +198,33 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             }
         )
 
+    def change_category(self, room: Room, player: Player, category: str):
+        category_map = {
+            'Everything': Question.Category.EVERYTHING,
+            'Math': Question.Category.MATH,
+            'Trivia': Question.Category.MULTIHOP
+        }
+        room.category = category_map[category]
+        room.save()
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                "type": "update_room",
+                "data": get_room_response_json(room),
+            },
+        )
+
     def join(self, room: Room, data):
         """Join room"""
         user = User.objects.filter(user_id=data["user_id"]).first()
         if user == None:
             return
+        if user.experiment_group == None:
+            print("No experiment group found!")
+            return
+        
+        # immediately pass the experiment group to the front-end
+        self.update_experiment_type(user)
         
         room.steps_seen_a = 1
         room.steps_seen_b = 1
@@ -263,9 +287,51 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             },
         )
 
+    def decide_expt_group(self, user: User):
+
+        if user.experiment_group is not None:
+            return user.experiment_group
+        
+        # (question_id, did_comparison) -> number of users who have done it
+        question_user_count = (
+            AnswerData.objects.filter(followed_plan=True, is_final=True, is_report=False)
+            .values("question_id", "did_comparison")
+            .annotate(user_count=Count("user__user_id", distinct=True))
+        )
+        question_to_user_count = {
+            (entry["question_id"], entry["did_comparison"]): entry["user_count"]
+            for entry in question_user_count
+        }
+
+        num_swap_questions_done = 0
+        num_pairwise_questions_done = 0
+        for k, v in question_to_user_count.items():
+            if k[1]:
+                num_pairwise_questions_done += int(v >= 6)
+            else:
+                num_swap_questions_done += int(v >= 3)
+        
+        num_swap_users = len(User.objects.filter(experiment_group=User.ExperimentGroup.SWAP))
+        num_pairwise_users = len(User.objects.filter(experiment_group=User.ExperimentGroup.PAIRWISE))
+
+        if num_swap_questions_done == num_pairwise_questions_done:
+            if num_swap_users < num_pairwise_users:
+                return User.ExperimentGroup.SWAP
+            elif num_pairwise_users < num_swap_users:
+                return User.ExperimentGroup.PAIRWISE
+            else:
+                return User.ExperimentGroup.PAIRWISE if random.uniform(0, 1) > 0.5 else User.ExperimentGroup.SWAP
+        elif num_swap_questions_done > num_pairwise_questions_done:
+            return User.ExperimentGroup.PAIRWISE
+        else:
+            return User.ExperimentGroup.SWAP
+
     def new_user(self, room):
         """Create new user and player in room"""
         user = User.objects.create(user_id=generate_id(), name=generate_name())
+        expt_group = self.decide_expt_group(user)
+        user.experiment_group = expt_group
+        user.save()
 
         self.send_json(
             {
@@ -382,9 +448,55 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             },
         )
 
+    def decide_question_category(self, player: Player):
+
+        # find the unseen math questions
+        all_questions_math = Question.objects.filter(
+            Q(category=Question.Category.MATH) & (
+                Q(generation_method=Question.GenerationMethod.LLAMA) |
+                Q(generation_method=Question.GenerationMethod.QWEN)
+            )
+        )
+        seen_questions_overall_math = AnswerData.objects.filter(
+            user=player.user, category=Question.Category.MATH, is_final=True
+        ).values_list("question_id", flat=True)
+        unseen_questions_math = all_questions_math.exclude(
+            question_id__in=seen_questions_overall_math
+        )
+
+        # find the unseen trivia questions
+        all_questions_trivia = Question.objects.filter(
+            Q(category=Question.Category.MULTIHOP) & (
+                Q(generation_method=Question.GenerationMethod.LLAMA) |
+                Q(generation_method=Question.GenerationMethod.QWEN)
+            )
+        )
+        seen_questions_overall_trivia = AnswerData.objects.filter(
+            user=player.user, category=Question.Category.MULTIHOP, is_final=True
+        ).values_list("question_id", flat=True)
+        unseen_questions_trivia = all_questions_trivia.exclude(
+            question_id__in=seen_questions_overall_trivia
+        )
+
+        # decide which question to show
+        if len(unseen_questions_math) + len(unseen_questions_trivia) == 0:
+            return Question.Category.MULTIHOP if random.uniform(0, 1) > 0.5 else Question.Category.MATH # pick randomly if no more questions
+        if len(unseen_questions_math) == 0:
+            return Question.Category.MULTIHOP # pick trivia if no more math questions
+        if len(unseen_questions_trivia) == 0:
+            return Question.Category.MATH # pick math if no more trivia questions
+        
+        return Question.Category.MULTIHOP if random.uniform(0, 1) > 0.5 else Question.Category.MATH # random selection otherwise
+        
+
     def decide_next_question(
         self, room: Room, player: Player, category: Question.Category, is_comparison: bool
     ):
+        
+        # if either category can be shown, decide what the next one should be
+        if category == Question.Category.EVERYTHING:
+            category = self.decide_question_category(player)
+
         # (question_id, did_comparison) -> number of users who have done it
         question_user_count = (
             AnswerData.objects.filter(followed_plan=True, is_final=True, is_report=False)
@@ -453,12 +565,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         # transition so the user has time to read the instructions
         if room.state == Room.GameState.IDLE:
 
-            question_type = os.getenv("QUESTION_TYPE")
-            question_type_map = {'math': Question.Category.MATH, 'trivia': Question.Category.MULTIHOP}
-            question_type = question_type_map[question_type]
-
+            question_type = room.category
             q = self.decide_next_question(
-                room=room, player=player, category=question_type, is_comparison=(os.getenv("SETTING_TYPE") == 'pairwise')
+                room=room, player=player, 
+                category=question_type, 
+                is_comparison=player.user.experiment_group == User.ExperimentGroup.PAIRWISE
             )
             if q == None:  # no questions available D:
                 return
@@ -477,7 +588,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             # get this logging party started
             self.log_tool_use(room, player, "", dict(), "question", "start")
 
-            show_comparisons_before = os.getenv('SETTING_TYPE') == 'pairwise'
+            show_comparisons_before = (player.user.experiment_group == User.ExperimentGroup.PAIRWISE)
             room.show_comparisons_before = show_comparisons_before
 
             if show_comparisons_before:
@@ -874,6 +985,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             #     }
             # )
 
+    def update_experiment_type(self, user: User):
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                'type': 'update_room',
+                'data': {
+                    "response_type": "set_experiment_type",
+                    "experiment_type": user.experiment_group
+                },
+            }
+        )
+
     def get_shown_question(self, room: Room):
         """Computes the correct amount of the question to show, depending on the state of the game.
         Note, this value is not persisted because, updating is too expensive."""
@@ -890,19 +1013,19 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             },
         )
 
-    def decide_instruction_to_show(self, room: Room):
+    def decide_instruction_to_show(self, room: Room, player: Player):
         """Decide which instruction the user should see"""
 
         if room.current_question.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP}:
             return "A"
 
         # if users can swap, give them a random plan, as they can switch to the other one
-        if os.getenv('SETTING_TYPE') == 'swap':
+        if player.user.experiment_group == User.ExperimentGroup.SWAP:
             return "A" if random.uniform(0, 1) > 0.5 else "B"
 
         # otherwise, quantify which one has been seen less and show that one to balance out the labels
         instruction_obj = AnswerData.objects.filter(
-            question_id=room.current_question.question_id, did_comparison=True, is_final=True, is_report=False
+            question_id=room.current_question.question_id, did_comparison=True, is_final=True, is_report=False, followed_plan=True
         )
         seen_instr_A, seen_instr_B = (
             instruction_obj.filter(final_instructions_letter="A").values("user_id").distinct(),
@@ -1002,7 +1125,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     def load_instructions(self, room: Room, player: Player):
         """Load instructions to show to the user"""
-        instruction_label = self.decide_instruction_to_show(room=room)
+        instruction_label = self.decide_instruction_to_show(room=room, player=player)
         room.curr_instructions_letter = instruction_label
         room.save()
         room.refresh_from_db()
@@ -1120,12 +1243,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             },
         )
 
-    def hide_tools_on_join(self, player: Player):
-        question_type = os.getenv('QUESTION_TYPE')
-        self.update_tools(
-            self.channel_layer.send, player.channel_name, question_type == 'math', question_type == 'trivia', question_type == 'trivia'
-        )
-        #self.update_doc(self.channel_layer.send, player.channel_name, False, "")
+    # def hide_tools_on_join(self, player: Player):
+    #     question_type = os.getenv('QUESTION_TYPE')
+    #     self.update_tools(
+    #         self.channel_layer.send, player.channel_name, question_type == 'math', question_type == 'trivia', question_type == 'trivia'
+    #     )
+    #     #self.update_doc(self.channel_layer.send, player.channel_name, False, "")
 
     def update_tools_and_doc_for_question_and_player(self, room: Room, player: Player):
         """Update the visible tools and document based on the current question for just one player"""
@@ -1134,17 +1257,15 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         self.update_tools(
             self.channel_layer.group_send,
             self.room_group_name,
-            (os.getenv("QUESTION_TYPE") == 'math'),
-            (os.getenv("QUESTION_TYPE") == 'trivia'),
-            (os.getenv("QUESTION_TYPE") == 'trivia'),
+            (question is None and room.category in {Question.Category.MATH, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MATH),
+            (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
+            (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
         )
-        curr_doc = (
-            ""
-        )
+        curr_doc = ""
         self.update_doc(
             self.channel_layer.group_send,
             self.room_group_name,
-            (os.getenv("QUESTION_TYPE") == 'trivia'),
+            (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
             curr_doc,
         )
 
@@ -1161,16 +1282,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
     def show_and_disable_tools(self, room: Room, player: Player):
-
-        print('show and disable tools:', self.channel_layer.group_send, self.room_group_name)
-
         """Update the visible tools and document based on the current question"""
         self.update_tools_and_doc_for_question_and_player(room=room, player=player)
         self.disable_tool_btns(
             room=room,
             player=player,
             should_disable=True,
-            should_clear_document=(os.getenv("QUESTION_TYPE") == 'trivia'),
+            should_clear_document=((room.current_question is None and room.category in {Question.Category.MULTIHOP}) or (room.current_question is not None and room.current_question.category == Question.Category.MULTIHOP)),
         )
 
     def update_status(self, room: Room, status: str, player: Player, answer=""):

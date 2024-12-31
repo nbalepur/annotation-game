@@ -30,6 +30,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', '+phm-vl*x5!l^az_3*+28q(*yv!*!d*ex-i(*r=e1o
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 DEBUG = 'True'
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://annotationgame.com', 'https://*.annotationgame.com', 'http://localhost']
 

@@ -139,8 +139,6 @@ function clearInstructions() {
 
 function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
 
-  console.log('showing it all!');
-
   const iframe = document.getElementById('instruction-frame');
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
@@ -504,6 +502,8 @@ function toggleDisableButtons(flag) {
     searchClearBtn.disabled = flag;
     findClearBtn.disabled = flag;
 
+    copySearchBtn.disabled = flag;
+
     for (const btn of calculatorOperators.querySelectorAll('.btn')) {
       btn.disabled = flag;
     }     
@@ -778,37 +778,37 @@ docContent.addEventListener('load', function() {
     
 });
 
-instructionsFrame.addEventListener('load', function() {
-  const iframeDocument = this.contentDocument || this.contentWindow.document;
+// instructionsFrame.addEventListener('load', function() {
+//   const iframeDocument = this.contentDocument || this.contentWindow.document;
 
-  iframeDocument.addEventListener("keydown", function(event) {
-    if (event.key === "Escape") {
-      const activeElement = iframeDocument.activeElement;
-      if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
-        activeElement.blur(); // Remove focus from the input field
-      }
-    } else {
-      handleKeyDown(event);
-    }
-  });
+//   iframeDocument.addEventListener("keydown", function(event) {
+//     if (event.key === "Escape") {
+//       const activeElement = iframeDocument.activeElement;
+//       if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
+//         activeElement.blur(); // Remove focus from the input field
+//       }
+//     } else {
+//       handleKeyDown(event);
+//     }
+//   });
 
-  iframeDocument.addEventListener("keypress", function(event) {
-    if (event.key === "Escape") {
-      const activeElement = iframeDocument.activeElement;
-      if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
-        activeElement.blur(); // Remove focus from the input field
-      }
-    } else {
-      handleKeyPress(event);
-    }
-  });
+//   iframeDocument.addEventListener("keypress", function(event) {
+//     if (event.key === "Escape") {
+//       const activeElement = iframeDocument.activeElement;
+//       if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
+//         activeElement.blur(); // Remove focus from the input field
+//       }
+//     } else {
+//       handleKeyPress(event);
+//     }
+//   });
 
-  iframeDocument.getElementById("edit-instructions-checkbox").addEventListener("click", function() {
-    const phase = this.getAttribute("data-phase");
-    parent.toggleRogueCheckbox(this, phase);
-  });
+//   iframeDocument.getElementById("edit-instructions-checkbox").addEventListener("click", function() {
+//     const phase = this.getAttribute("data-phase");
+//     parent.toggleRogueCheckbox(this, phase);
+//   });
   
-});
+// });
 
 // docContent.addEventListener("keypress", (e) => {
 //   handleKeyPress(e);

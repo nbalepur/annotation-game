@@ -20,7 +20,7 @@
     <body>
       <div style="display: flex; justify-content: right; margin: 10px; visibility: hidden" id="follow-plan-div">
         <div class="form-check" id="edit-instructions-container">
-          <input class="form-check-input" type="checkbox" value="" data-phase="{{ setting_type }}" id="edit-instructions-checkbox">
+          <input class="form-check-input" type="checkbox" value="" id="edit-instructions-checkbox">
           <label class="form-check-label" for="edit-instructions-checkbox">
             I will not follow any plan
           </label>
@@ -40,6 +40,27 @@
         }
       </style>
 
+      <script>
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape") {
+            const activeElement = document.activeElement;
+            if (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA") {
+              activeElement.blur();
+            }
+          } else {
+            if (window.parent && typeof window.parent.handleKeyDown === "function") {
+              window.parent.handleKeyDown(event);
+            }
+          }
+        });
+      
+        document.addEventListener("keypress", function (event) {
+            if (window.parent && typeof window.parent.handleKeyPress === "function") {
+              window.parent.handleKeyPress(event);
+            }
+        });
+      </script>
+      
     </body>
   </html>
   '>

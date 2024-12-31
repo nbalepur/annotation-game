@@ -39,11 +39,18 @@ function sendToInstructions() {
   window.location.href = `/instructions`;
 }
 
-function joinNewRoom() {
+function joinNewRoom(showInstructions) {
+
+  // user has already seen it
+  if (showInstructions && localStorage.getItem('instructionsURL')) {
+    showInstructions = false;
+  }
+
+  const queryParams = new URLSearchParams({ instructions: showInstructions });
   const roomName = '';
   const evaluationRoom = setAndGetEvalRoomCookie(roomName);
   if (evaluationRoom) {
-    window.location.href = `/game/evaluation/${evaluationRoom}`;
+    window.location.href = `/game/evaluation/${evaluationRoom}?${queryParams.toString()}`;
   } else {
     alert('Please enter a valid room name!');
   }

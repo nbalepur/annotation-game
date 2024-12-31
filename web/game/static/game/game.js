@@ -44,6 +44,8 @@ let logNoneComparison = false;
 
 let isFeedbackLoaded = false;
 
+let experimentType = null;
+
 // Set up client
 document.addEventListener("DOMContentLoaded", () => {
   gamesock.onopen = () => {
@@ -234,7 +236,10 @@ gamesock.onmessage = message => {
     emailInput.value = userEmail ? userEmail : "";
     ping();
 
-  } else if (data['response_type'] === "send_answer") {
+  } else if (data['response_type'] === "set_experiment_type") {
+    setExperimentInstructions(data['experiment_type']);
+  }
+  else if (data['response_type'] === "send_answer") {
     setAnswer(data['answer']);
   } else if (data['response_type'] === "get_shown_question") {
     setQuestion(data['shown_question'], data['state']);
@@ -355,6 +360,22 @@ function setQuestion(question_text, state) {
 //   answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : 'Answer:';
 // }
 
+function setExperimentInstructions(experimentType) {
+  const url = `/instructions_modal_${experimentType}/`
+  instructionAnnotationModal.src = url;
+  localStorage.setItem('instructionsURL', url);
+}
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== "http://localhost:8000") return; // Validate origin
+  if (event.data.type === "setIframeSrc") {
+      const iframe = document.getElementById("instruction-annotation-page");
+      if (iframe) {
+          iframe.src = event.data.url;
+          console.log("Iframe src set to:", iframe.src);
+      }
+  }
+});
 
 function setCalculation(res) {
   calculatorResult.value = res;

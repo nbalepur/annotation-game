@@ -1,0 +1,232 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href={% static "game/science-discovery.svg" %} />
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.22.5/dist/bootstrap-table.min.css">
+  <link id="theme-stylesheet" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+  integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+  {% block title %}
+  {% endblock %}
+
+</head>
+
+<div class="row justify-content-center">
+  <div class="col-lg-12">
+    {% load static %}
+
+    <div>
+      <h1 style="margin-bottom: 30px;">Instructions</h1>
+    
+      <p>
+        Thank you for participating in our user study! Below, we have instructions on how to participate and how you will be compensated. You can return to this page at any time by hitting the "Instructions" tab in the header of the website.
+      </p>
+    
+      <h2 style="margin-bottom: 20px;">Table of Contents</h2>
+      <ul>
+        <li><a href="#setup">Setup</a></li>
+        <li><a href="#pairwise">Step 1: Select which Plan is Better</a></li>
+        <li><a href="#answering">Step 2: Answering Questions</a></li>
+        <ul>
+          <li><a href="#following">Following the Plan</a></li>
+          <li><a href="#tools">Using Tools</a></li>
+          <li><a href="#final">Providing a Final Answer</a></li>
+          <li><a href="#shortcuts">Keyboard Shortcuts</a></li>
+          <li><a href="#reporting">Reporting Questions</a></li>
+        </ul>
+        <li><a href="#compensation">Compensation</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    
+      <h2 id="setup" style="margin-top: 40px; margin-bottom: 20px;">Setup</h2>
+      <p>
+        The first thing you should do is hit the “settings” button and enter your email address. This is the email we will be using to communicate with you and send you compensation. After providing your email and once you are ready to participate in our user study, please hit the “Next” button. We show where both of these buttons are below:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/getting_started.png' %}" alt="getting started" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        After hitting "Next", you will be asked to select which of two step-by-step plans is better for an input question. Afterwards, you will be asked to answer the question while following one of these plans. We provide details on both of these steps below.
+      </p>
+    
+      <h2 id="pairwise" style="margin-top: 40px; margin-bottom: 20px;">Step 1: Select which Plan is Better</h2>
+      <p>
+        The first thing you will see is a question and two diverse step-by-step plans that can be used to answer the question. Your goal is to select which plan you believe would help you answer the question more accurately and quickly (you can also determine that the plans are tied). <b>Please note that the plan you select may or may not be the plan you interact with in the second stage.</b> The interface for this comparison is shown below:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/pairwise_comparison.png' %}" alt="pairwise comparison interface" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        We will allocate you 60 seconds to complete this step. <b>We will also have attention checks where one plan is intentionally low-quality, and we may deny compensation if you are found to fail these attention checks by selecting the low-quality plan.</b>
+      </p>
+    
+      <h2 id="answering" style="margin-top: 40px; margin-bottom: 20px;">Step 2: Answering Questions</h2>
+      <p>
+        In the second step, you will be asked to follow a single plan of step-by-step instructions to answer the question. Specifically, you will see one step at a time, and will be asked to compute the intermediate result of each step while having access to either a Calculator or a version of Google search. Once you reach the end of the instructions, you will provide a final answer. <b>The first question will also be a tutorial question that will not count towards your progress to get you familiar with the interface.</b>
+      </p>
+    
+      <h4 id="following" style="margin-top: 30px; margin-bottom: 20px;">a. Following the Plan</h4>
+      <p>
+        When a question is loaded, the interface will be divided into two halves: the left half will contain a question and a plan for you to follow, while the right half will contain tools to help you answer the question. You will initially see just one step of the plan and will be asked to store the answer to this instruction. Once you are happy with your answer, you can hit "Next Step" in the top left of the screen to see the next step in the plan. You will be able to see all the previous steps and modify all your previous answers. We display and point out all of these visual elements below:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/overview.png' %}" alt="overview of the plan" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        If you hit "Next Step" on accident and want to undo seeing the next step, you can use <code>ctrl/cmd+Z</code> or hit the "X" in the top-right corner of the plan.
+      </p>
+    
+      <p>
+        <b>Please note that some of the plans will have attention checks with verbatim instructions for you to follow (e.g. "Type answer 'XYZ'"). If you do not pass these attention checks, we may deny compensation.</b>
+      </p>
+    
+    
+      <h4 id="tools" style="margin-top: 30px; margin-bottom: 20px;">b. Using Tools</h4>
+      <p>
+        Questions are divided into two types: math questions or trivia questions. As a result, you may need external help when solving these questions. Instead of using other tools that would require you to navigate off our UI, we provide versions of calculators and Google search to help you answer the question.
+      </p>
+    
+      <p>
+        For the calculator tool, you can manually write a math equation or press operation buttons with mathematical symbols (e.g. "+", "-", etc.) to build an equation in the upper input field. After hitting the calculator icon, the result will be stored in the bottom input field:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/calculator.png' %}" alt="calculator tool" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        For the web search tool, there are two search fields. The top field allows you to find the most similar Wikipedia page based on a given query or keywords. Once you search here, you will see the Wikipedia page and a second search field you can use, which allows you to look for information inside the document (like ctrl/cmd+F). After entering a query, the page will scroll to the sentence that is most similar to the query and highlight the text. You can also scroll up and down the page to look for information:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/web.png' %}" alt="web search tool" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        All tool inputs have a "Clear" button which removes the text in the input field. There is also a "Copy" button that moves the current output in the calculator tool or the highlighted text on the page to the current step in the plan to easily store your answer. Similarly, each step in the plan has a "Copy to Tool" button which takes the answer to the plan and adds it to the input field of the tool.
+      </p>
+    
+      <h4 id="final" style="margin-top: 30px; margin-bottom: 20px;">c. Providing a Final Answer</h4>
+      <p>
+        Once you reach the end of the plan, you will see buttons named "Buzz" that you can press to input your final answer to the question. The buttons are shown below:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/buzz.png' %}" alt="buzzing" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        Once you hit buzz, you will see an input field at the top of your screen where you can type in your answer to the question. You will have 8 seconds to answer the question and can hit "Enter" to submit your answer. By default, this input area will be filled with whatever is typed in the last step of the plan:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/answer.png' %}" alt="providing a final answer" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        After buzzing, you will be told whether your answer is correct or incorrect. If the answer is correct, you can move on to the next question. If the answer is incorrect, you can keep trying to answer the question until you get it correct or time runs out. If you believe your answer is wrongly marked as correct/incorrect, or you want to give up on the question because it is too difficult, you can report the question (see section (e)).
+      </p>
+    
+      <h4 id="shortcuts" style="margin-top: 30px; margin-bottom: 20px;">d. Keyboard Shortcuts</h4>
+      <p>
+        We also provide keyboard shortcuts for every button in the app to help you answer questions quickly:
+      </p>
+      <ul>
+        <li><code>N</code>: Start the next question or move onto the next step (depending on which button appears).</li>
+        <li><code>ctrl/cmd + Z</code>: Undo the current step that was loaded.</li>
+        <li><code>M</code>: Focus on the calculator tool input.</li>
+        <li><code>W</code>: Focus on the web search tool input.</li>
+        <li><code>F</code>: Focus on the search (i.e. ctrl+F) tool input.</li>
+        <li><code>C</code>: Copy the current result in the calculator or highlighted text on the wiki page into the plan.</li>
+        <li><code>Enter</code>: Run the tool (e.g., calculate your equation) when inside a tool text inputs or proceed to the next step/buzz with an answer when inside the step text inputs.</li>
+        <li><code>[</code>: Mark that the left plan (plan A) is better in the pairwise comparison.</li>
+        <li><code>]</code>: Mark that the right plan (plan B) is better in the pairwise comparison.</li>
+        <li><code>Space</code>: Buzz to give your answer.</li>
+        <li><code>Tab</code>: Open the settings pane.</li>
+        <li><code>Escape</code>: Unfocus from your current text input.</li>
+      </ul>
+      <p>
+        All buttons or tools are labeled with these shortcuts to remind you. We encourage you to use these keyboard shortcuts to improve your speed. If the keyboard shortcuts are not working, you may need to refresh the page
+      </p>
+    
+      <h4 id="reporting" style="margin-top: 30px; margin-bottom: 20px;">e. Reporting Questions</h4>
+      <p>
+        If you believe there is an error or you want to move onto the next question, you can report the current question by hitting the "Report" button in the top left. This button will appear after 90 seconds to ensure that you gave a good-faith effort in answering the question:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/report_button.png' %}" alt="reporting a question (button)" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        After hitting this button, you will have to select one of the following reasons why you are reporting the question, or provide a textual description of your issue:
+      </p>
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/report_pane.png' %}" alt="reporting a question (pane)" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+    
+      <p>
+        After reporting the question, you will be able to move onto the next question. Reported questions do not count as questions completed for the compensation below.
+      </p>
+    
+      <h2 id="compensation" style="margin-top: 40px; margin-bottom: 20px;">Compensation</h2>
+      <p>
+        You must answer at least 10 questions to be eligible for compensation. We will pay $5 for every 5 questions you answer. We will additionally give $50 to the 5 users with the highest average accuracy scores and $50 to the 5 users with the lowest time taken (i.e. fastest speed). You are eligible to obtain both $50 rewards. Reported questions are not included in this calculation.
+      </p>
+      <p>
+        More compensation details can be found on the Incentives page. You can track your accuracy and speed scores on the Leaderboard page.
+      </p>
+    
+      <h2 id="contact" style="margin-top: 40px; margin-bottom: 20px;">Contact</h2>
+      <p>
+        If you have any questions or if you run into any issues, please email <a href="mailto:nbalepur@umd.edu">nbalepur@umd.edu</a>
+      </p>
+    </div>
+    
+  </div>
+</div>
+
+<!-- ORIGINAL -->
+<!-- <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.bundle.min.js"
+  integrity="sha384-pjaaA8dDz/5BgdFUPX6M/9SUZv4d12SUPF0axWc+VRZkx5xU3daN+lYb49+Ax+Tl" crossorigin="anonymous"></script>
+<link id="theme-stylesheet" rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+  integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous"> -->
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"
+  integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.22.5/dist/bootstrap-table.min.js"></script>
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+<script src="{% static 'fontawesomefree/js/fontawesome.js' %}"></script>
+<script src="{% static 'fontawesomefree/js/all.min.js' %}"></script>
+
+<link rel="stylesheet" href={% static "game/game.css" %}>
+<script src={% static "game/base.js" %}></script>
+<script type="text/javascript" src={% static "game/userdata.js" %}></script>
+<script type="text/javascript" src={% static "game/utils.js" %}></script>
+
+
+
+{% block scripts %}
+{% endblock %}
+
+</html>
+
+
