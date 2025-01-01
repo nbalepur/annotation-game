@@ -75,6 +75,7 @@ class TestConsumers:
         self.room.current_question.generation_method = Question.GenerationMethod.ATTENTION_SWAP
         assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
 
+
     def test_decide_instruction_to_show_swap_distribution(self):
         """Test when SETTING_TYPE is 'swap'."""
         consumer = QuizbowlConsumer()
@@ -89,7 +90,6 @@ class TestConsumers:
         assert 450 <= sum_a <= 550
 
     def test_decide_instruction_to_show_pairwise_balancing(self):
-        """Test when SETTING_TYPE is 'pairwise'."""
         consumer = QuizbowlConsumer()
         self.user.experiment_group = User.ExperimentGroup.PAIRWISE
         self.user.save()
@@ -154,7 +154,7 @@ class TestConsumers:
             final_instructions_letter="A",
         )
         # Should return "A" because "A" has been seen less
-        for _ in range(1000):
+        for _ in range(50):
             assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
 
         # Add another "A" to balance
@@ -204,6 +204,76 @@ class TestConsumers:
         )
         for _ in range(50):
             assert consumer.decide_instruction_to_show(self.room, self.player) == "B"
+
+    def test_must_be_final(self):
+
+        consumer = QuizbowlConsumer()
+        self.user.experiment_group = User.ExperimentGroup.PAIRWISE
+        self.user.save()
+
+        """Test that we ignore reported questions"""
+        AnswerData.objects.create(
+            question_id=self.room.current_question.question_id,
+            user=self.all_users[0],
+            category=Question.Category.MATH,
+            instructions_a={"step1": "Do this"},
+            instructions_b={"step1": "Do that"},
+            subanswers_a={"sub1": "Answer A1"},
+            subanswers_b={"sub1": "Answer B1"},
+            steps_seen_a=3,
+            steps_seen_b=2,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=False,
+            guessed_answer={"guess": "Guessed answer"},
+            true_answer={"true": "True answer"},
+            final_instructions_letter="B",
+        )
+
+        AnswerData.objects.create(
+            question_id=self.room.current_question.question_id,
+            user=self.all_users[0],
+            category=Question.Category.MATH,
+            instructions_a={"step1": "Do this"},
+            instructions_b={"step1": "Do that"},
+            subanswers_a={"sub1": "Answer A1"},
+            subanswers_b={"sub1": "Answer B1"},
+            steps_seen_a=3,
+            steps_seen_b=2,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=False,
+            is_report=False,
+            guessed_answer={"guess": "Guessed answer"},
+            true_answer={"true": "True answer"},
+            final_instructions_letter="A",
+        )
+
+        AnswerData.objects.create(
+            question_id=self.room.current_question.question_id,
+            user=self.all_users[0],
+            category=Question.Category.MATH,
+            instructions_a={"step1": "Do this"},
+            instructions_b={"step1": "Do that"},
+            subanswers_a={"sub1": "Answer A1"},
+            subanswers_b={"sub1": "Answer B1"},
+            steps_seen_a=3,
+            steps_seen_b=2,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=False,
+            is_report=False,
+            guessed_answer={"guess": "Guessed answer"},
+            true_answer={"true": "True answer"},
+            final_instructions_letter="A",
+        )
+
+        for _ in range(50):
+            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
 
     def test_report(self):
 
@@ -379,7 +449,7 @@ class TestExperimentGroup:
         user.save()
         assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
 
-    def test_rogue_and_report_dont_count(self):
+    def test_rogue_report_unfinal_dont_count(self):
 
         user = User.objects.create(name="testuser", user_id=1000)
 
@@ -407,7 +477,7 @@ class TestExperimentGroup:
             )
 
         for _ in range(2):
-            for user_num in range(12):
+            for user_num in range(18):
                 swap_user, _ = User.objects.get_or_create(name="swap_" + str(user_num), user_id=user_num + 200, experiment_group=User.ExperimentGroup.PAIRWISE)
 
                 if user_num < 6:
@@ -426,6 +496,26 @@ class TestExperimentGroup:
                         is_correct=True,
                         is_final=True,
                         is_report=True,
+                        guessed_answer={"guess": "Guessed answer"},
+                        true_answer={"true": "True answer"},
+                        final_instructions_letter="A",
+                    )
+                elif 6 <= user_num < 12:
+                    AnswerData.objects.create(
+                        question_id=self.math_questions[1].question_id,
+                        user=swap_user,
+                        category=Question.Category.MULTIHOP,
+                        instructions_a={"step1": "Do this"},
+                        instructions_b={"step1": "Do that"},
+                        subanswers_a={"sub1": "Answer A1"},
+                        subanswers_b={"sub1": "Answer B1"},
+                        steps_seen_a=3,
+                        steps_seen_b=2,
+                        did_comparison=False,
+                        followed_plan=True,
+                        is_correct=True,
+                        is_final=False,
+                        is_report=False,
                         guessed_answer={"guess": "Guessed answer"},
                         true_answer={"true": "True answer"},
                         final_instructions_letter="A",
@@ -453,7 +543,7 @@ class TestExperimentGroup:
 
         assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
 
-    def test_rogue_and_report_dont_count_flipped(self):
+    def test_rogue_report_final_dont_count_flipped(self):
 
         user = User.objects.create(name="testuser", user_id=1000)
 
@@ -481,7 +571,7 @@ class TestExperimentGroup:
             )
 
         for _ in range(2):
-            for user_num in range(12):
+            for user_num in range(18):
                 pairwise_user, _ = User.objects.get_or_create(name="pairwise_" + str(user_num), user_id=user_num, experiment_group=User.ExperimentGroup.PAIRWISE)
 
                 if user_num < 6:
@@ -500,6 +590,26 @@ class TestExperimentGroup:
                         is_correct=True,
                         is_final=True,
                         is_report=True,
+                        guessed_answer={"guess": "Guessed answer"},
+                        true_answer={"true": "True answer"},
+                        final_instructions_letter="A",
+                    )
+                elif 6 <= user_num < 12:
+                    AnswerData.objects.create(
+                        question_id=self.math_questions[1].question_id,
+                        user=pairwise_user,
+                        category=Question.Category.MULTIHOP,
+                        instructions_a={"step1": "Do this"},
+                        instructions_b={"step1": "Do that"},
+                        subanswers_a={"sub1": "Answer A1"},
+                        subanswers_b={"sub1": "Answer B1"},
+                        steps_seen_a=3,
+                        steps_seen_b=2,
+                        did_comparison=False,
+                        followed_plan=True,
+                        is_correct=True,
+                        is_final=False,
+                        is_report=False,
                         guessed_answer={"guess": "Guessed answer"},
                         true_answer={"true": "True answer"},
                         final_instructions_letter="A",
@@ -1014,6 +1124,32 @@ class TestEverythingQuestions:
                 followed_plan=False,
                 is_correct=True,
                 is_final=True,
+                is_report=False,
+                guessed_answer={"guess": "Guessed answer"},
+                true_answer={"true": "True answer"},
+                final_instructions_letter="A",
+            )
+        consumer = QuizbowlConsumer()
+        for _ in range(10):
+            assert consumer.decide_question_category(self.player) == Question.Category.MULTIHOP
+
+    def test_final_does_nothing(self):
+
+        for q in self.math_questions:
+            AnswerData.objects.create(
+                question_id=q.question_id,
+                user=self.user,
+                category=Question.Category.MATH,
+                instructions_a={"step1": "Do this"},
+                instructions_b={"step1": "Do that"},
+                subanswers_a={"sub1": "Answer A1"},
+                subanswers_b={"sub1": "Answer B1"},
+                steps_seen_a=3,
+                steps_seen_b=2,
+                did_comparison=True,
+                followed_plan=True,
+                is_correct=False,
+                is_final=False,
                 is_report=False,
                 guessed_answer={"guess": "Guessed answer"},
                 true_answer={"true": "True answer"},

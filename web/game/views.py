@@ -63,9 +63,14 @@ class Cube(Func):
 
 def compute_leaderboard(question_type: Question.Category):
 
+    # ignore tutorial + sanity check questions
+    valid_logs = LeaderboardLog.objects.filter(question_id__in=Question.objects.filter(
+        generation_method__in=[Question.GenerationMethod.LLAMA, Question.GenerationMethod.QWEN]
+    ).values_list('question_id', flat=True))
+
     # Calculate the average correctness score and seconds taken per user based on the question type
     if question_type == Question.Category.EVERYTHING:
-        aggregated_data = LeaderboardLog.objects.values('user_id', 'user__name').annotate(
+        aggregated_data = valid_logs.values('user_id', 'user__name').annotate(
         avg_correctness=Avg('correctness_score'),
         avg_seconds_taken=Avg(
                 Case(
@@ -74,9 +79,9 @@ def compute_leaderboard(question_type: Question.Category):
                 )
             )
         )
-        user_question_count = LeaderboardLog.objects.values('user').annotate(question_count=Count('question_id'))
+        user_question_count = valid_logs.values('user').annotate(question_count=Count('question_id'))
     else:
-        aggregated_data = LeaderboardLog.objects.filter(
+        aggregated_data = valid_logs.filter(
             question_id__in=Question.objects.filter(category=question_type).values('question_id')
         ).values(
             'user_id', 'user__name'
@@ -89,7 +94,7 @@ def compute_leaderboard(question_type: Question.Category):
                 )
             )
         )
-        filtered_data = LeaderboardLog.objects.filter(
+        filtered_data = valid_logs.filter(
             question_id__in=Question.objects.filter(category=question_type).values_list('question_id', flat=True)
         )
         user_question_count = filtered_data.values('user').annotate(question_count=Count('question_id'))

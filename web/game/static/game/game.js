@@ -24,7 +24,7 @@ let endTime;
 let buzzStartTime;
 let buzzPassedTime = 0;
 let graceTime = 3;
-let buzzTime = 8;
+let buzzTime = 5;
 
 let readingTime = 30;
 // let readingTime = 3; // seconds to read the question
@@ -33,6 +33,8 @@ let readingPassedTime = 0;
 let questionTime = 180;
 // let questionTime = 3; // secconds to answer the question
 let questionPassedTime = 0;
+
+let isTutorial = false;
 
 let question;
 let category;
@@ -100,8 +102,11 @@ function update() {
     case 'compare':
       // Update if game is going
       questionPassedTime = 0;
-      width = Math.min(100, (100 * ((1.05 * readingPassedTime) / readingTime)));
-      instructionProgress.style.width = width + '%';
+
+      if (!isTutorial) {
+        width = Math.min(100, (100 * ((1.01 * readingPassedTime) / (2 * readingTime))));
+        instructionProgress.style.width = width + '%';
+      }
 
       currentTime += 0.1;
 
@@ -110,7 +115,7 @@ function update() {
       contentProgress.style.display = 'none'
       // answerHeader.innerHTML = '';
 
-      if (readingPassedTime >= readingTime && !logNoneComparison) {
+      if (readingPassedTime >= 2 * readingTime && !logNoneComparison && !isTutorial) {
         selectPlan("None");
         instructionProgress.style.width = '0%';
         logNoneComparison = true;
@@ -121,8 +126,11 @@ function update() {
     case 'instruct':
       // Update if game is going
       questionPassedTime = 0;
-      width = Math.min(100, (100 * ((1.05 * readingPassedTime) / readingTime)));
-      instructionProgress.style.width = width + '%';
+
+      if (!isTutorial) {
+        width = Math.min(100, (100 * ((1.01 * readingPassedTime) / readingTime)));
+        instructionProgress.style.width = width + '%';
+      }
 
       currentTime += 0.1;
 
@@ -131,7 +139,7 @@ function update() {
       contentProgress.style.display = 'none'
       // answerHeader.innerHTML = '';
 
-      if (readingPassedTime >= readingTime && !logNoneComparison) {
+      if (readingPassedTime >= readingTime && !logNoneComparison && !isTutorial) {
         skip();
         instructionProgress.style.width = '0%';
         logNoneComparison = true;
@@ -142,8 +150,10 @@ function update() {
     case 'playing':
 
       // Update if game is going
-      const passed_prop = (1.05 * questionPassedTime / questionTime)
-      contentProgress.style.width = (100 * passed_prop).toFixed(4) + '%';
+      const passed_prop = (1.01 * questionPassedTime / questionTime)
+      if (!isTutorial) {
+        contentProgress.style.width = (100 * passed_prop).toFixed(4) + '%';
+      }
 
       if (passed_prop > 0.5) {
         reportBtn.style.display = '';
@@ -157,7 +167,7 @@ function update() {
       instructionProgress.style.display = 'none'
       // answerHeader.innerHTML = '';
 
-      if (questionPassedTime >= questionTime) {
+      if (questionPassedTime >= questionTime && !isTutorial) {
         sendRequest('no_buzz');
         contentProgress.style.width = '0%';
       }
@@ -168,7 +178,7 @@ function update() {
     case 'contest':
       timePassed = buzzStartTime - startTime;
 
-      buzzProgress.style.width = (100 * (1.05 * buzzPassedTime / buzzTime)).toFixed(4) + '%';
+      buzzProgress.style.width = (100 * (1.01 * buzzPassedTime / buzzTime)).toFixed(4) + '%';
       instructionProgress.style.display = 'none'
       contentProgress.style.display = 'none';
       buzzProgress.style.display = '';
@@ -243,6 +253,7 @@ gamesock.onmessage = message => {
     setAnswer(data['answer']);
   } else if (data['response_type'] === "get_shown_question") {
     setQuestion(data['shown_question'], data['state']);
+    isTutorial = data['is_tutorial'];
   } else if (data['response_type'] === 'clear_instructions') {
     clearInstructions();
   } else if (data['response_type'] === "update_instructions") {
@@ -351,9 +362,18 @@ function setQuestion(question_text, state) {
   question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
   question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
   question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
-  questionSpace.innerHTML = question_text;
+  questionSpace.innerHTML = question_text.replace(/\n\n/g, '<br /><br />');
   question = question_text;
 }
+
+function setReadingTime(is_tutorial) {
+  if (is_tutorial) {
+
+  } else {
+    
+  }
+}
+
 
 // function setAnswer(answer) {
 //   answer = answer.replace("{", "<u><b>").replace("}", "</b></u>");

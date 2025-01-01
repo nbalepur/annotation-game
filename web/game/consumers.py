@@ -266,13 +266,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             )
 
             room.refresh_from_db()
-            # print(room.current_question)
-            # if room.current_question:
-            
             self.update_status(room, room.state, p)
-            #self.get_shown_question(room=room)
-            #self.get_answer(room=room, player=p)
-
             self.show_and_disable_tools(room=room, player=p)
 
             p.last_room = self.room_name
@@ -807,7 +801,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             # except ValidationError as e:
             #     pass
 
-            self.get_shown_question(room=room)
+            #self.get_shown_question(room=room)
 
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -1009,6 +1003,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 "data": {
                     "response_type": "get_shown_question",
                     "shown_question": room.get_shown_question(),
+                    "is_tutorial": room.current_question.generation_method == Question.GenerationMethod.TUTORIAL,
                     "state": room.state,
                 },
             },

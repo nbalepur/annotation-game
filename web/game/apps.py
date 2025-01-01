@@ -5,6 +5,6 @@ class GameConfig(AppConfig):
     name = 'game'
     verbose_name = "Annotation Game"
 
-    def ready(self):
-        from .tasks import send_next_question
-        send_next_question.delay()
+    # def ready(self):
+    #     from .tasks import send_next_question
+    #     send_next_question.delay()
