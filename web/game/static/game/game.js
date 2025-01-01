@@ -363,7 +363,7 @@ function setQuestion(question_text, state) {
 function setExperimentInstructions(experimentType) {
   const url = `/instructions_modal_${experimentType}/`
   instructionAnnotationModal.src = url;
-  localStorage.setItem('instructionsURL', url);
+  sessionStorage.setItem('instructionsURL', url);
 }
 
 window.addEventListener("message", (event) => {

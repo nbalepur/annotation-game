@@ -346,6 +346,8 @@ class AnswerData(models.Model):
     is_final = models.BooleanField()
     is_report = models.BooleanField(default=False)
 
+    notes = models.TextField(max_length=1024, default="")
+
     guessed_answer = models.JSONField(null=True)
     true_answer = models.JSONField(null=True)
 

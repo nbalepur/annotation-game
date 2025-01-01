@@ -42,7 +42,7 @@ function sendToInstructions() {
 function joinNewRoom(showInstructions) {
 
   // user has already seen it
-  if (showInstructions && localStorage.getItem('instructionsURL')) {
+  if (showInstructions && sessionStorage.getItem('instructionsURL')) {
     showInstructions = false;
   }
 

@@ -74,6 +74,7 @@ def compute_leaderboard(question_type: Question.Category):
                 )
             )
         )
+        user_question_count = LeaderboardLog.objects.values('user').annotate(question_count=Count('question_id'))
     else:
         aggregated_data = LeaderboardLog.objects.filter(
             question_id__in=Question.objects.filter(category=question_type).values('question_id')
@@ -88,6 +89,13 @@ def compute_leaderboard(question_type: Question.Category):
                 )
             )
         )
+        filtered_data = LeaderboardLog.objects.filter(
+            question_id__in=Question.objects.filter(category=question_type).values_list('question_id', flat=True)
+        )
+        user_question_count = filtered_data.values('user').annotate(question_count=Count('question_id'))
+
+    user_question_map = {row['user']: row['question_count'] for row in user_question_count}
+    
     aggregated_data = list(aggregated_data)
 
     # Rank the users by corectnesss and time
@@ -108,7 +116,7 @@ def compute_leaderboard(question_type: Question.Category):
         leaderboard_data.append({'username': row['user__name'], 
                                  'correctness': f"{'%.3f' % (row['avg_correctness'] * 100)}% Accuracy", 
                                  'time': 'N/A' if row['avg_seconds_taken'] == None else f"{'%.3f' % row['avg_seconds_taken']} Seconds", 
-                                 'num_questions': len(correctness_scores)})
+                                 'num_questions': user_question_map[row['user_id']]})
     return leaderboard_data
 
 def leaderboard(request):

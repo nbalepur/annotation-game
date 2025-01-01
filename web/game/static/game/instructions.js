@@ -346,8 +346,14 @@ function sendSubanswers(isCorrect, isFinal) {
   const instructionFrame = document.getElementById('instruction-frame')
   const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
   const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+  const notes = iframeDoc.getElementById('rogue-notes-area').value;
 
-  sendRequest('send_subanswers', {'subanswers': getSubanswers(), 'is_correct': isCorrect, 'is_final': isFinal, 'followed_plan': !checkbox.checked});
+  sendRequest('send_subanswers', {'subanswers': getSubanswers(), 
+                                  'is_correct': isCorrect,
+                                  'is_final': isFinal,
+                                  'followed_plan': !checkbox.checked,
+                                  'notes': notes,
+                                });
 }
 
 function reassignCloseButton() {
@@ -733,7 +739,7 @@ function clearToolHistory() {
     sendRequest("content_select", query);
   }
 
-function toggleRogueCheckbox(checkbox, settingType) {
+function toggleRogueCheckbox(checkbox) {
   if (checkbox.checked) {
     buzzBtn.style.display = '';
     swapBtn.style.display = 'none';
@@ -803,10 +809,10 @@ docContent.addEventListener('load', function() {
 //     }
 //   });
 
-//   iframeDocument.getElementById("edit-instructions-checkbox").addEventListener("click", function() {
-//     const phase = this.getAttribute("data-phase");
-//     parent.toggleRogueCheckbox(this, phase);
-//   });
+// iframeDocument.getElementById("edit-instructions-checkbox").addEventListener("click", function() {
+//   const phase = this.getAttribute("data-phase");
+//   parent.toggleRogueCheckbox(this, phase);
+// });
   
 // });
 

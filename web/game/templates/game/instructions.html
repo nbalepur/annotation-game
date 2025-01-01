@@ -28,7 +28,7 @@
       </div>
 
       <div class="form-group m-3" style="display: none;" id="rogue-notes">
-        <textarea class="form-control" placeholder="Enter any notes here..." rows=10></textarea>
+        <textarea id="rogue-notes-area" class="form-control" placeholder="Enter any notes here..." rows=10></textarea>
       </div>
 
       <div id="instructions-container" style="margin: 10px;">
@@ -52,6 +52,10 @@
               window.parent.handleKeyDown(event);
             }
           }
+        });
+
+        document.getElementById("edit-instructions-checkbox").addEventListener("click", function() {
+          window.parent.toggleRogueCheckbox(this);
         });
       
         document.addEventListener("keypress", function (event) {

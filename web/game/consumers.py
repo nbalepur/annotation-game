@@ -137,6 +137,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     is_correct=data["content"]["is_correct"],
                     is_final=data["content"]["is_final"],
                     followed_plan=data["content"]["followed_plan"],
+                    notes=data["content"]["notes"]
                 )
             elif data["request_type"] == "buzz_init":
                 self.buzz_init(room, p, data["content"])
@@ -458,7 +459,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             )
         )
         seen_questions_overall_math = AnswerData.objects.filter(
-            user=player.user, category=Question.Category.MATH, is_final=True
+            user=player.user, category=Question.Category.MATH
         ).values_list("question_id", flat=True)
         unseen_questions_math = all_questions_math.exclude(
             question_id__in=seen_questions_overall_math
@@ -472,7 +473,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             )
         )
         seen_questions_overall_trivia = AnswerData.objects.filter(
-            user=player.user, category=Question.Category.MULTIHOP, is_final=True
+            user=player.user, category=Question.Category.MULTIHOP
         ).values_list("question_id", flat=True)
         unseen_questions_trivia = all_questions_trivia.exclude(
             question_id__in=seen_questions_overall_trivia
@@ -510,12 +511,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         # questions the user has already seen for this category and experimental group
         seen_questions = AnswerData.objects.filter(
-            user=player.user, category=category, is_final=True, did_comparison=is_comparison
+            user=player.user, category=category, did_comparison=is_comparison
         ).values_list("question_id", flat=True)
 
         # questions the user has seen overall
         seen_questions_overall = AnswerData.objects.filter(
-            user=player.user, category=category, is_final=True
+            user=player.user, category=category
         ).values_list("question_id", flat=True)
 
         # check if we need to give a tutorial question or an attention check question
@@ -724,7 +725,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             room.save()
 
             if answered_correctly:
-                player.score += 10  # TODO: do not hardcode points
+                player.score += 10
                 player.correct += 1
                 player.save()
 
@@ -1062,6 +1063,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         is_correct: bool,
         is_final: bool,
         followed_plan: bool,
+        notes: str,
     ):
         """Log the subanswers"""
         if room.curr_instructions_letter == None:
@@ -1082,7 +1084,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             is_final=is_final, 
             followed_plan=followed_plan, 
             true_answer=room.current_question.answer_accept, 
-            guessed_answer=room.last_guess
+            guessed_answer=room.last_guess,
+            notes=notes
         )
 
     def swap_plan(self, room: Room, player: Player, subanswers: List[str]):
@@ -1242,13 +1245,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 },
             },
         )
-
-    # def hide_tools_on_join(self, player: Player):
-    #     question_type = os.getenv('QUESTION_TYPE')
-    #     self.update_tools(
-    #         self.channel_layer.send, player.channel_name, question_type == 'math', question_type == 'trivia', question_type == 'trivia'
-    #     )
-    #     #self.update_doc(self.channel_layer.send, player.channel_name, False, "")
 
     def update_tools_and_doc_for_question_and_player(self, room: Room, player: Player):
         """Update the visible tools and document based on the current question for just one player"""
@@ -1552,7 +1548,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 m.player.save()
 
     def log_answers(
-        self, room: Room, player: Player, is_correct: bool, is_final: bool, followed_plan: bool, guessed_answer: str, true_answer: str
+        self, room: Room, player: Player, is_correct: bool, is_final: bool, followed_plan: bool, guessed_answer: str, true_answer: str, notes: str,
     ):
         """Log the user's progress on completing the instructions"""
 
@@ -1583,6 +1579,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             followed_plan=followed_plan,
             true_answer=true_answer,
             guessed_answer=guessed_answer,
+            notes=notes,
         )
 
     def log_leaderboard(self, room: Room, p: Player):
