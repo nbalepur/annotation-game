@@ -5,6 +5,7 @@ from django.db.models import Q, Count
 from channels.generic.websocket import JsonWebsocketConsumer
 
 from django.core.serializers import serialize
+from django.shortcuts import redirect
 
 from .models import *
 from .utils import clean_content, generate_name, generate_id
@@ -51,6 +52,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         self.room_name = self.scope["url_route"]["kwargs"]["label"]
         self.room_group_name = f"game-{self.room_name}"
 
+        # make sure there's a user
+        self.user_id = self.scope["session"].get("user_id")
+        if not self.user_id:
+            return redirect('home')
+
         # Join room
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name, self.channel_name
@@ -70,26 +76,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         data = json.loads(text_data)
         if "content" not in data or data["content"] == None:
             data["content"] = ""
-
+        
         room = Room.objects.get(label=self.room_name)
-
-        print("receiving!", json.loads(text_data)["request_type"], room.state)
-
-        # print('recieve', room.current_question, room.state)
-
-        # Handle new user and join room
+        
         if data["request_type"] == "new_user":
-            user = self.new_user(room)
+            user = self.new_user()
             data["user_id"] = user.user_id
             self.join(room, data)
 
-        # Abort if no user id or request type supplied
         if "user_id" not in data or "request_type" not in data:
             return
-
-        # Validate user
         if len(User.objects.filter(user_id=data["user_id"])) <= 0:
-            user = self.new_user(room)
+            user = self.new_user()
             data["user_id"] = user.user_id
 
         # Handle join
@@ -98,7 +96,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             return
 
         # Get player
-        p: Player = room.players.filter(user__user_id=data["user_id"]).first()
+        p: Player = room.players.filter(user__user_id=data['user_id']).first()
         # Update connection if it's new
         if p.channel_name != self.channel_name:
             p.channel_name = self.channel_name
@@ -219,6 +217,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Join room"""
         user = User.objects.filter(user_id=data["user_id"]).first()
         if user == None:
+            print("No user found!")
             return
         if user.experiment_group == None:
             print("No experiment group found!")
@@ -321,42 +320,77 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         else:
             return User.ExperimentGroup.SWAP
 
-    def new_user(self, room):
+    def new_user(self):
         """Create new user and player in room"""
-        user = User.objects.create(user_id=generate_id(), name=generate_name())
+        user = User.objects.filter(user_id=self.user_id).first()
         expt_group = self.decide_expt_group(user)
         user.experiment_group = expt_group
         user.save()
-
         self.send_json(
             {
                 "response_type": "new_user",
                 "user_id": user.user_id,
                 "user_name": user.name,
+                "user_email": user.email,
             }
         )
 
         return user
+    
+    def check_duplicate_user_data(self, adj_username, adj_email):
+        """Check if there's duplicate information in the user data"""
+        print('adjusted:', adj_username, adj_email)
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                "type": "update_room",
+                "data": {
+                    "response_type": "check_duplicate_user_data",
+                    "username": adj_username,
+                    "email": adj_email,
+                },
+            },
+        )
+        pass
 
-    def set_user_data(self, room, p, content):
+    def set_user_data(self, room: Room, p: Player, content):
         """Update player name"""
 
-        p.user.name = clean_content(content["user_name"])
-        p.user.email = clean_content(content["user_email"])
-        try:
-            p.user.full_clean()
-            p.user.save()
+        # get the current owner of the user names + emails
+        old_user_name = clean_content(content["user_name"])
+        old_email = clean_content(content["user_email"])
 
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    "type": "update_room",
-                    "data": get_room_response_json(room),
-                },
-            )
+        curr_username_user = User.objects.filter(name=old_user_name)
+        curr_email_user = User.objects.filter(email=old_email)
 
-        except ValidationError as e:
-            return
+        # check if these are valid to use: if no one exists, or if it's the current user
+        username_is_valid = (not curr_username_user.exists()) or (curr_username_user.first().user_id == p.user.user_id)
+        email_is_valid = (not curr_email_user.exists()) or (curr_email_user.first().user_id == p.user.user_id)
+
+        # set the new values accordingly
+        new_user_name = old_user_name if username_is_valid else ''
+        new_email = old_email if email_is_valid else ''
+
+        self.check_duplicate_user_data(new_user_name, new_email)
+
+        if username_is_valid or email_is_valid:
+
+            p.user.name = new_user_name
+            p.user.email = new_email
+
+            try:
+                p.user.full_clean()
+                p.user.save()
+
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        "type": "update_room",
+                        "data": get_room_response_json(room),
+                    },
+                )
+            except ValidationError as e:
+                return
 
     def handle_not_enough_players(self, room: Room, send_alert: bool):
         """Logic to run when there's not enough players"""
@@ -743,6 +777,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 room.save()
                 self.log_leaderboard(room, player)
                 self.show_and_disable_tools(room=room, player=player)
+                self.disable_plan()
             else:
 
                 # keep playing if it's wrong
@@ -1745,7 +1780,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 "cx": search_engine_id,
                 "q": query,
                 "num": 10,
-                "dateRestrict": "y[2022]",
             }
             response = requests.get(google_search_url, params=params)
             response_data = response.json()

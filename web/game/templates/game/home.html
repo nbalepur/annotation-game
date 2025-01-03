@@ -2,18 +2,24 @@
 {% load static %}
 
 {% block title %}
-<title>Planapalooza</title>
+<title>Planorama</title>
 {% endblock %}
 
 {% block content %}
 <div>
   <div>
-    <img src="{% static 'game/science-discovery.svg' %}" alt="Lightbulb" class="img-fluid mx-auto d-block" style="max-width: 10%; width: 10%;">
-    <h1 class="display-4 text-center">Planapalooza</h1>
+    <img src="{% static 'game/science-discovery.svg' %}" alt="Blueprint" class="img-fluid mx-auto d-block" style="padding-top: 10px; max-width: 10%; width: 10%;">
+    <h1 class="display-4 text-center">Planorama</h1>
 
     <p class="lead text-center">
-      Come help us uncover the best strategies for humans and AI to solve complex questions!
+      Help us uncover the best strategies for humans and AI to solve complex questions!
     </p>
+
+    {% if is_password_reset %}
+      {% include "reset_form.html" %}
+    {% elif not user_logged_in %}
+      {% include "login.html" %}
+    {% endif %}
 
     <div class="container">
       <div class="row justify-content-center">
@@ -28,7 +34,13 @@
           <div class="col-md-10 text-center mb-3">
             <div id="agree-irb">
               <div class="mb-4">
+
+                {% if user_logged_in %}
+                  <h3>Welcome, <span class="text-primary">{{user_name}}</span>!</h3>
+                {% endif %}
+
                 <p>Please read and agree to the above IRB before joining or creating a room.</p>
+                <button id="logout-btn" type="button" class="btn btn-danger btn-lg me-4">Log Out</button>
                 <button id="agree-btn" type="button" class="btn btn-primary btn-lg">I Agree</button>
               </div>
             </div>
@@ -48,9 +60,11 @@
 
 {% block scripts %}
 <script src="{% static 'game/home.js' %}"></script>
+<script src="{% static 'game/login.js' %}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const agreeButton = document.getElementById('agree-btn');
+    const logoutButton = document.getElementById('logout-btn');
     const roomSection = document.getElementById('room-section');
     const playButton = document.getElementById('evaluation-play-btn');
 
@@ -60,6 +74,29 @@
       roomSection.style.display = 'block';
       playButton.disabled = false;
     });
+
+    logoutButton.addEventListener('click', () => {
+      fetch('/logout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      }).then(() => {
+        window.location.reload(); // Refresh the page
+      });
+    });
   });
+
+  // Helper function to retrieve CSRF token
+  function getCookie(name) {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [key, value] = cookie.trim().split('=');
+      if (key === name) return decodeURIComponent(value);
+    }
+    return null;
+  }
 </script>
+
 {% endblock %}

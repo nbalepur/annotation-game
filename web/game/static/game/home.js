@@ -2,6 +2,7 @@
 // Scripts for landing page
 
 const agreeBtn = document.getElementById('agree-btn');
+const logoutBtn = document.getElementById('logout-btn');
 const evalBtn = document.getElementById('get-started-btn');
 
 
@@ -92,6 +93,22 @@ if (landingButton) {
     e.stopPropagation();
     submitGamePage();
   }
+}
+
+function handleEmailSubmission(event) {
+  event.preventDefault();
+  const emailField = document.getElementById('user-email');
+  const optOutCheckbox = document.getElementById('opt-out-checkbox');
+  const email = emailField.value;
+
+  // Validate email format or check if opt-out is selected
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email) && !optOutCheckbox.checked) {
+    alert('Please enter a valid email address or check the opt-out box.');
+    return;
+  }
+
+  joinNewRoom(true); // Assuming joinNewRoom is the function to proceed further
 }
 
 // // Handle the "I Agree" button click

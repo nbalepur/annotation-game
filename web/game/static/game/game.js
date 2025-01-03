@@ -52,8 +52,8 @@ let experimentType = null;
 document.addEventListener("DOMContentLoaded", () => {
   gamesock.onopen = () => {
     // Ensure the DOM is ready and elements exist
-    retrieveUserdata();
-
+    //retrieveUserdata();
+    
     if (userID === undefined) {
       newUser();
     } else {
@@ -221,7 +221,7 @@ gamesock.onmessage = message => {
 
     // Update scoreboard
     // TODO: Make it so we don't have to redo popover??
-    updateScoreboard();
+    //updateScoreboard();
 
     // Update messages
     updateMessages();
@@ -233,9 +233,9 @@ gamesock.onmessage = message => {
 
   } else if (data['response_type'] === "new_user") {
 
-    setCookie('user_id', data['user_id']);
-    setCookie('user_name', data['user_name']);
-    setCookie('user_email', data['user_email']);
+    // setCookie('user_id', data['user_id']);
+    // setCookie('user_name', data['user_name']);
+    // setCookie('user_email', data['user_email']);
     userID = data['user_id'];
     userName = data['user_name'];
     userEmail = data['user_email'];
@@ -256,7 +256,10 @@ gamesock.onmessage = message => {
     isTutorial = data['is_tutorial'];
   } else if (data['response_type'] === 'clear_instructions') {
     clearInstructions();
-  } else if (data['response_type'] === "update_instructions") {
+  } else if (data['response_type'] === 'check_duplicate_user_data') {
+    setUserData(data['username'], data['email']);
+  } 
+  else if (data['response_type'] === "update_instructions") {
     if (data['should_clear']) {
       clearInstructions();
     }
@@ -385,17 +388,6 @@ function setExperimentInstructions(experimentType) {
   instructionAnnotationModal.src = url;
   sessionStorage.setItem('instructionsURL', url);
 }
-
-window.addEventListener("message", (event) => {
-  if (event.origin !== "http://localhost:8000") return; // Validate origin
-  if (event.data.type === "setIframeSrc") {
-      const iframe = document.getElementById("instruction-annotation-page");
-      if (iframe) {
-          iframe.src = event.data.url;
-          console.log("Iframe src set to:", iframe.src);
-      }
-  }
-});
 
 function setCalculation(res) {
   calculatorResult.value = res;
@@ -676,13 +668,38 @@ function newUser() {
   sendRequest("new_user");
 }
 
-function setUserData() {
-  setCookie('user_name', nameInput.value);
-  setCookie('user_email', emailInput.value);
-  setCookie('user_optOut', optOutInput.checked);
-  userName = nameInput.value;
-  userEmail = emailInput.value;
+function clearUserData() {
+  nameInput.classList.remove("is-invalid");
+  nameInput.classList.remove("is-valid");
+  emailInput.classList.remove("is-invalid");
+  emailInput.classList.remove("is-valid");
+
+  if (nameInput.value == userName && emailInput.value == userEmail) {
+    saveStatus.style.display = '';
+    saveStatus.textContent = 'Account settings saved!';
+    saveStatus.className = 'text-success';
+    return;
+  }
   sendRequest("set_user_data", {'user_name': nameInput.value, 'user_email': emailInput.value});
+}
+
+function setUserData(name, email) {
+  saveStatus.style.display = '';
+  if (name == '' && email == '') {
+    saveStatus.textContent = 'That username and email are already in use, please try another.';
+    saveStatus.className = 'text-danger';
+  } else if (name == '') {
+    saveStatus.textContent = 'That username is already in use, please try another.';
+    saveStatus.className = 'text-danger';
+  } else if (email == '') {
+    saveStatus.textContent = 'That email is already in use, please try another.';
+    saveStatus.className = 'text-danger';
+  } else {
+    userName = name;
+    userEmail = email;
+    saveStatus.textContent = 'Account settings saved!';
+    saveStatus.className = 'text-success';
+  }
 }
 
 function buzz() {
@@ -775,8 +792,8 @@ function skip() {
 }
 
 function settings() {
-  offCanvasElement = document.querySelector('#offcanvasSettings');
-  isToggled = offCanvasElement.classList.contains('show');
+  const offcanvasElement = document.getElementById('offcanvasSettings');
+  isToggled = offcanvasElement.classList.contains('show');
   if (gameState === 'idle') {
     if (isToggled) {
       document.querySelector('#settings-close-btn').click();
@@ -785,6 +802,20 @@ function settings() {
     }
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const offcanvasElement = document.getElementById('offcanvasSettings');
+  offcanvasElement.addEventListener('hidden.bs.offcanvas', () => {
+      nameInput.classList.remove('is-valid');
+      nameInput.classList.remove('is-invalid');
+      emailInput.classList.remove('is-valid');
+      emailInput.classList.remove('is-invalid');
+      saveStatus.style.display = 'none'
+
+      nameInput.value = userName;
+      emailInput.value = userEmail;
+  });
+});
 
 function focusTextInput(elem_id) {
   const focusInput = document.getElementById(elem_id);
@@ -796,7 +827,7 @@ function focusTextInput(elem_id) {
 }
 
 function toggleTools() {
-  offCanvasElement = document.querySelector('#offcanvasToolbox');
+  const offCanvasElement = document.querySelector('#offcanvasToolbox');
   isToggled = offCanvasElement.classList.contains('show');
   if (isToggled) {
     document.querySelector('#tools-close-btn').click();
@@ -806,14 +837,10 @@ function toggleTools() {
 }
 
 function next() {
-  emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (userName && (optOutInput.checked || (userEmail && emailRegex.test(userEmail)))) {
-    if (gameState === 'idle') {
+  if (gameState === 'idle') {
       statusText.scrollIntoView({ block: 'start' });
       sendRequest("next");
-  }
- } 
- else {
+  } else {
     settings();
     alert("Please input a valid username and email before continuing.");
  }

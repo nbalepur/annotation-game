@@ -3,7 +3,7 @@
 
 {% block title %}
 {% if room.collects_feedback %}
-<title>Planapalooza - Kuiperbowl</title>
+<title>Planorama - Kuiperbowl</title>
 {% else %}
 <title>{{ room.label }} - Kuiperbowl</title>
 {% endif %}
@@ -97,7 +97,7 @@
     </div>
   </div>
 
-  <!-- Offcanvas for Toolbox -->
+  <!-- Offcanvas for Settings -->
   <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSettings"
     aria-labelledby="offcanvasSettingsLabel">
     <div class="offcanvas-header">
@@ -106,39 +106,8 @@
         aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-      <!-- Scoreboard and settings content here -->
-      <div class="card mb-3">
-        <div class="card-header" style="padding-bottom: 10px;">Scoreboard</div>
-        <div class="card-body">
-          <label for="name">Username:</label>
-          <div class="input-group mb-2">
-            <div class="input-group-prepend">
-              <span class="input-group-text">@</span>
-            </div>
-            <input type="text" class="form-control" id="name" maxlength="20" required placeholder="Username">
-            <div class="invalid-feedback">Please provide a username!</div>
-          </div>
-          <label for="email">Email:</label>
-          <div class="input-group mb-3">
-            <input type="email" class="form-control" id="email" maxlength="320" placeholder="Enter your email">
-            <div class="invalid-feedback">Please provide a valid email or check the box below to opt out!</div>
-          </div>
-          <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="optOutCheck">
-            <label class="form-check-label" for="optOutCheck">I do not want to provide my email and receive
-              prizing</label>
-          </div>
-          <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Score</th>
-              </tr>
-            </thead>
-            <tbody id="scoreboard-body"></tbody>
-          </table>
-        </div>
-      </div>
+
+      <!-- Question Selection -->
 
       <div class="card mb-3">
         <div class="card-header" style="padding-bottom: 10px;">Question Type</div>
@@ -156,6 +125,46 @@
         </div>
       </div>
 
+      <!-- Account Settings -->
+      <div class="card mb-3">
+        <div class="card-header" style="padding-bottom: 10px;">Account</div>
+        <div class="card-body">
+          <label for="name">Username:</label>
+          <div class="input-group mb-2">
+            <div class="input-group-prepend">
+              <span class="input-group-text">@</span>
+            </div>
+            <input type="text" class="form-control" id="name" maxlength="20" required placeholder="Username">
+            <div class="invalid-feedback">Please provide a username that does not contain spaces!</div>
+          </div>
+          <label for="email">Email:</label>
+          <div class="input-group mb-3">
+            <input type="email" class="form-control" id="email" maxlength="320" required placeholder="Enter your email">
+            <div class="invalid-feedback">Please provide a valid email!</div>
+          </div>
+          <div class="input-group">
+            <button class="btn btn-primary btn-sm" id="save-user-settings">Change Account Details</button>
+          </div>
+          <div id="save-status" style="margin-top: 10px; display: none;"></div>
+          <!-- <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="optOutCheck">
+            <label class="form-check-label" for="optOutCheck">I do not want to provide my email and receive
+              prizing</label>
+          </div> -->
+          <!-- <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Score</th>
+              </tr>  emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (userName && (optOutInput.checked || (userEmail && emailRegex.test(userEmail)))) {
+            </thead>
+            <tbody id="scoreboard-body"></tbody>
+          </table> -->
+        </div>
+      </div>
+      
+      <!-- Message Log -->
       <div class="card mb-3">
         <div class="card-header" style="padding-bottom: 10px;">Message Log</div>
         <div class="card-body">
@@ -223,7 +232,7 @@
     <div class="modal-dialog modal-fullscreen" style="padding: 20px;">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="welcomeModalLabel">Read the instructions below before starting!</h5>
+          <h5 class="modal-title" id="welcomeModalLabel">Read all of the instructions below before starting!</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-instruction-modal1"></button>
         </div>
         <div class="modal-body">
@@ -241,6 +250,7 @@
 {% endblock %}
 
 {% block scripts %}
+
 <script type="text/javascript"
   src="https://cdn.jsdelivr.net/npm/reconnecting-websocket@4.4.0/dist/reconnecting-websocket-iife.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

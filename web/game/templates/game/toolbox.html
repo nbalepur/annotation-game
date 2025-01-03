@@ -6,8 +6,11 @@
       <i class="fas fa-calculator"></i>
     </button>
     <input type="text" id="calc-expression" class="form-control" placeholder="Calculate a math equation (m)" />
+    <button type="button" class="btn btn-primary" id="calc-expression-btn2" onclick="calculate()">
+      Calculate
+    </button>
     <button type="button" class="btn btn-secondary" id="calc-clear-btn" onclick="clear_math()">
-      Clear
+      <i class="fa-solid fa-delete-left"></i>
     </button>
   </div>
   
@@ -23,7 +26,7 @@
 
 
   <div class="input-group mb-3" id="calculator-tool-result">
-    <button type="button" class="btn btn-primary" id="calc-copy-btn" onclick="copyMathResult()">
+    <button type="button" class="btn btn-warning" id="calc-copy-btn" onclick="copyMathResult()">
       Copy Result (c):
     </button>
     <input type="text" id="calc-result" class="form-control" placeholder="Results will come here!" readonly>
@@ -34,8 +37,11 @@
       <i class="fas fa-globe"></i>
     </button>
     <input type="text" id="google-query" class="form-control" placeholder="Web Search (w)" />
+    <button type="button" class="btn btn-primary" id="google-query-btn2" onclick="webSearch()">
+      Search
+    </button>
     <button type="button" class="btn btn-secondary" id="search-clear-btn" onclick="clear_search()">
-      Clear
+      <i class="fa-solid fa-delete-left"></i>
     </button>
   </div>
 
@@ -48,7 +54,7 @@
 
     <div id="doc-viewer-content" class="d-flex flex-column flex-grow-1">
       <div class="input-group mt-2" id="content-selector-tool">
-        <button type="button" class="btn btn-info" id="copy-search-btn" onclick="copyDocText()">
+        <button type="button" class="btn btn-warning" id="copy-search-btn" onclick="copyDocText()">
           Copy Text (c)
         </button>
 
@@ -57,8 +63,11 @@
           <i class="fas fa-search"></i>
         </button>
         <input type="text" id="content-search" class="input-sm form-control " placeholder="Find text within the page (f)" />
+        <button type="button" class="btn btn-primary" id="content-search-btn2" onclick="selectContent()">
+          Find
+        </button>
         <button type="button" class="btn btn-secondary" id="find-clear-btn" onclick="clear_find()">
-          Clear
+          <i class="fa-solid fa-delete-left"></i>
         </button>
 
 

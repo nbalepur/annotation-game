@@ -50,7 +50,7 @@
       </div>
     
       <p>
-        After hitting "Next", you will be asked to select which of two step-by-step plans is better for an input question. Afterwards, you will be asked to answer the question while following one of these plans. We provide details on both of these steps below.
+        After hitting "Next", the user study will begin. As a summary, you will be asked to select which of two step-by-step plans is better for an input question. Afterwards, you will be asked to answer the question while following one of these plans. We provide details on both of these steps below.
       </p>
     
       <h2 id="pairwise" style="margin-top: 40px; margin-bottom: 20px;">Step 1: Select which Plan is Better</h2>
@@ -79,7 +79,7 @@
       </div>
     
       <p>
-        If you hit "Next Step" on accident and want to undo seeing the next step, you can use <code>ctrl/cmd+Z</code> or hit the "X" in the top-right corner of the plan.
+        If you hit "Next Step" on accident and want to undo seeing the next step, you can use <code>ctrl/cmd+Z</code> or hit the "X" in the top-right corner of the step. If you do not want to follow the plan, you can hit "I will not follow any plan" and you will be asked to write your own plan to answer the question.
       </p>
     
       <p>
@@ -100,14 +100,19 @@
       </div>
     
       <p>
-        For the web search tool, there are two search fields. The top field allows you to find the most similar Wikipedia page based on a given query or keywords. Once you search here, you will see the Wikipedia page and a second search field you can use, which allows you to look for information inside the document (like ctrl/cmd+F). After entering a query, the page will scroll to the sentence that is most similar to the query and highlight the text. You can also scroll up and down the page to look for information:
+        For the web search tool, there are two search fields. The top field allows you to find the most similar Wikipedia page based on a given query or keywords. Once you search here, you will see the Wikipedia page and a second search field you can use, which allows you to look for information inside the document (like ctrl/cmd+F). After entering a query, the page will scroll to the sentence that is most similar to the query and highlight the text. You can also scroll up and down the page to look for information. Please note that hyperlinks are disabled on the Wikipedia page:
       </p>
+
       <div style="text-align: center;">
         <img class="mt-2 mb-2" src="{% static 'game/web.png' %}" alt="web search tool" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
         All tool inputs have a "Clear" button which removes the text in the input field. There is also a "Copy" button that moves the current output in the calculator tool or the highlighted text on the page to the current step in the plan to easily store your answer. Similarly, each step in the plan has a "Copy to Tool" button which takes the answer to the plan and adds it to the input field of the tool.
+      </p>
+
+      <p>
+        You are not required to use tools (e.g. if you know the answer to a trivia sub-question, or for simple calculations like "2+2" where calculators are not needed), but we encourage you to use them to reduce the chance of making a minor mistake that leads to an incorrect answer.
       </p>
     
       <h4 id="final" style="margin-top: 30px; margin-bottom: 20px;">c. Providing a Final Answer</h4>
@@ -172,8 +177,9 @@
     
       <h2 id="compensation" style="margin-top: 40px; margin-bottom: 20px;">Compensation</h2>
       <p>
-        You must answer at least 10 questions to be eligible for compensation. We will pay $5 for every 5 questions you answer. We will additionally give $50 to the 5 users with the highest average accuracy scores and $50 to the 5 users with the lowest time taken (i.e. fastest speed). You are eligible to obtain both $50 rewards. Reported questions are not included in this calculation.
+        You must answer at least 10 questions to be eligible for compensation. We will pay $5 for every 5 questions you answer. We will additionally give $50 to the 3 users with the highest average accuracy scores and $50 to the 3 users with the lowest time taken (i.e. fastest speed) across both question types (12 extra rewards total). You are eligible to obtain up to four of the $50 rewards. Reported questions are not included in this calculation.
       </p>
+      
       <p>
         More compensation details can be found on the Incentives page. You can track your accuracy and speed scores on the Leaderboard page.
       </p>

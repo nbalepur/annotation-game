@@ -1,0 +1,86 @@
+<div id="reset-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-75" style="z-index: 1050; backdrop-filter: blur(6px);">
+    <div class="container-fluid h-100 d-flex align-items-center justify-content-center">
+      <div class="row w-100 justify-content-center align-items-center">
+        <div class="col-12 col-md-10 col-lg-8">
+          <div class="card p-4">
+            <h5 class="card-title text-center mb-4" id="modal-title">Reset Your Password</h5>
+  
+            <!-- Password Reset Form -->
+            <form id="reset-password-form" method="POST" action="">
+              {% csrf_token %}
+              <div class="mb-3">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                  <input type="password" placeholder="Enter your new password..." class="form-control" id="new-password" name="new_password" required minlength="8">
+                </div>
+              </div>
+              <button type="submit" id="reset-password-submit" class="btn btn-warning w-100">Reset Password</button>
+              <a href="/" class="d-block text-center mt-3">Back to Home</a>
+            </form>
+  
+            <div id="reset-status-text-wrapper" class="text-center" style="padding-top:10px; display: none;">
+              <i class="fa-solid fa-triangle-exclamation" style="color: red;"></i>
+              <span class="text-danger" id="reset-status-text">Status text</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const resetForm = document.getElementById('reset-password-form');
+        const resetButton = document.getElementById('reset-password-submit');
+        const statusWrapper = document.getElementById('reset-status-text-wrapper');
+        const statusText = document.getElementById('reset-status-text');
+  
+        resetForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+  
+            const newPassword = document.getElementById('new-password').value.trim();
+            const token = new URLSearchParams(window.location.search).get('token');
+  
+            if (newPassword.length < 8) {
+                statusWrapper.style.display = 'block';
+                statusText.textContent = 'Password must be at least 8 characters.';
+                return;
+            }
+  
+            fetch('/reset-password/form/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({ new_password: newPassword, token: token }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        alert('Password successfully reset! Redirecting to login...');
+                        window.location.href = '/'; // Redirect to login page
+                    } else {
+                        statusWrapper.style.display = 'block';
+                        statusText.textContent = data.message || 'An error occurred. Please try again.';
+                    }
+                })
+                .catch((error) => {
+                    statusWrapper.style.display = 'block';
+                    statusText.textContent = 'An unexpected error occurred.';
+                    console.error('Error:', error);
+                });
+        });
+  
+        // Helper function to retrieve the CSRF token
+        function getCookie(name) {
+            const cookies = document.cookie.split(';');
+            for (const cookie of cookies) {
+                const [key, value] = cookie.trim().split('=');
+                if (key === name) return decodeURIComponent(value);
+            }
+            return null;
+        }
+    });
+  </script>
+  

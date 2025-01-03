@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from channels.db import database_sync_to_async
+from django.contrib.auth.hashers import make_password, check_password
 
 import nltk
 from math import ceil
@@ -293,14 +294,14 @@ class Room(models.Model):
         return chrono_messages
 
 class User(models.Model):
-
     class ExperimentGroup(models.TextChoices):
-        PAIRWISE = 'pairwise', _('pairwise')
-        SWAP = 'swap', _('swap')
+        PAIRWISE = 'pairwise', 'Pairwise'
+        SWAP = 'swap', 'Swap'
 
     user_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
-    email = models.CharField(default="", blank=True, max_length=320)
+    email = models.CharField(default="", blank=True, max_length=320, unique=True)
+    password = models.CharField(max_length=128)  # Use a hashed password
     experiment_group = models.CharField(
         max_length=10,
         choices=ExperimentGroup.choices,
@@ -308,6 +309,14 @@ class User(models.Model):
         blank=True,
         null=True
     )
+    reset_token = models.CharField(max_length=255, null=True, blank=True)
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+        self.save()
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
     
 class ReportIssue(models.Model):
 

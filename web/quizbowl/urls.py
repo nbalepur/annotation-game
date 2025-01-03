@@ -32,4 +32,9 @@ urlpatterns = [
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('incentives/', views.incentives, name='incentives'),
     path('resources/', views.resources, name='resources'),
+    path('register/', views.register, name='register'),
+    path('login/', views.login, name='login'),
+    path('logout/', views.logout, name='logout'),
+    path('reset-password/', views.reset_password, name='reset_password'),
+    path('reset-password/form/', views.password_reset_form, name='password_reset_form'),
 ]

@@ -18,22 +18,21 @@ from kombu import Queue
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Load local env
-load_dotenv(os.path.join(BASE_DIR, '.env.local'))
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', '+phm-vl*x5!l^az_3*+28q(*yv!*!d*ex-i(*r=e1oj=6rnxm1')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-DEBUG = 'True'
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://annotationgame.com', 'https://*.annotationgame.com', 'http://localhost']
+CSRF_TRUSTED_ORIGINS = ['https://annotationgame.com', 'https://*.annotationgame.com', os.getenv('PRODUCTION_URL'), os.getenv('PRODUCTION_URL').replace('https://', 'https://*.'), 'http://localhost']
 
 SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = None  # Set to 'Lax' or 'Strict' in production
@@ -103,11 +102,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.getenv('DB_NAME', 'postgres'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASS', 'postgres'),
-        'HOST': os.getenv('DB_SERVICE', 'localhost'),
-        'PORT': int(os.getenv('DB_PORT', '5432')),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASS'),
+        'HOST': os.getenv('DB_SERVICE'),
+        'PORT': int(os.getenv('DB_PORT')),
     }
 }
 
@@ -143,6 +142,13 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+# Session cookies
+SESSION_COOKIE_AGE = 86400  # 1 day in seconds
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_SAVE_EVERY_REQUEST = True
 
 
 # Static files (CSS, JavaScript, Images)

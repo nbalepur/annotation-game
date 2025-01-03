@@ -35,6 +35,9 @@ const webSearchInput = document.getElementById("google-query");
 const docSearchInput = document.getElementById("content-search");
 const scratchpadInput = document.getElementById("user-notes");
 
+const accountSave = document.getElementById('save-user-settings');
+const saveStatus = document.getElementById('save-status');
+
 // Init tooltip and popover
 $(document).ready(() => {
   // $('[data-bs-toggle="tooltip"]').tooltip();
@@ -69,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
   closeBtn2.addEventListener('click', function () {
     welcomeModal.hide();
   });
+
 });
 
 // Timed events (ms)
@@ -95,45 +99,57 @@ window.addEventListener("load", function () {
     });
 });
 
-nameInput.addEventListener("input", debounce(setUserData, 300));
-nameInput.addEventListener("input", function validateUserName() {
-  if (!this.value) {
+function validateUserName() {
+  const usernameRegex = /^[a-zA-Z0-9_.]+$/;
+  if (this.value.length < 1) {
     this.classList.add("is-invalid");
+    accountSave.disabled = true;
+  } else if (!usernameRegex.test(this.value)) {
+    this.classList.add("is-invalid");
+    accountSave.disabled = true;
   } else {
     this.classList.remove("is-invalid");
     this.classList.add("is-valid");
+    accountSave.disabled = false;
   }
-});
+}
 
-emailInput.addEventListener("input", debounce(setUserData, 300));
-emailInput.addEventListener("input", function validateEmail() {
+function validateEmail() {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (optOutInput.checked || (this.value && emailRegex.test(this.value))) {
+  if (this.value && emailRegex.test(this.value)) {
     this.classList.remove("is-invalid");
     this.classList.add("is-valid");
-    nextBtn.disabled = false; // Enable the next button
+    accountSave.disabled = false;
   } else {
     this.classList.add("is-invalid");
-    nextBtn.disabled = true; // Disable the next button
+    accountSave.disabled = true;
   }
-});
+}
 
-optOutInput.addEventListener("click", function optOut() {
-  if (optOutInput.checked) {
-    nextBtn.disabled = false; // Enable the next button
-    emailInput.value = "";
-    emailInput.disabled = true;
-    emailInput.classList.remove("is-invalid");
-    emailInput.classList.add("is-valid");
-  } else {
-    nextBtn.disabled = true; // Disable the next button
-    emailInput.disabled = false;
-    emailInput.classList.remove("is-valid");
-    if (!emailInput.value) emailInput.classList.add("is-invalid");
-  }
-  setUserData();
-});
+// nameInput.addEventListener("input", debounce(setUserData, 300));
+
+// emailInput.addEventListener("input", debounce(setUserData, 300));
+nameInput.addEventListener("input", validateUserName);
+emailInput.addEventListener("input", validateEmail);
+
+accountSave.addEventListener('click', clearUserData)
+
+// optOutInput.addEventListener("click", function optOut() {
+//   if (optOutInput.checked) {
+//     nextBtn.disabled = false; // Enable the next button
+//     emailInput.value = "";
+//     emailInput.disabled = true;
+//     emailInput.classList.remove("is-invalid");
+//     emailInput.classList.add("is-valid");
+//   } else {
+//     nextBtn.disabled = true; // Disable the next button
+//     emailInput.disabled = false;
+//     emailInput.classList.remove("is-valid");
+//     if (!emailInput.value) emailInput.classList.add("is-invalid");
+//   }
+//   setUserData();
+// });
 
 function handleKeyPress(e) {
   
@@ -244,6 +260,7 @@ requestContentInput.addEventListener("keypress", (e) => {
     // }
   }
 });
+
 
 function moveCursorToSecondBullet() {
   const secondBullet = scratchpadInput.querySelector("ul li:nth-child(2)");

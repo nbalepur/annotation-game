@@ -1,0 +1,83 @@
+<!-- Login/Register Modal -->
+<div id="login-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-75" style="z-index: 1050; backdrop-filter: blur(6px);">
+  <div class="container-fluid h-100 d-flex align-items-center justify-content-center">
+    <div class="row w-100 justify-content-center align-items-center">
+      <div class="col-12 col-md-10 col-lg-8">
+        <div class="card p-4">
+          <h5 class="card-title text-center mb-4" id="modal-title">Welcome to Planorama!</h5>
+
+          <!-- Step One: Main Selection -->
+          <div id="step-one">
+            <p class="text-center">Please either log in or register a new account</p>
+            <button id="choose-login" class="btn btn-info w-100 mb-3">Log In</button>
+            <button id="choose-register" class="btn btn-primary w-100">Register</button>
+          </div>
+
+          <!-- Login Form -->
+          <form id="login-form" style="display: none;">
+            {% csrf_token %}
+            <div id="login-fields">
+              <div class="mb-3">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                  <input type="text" placeholder="Enter your username/email..." class="form-control" id="login-identifier" name="login-identifier" required>
+                </div>
+              </div>
+              <div class="mb-3">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                  <input type="password" placeholder="Enter your password..." class="form-control" id="login-password" name="password" required>
+                </div>
+              </div>
+              <button type="submit" id="login-submit" class="btn btn-info w-100">Log In</button>
+              <a href="#" id="forgot-password-link" class="d-block text-center mt-3">Forgot Password?</a>
+              <a href="#" id="back-to-main" class="d-block text-center mt-3">Back to Main</a>
+            </div>
+          </form>
+
+          <!-- Forgot Password Form -->
+          <form id="forgot-password-form" style="display: none;">
+            {% csrf_token %}
+            <div class="mb-3">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" placeholder="Enter your email..." class="form-control" id="forgot-password-email" name="email" required>
+              </div>
+            </div>
+            <button type="submit" id="forgot-password-submit" class="btn btn-warning w-100">Reset Password</button>
+            <a href="#" id="back-to-login" class="d-block text-center mt-3">Back to Login</a>
+          </form>
+
+          <!-- Register Form -->
+          <form id="register-fields" style="display: none;">
+            {% csrf_token %}
+            <div class="mb-3">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                <input type="email" placeholder="Enter your email..." class="form-control" id="register-email" name="email" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                <input type="text" placeholder="Enter your username..." class="form-control" id="register-username" name="username" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" placeholder="Enter your password..." class="form-control" id="register-password" name="password" required>
+              </div>
+            </div>
+            <button type="submit" id="register-submit" class="btn btn-primary w-100">Register</button>
+            <a href="#" id="back-to-main2" class="d-block text-center mt-3">Back to Main</a>
+          </form>
+          <div class="text-center" style="padding-top:10px; padding-bottom: 0px; margin-bottom: 0px; display: none;" id="login-status-text-wrapper">
+            <i class="fa-solid fa-triangle-exclamation" style="color: red;"></i>
+            <span class="text-danger" id="login-status-text">Status text</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -9,9 +9,15 @@ const googleTool = document.getElementById('google-tool');
 const contentSelectorTool = document.getElementById('content-selector-tool');
 
 const calculatorResultBtn = document.getElementById('calc-copy-btn');
+
 const calculatorToolBtn = document.getElementById('calc-expression-btn');
+const calculatorToolBtn2 = document.getElementById('calc-expression-btn2');
+
 const googleToolBtn = document.getElementById('google-query-btn');
+const googleToolBtn2 = document.getElementById('google-query-btn2');
+
 const contentSelectorToolBtn = document.getElementById('content-search-btn');
+const contentSelectorToolBtn2 = document.getElementById('content-search-btn2');
 
 const calculatorResult = document.getElementById('calc-result');
 
@@ -424,6 +430,10 @@ function updateTools(use_calc, use_doc, use_web) {
     googleToolBtn.style.display = use_web ? '' : 'none';
     contentSelectorToolBtn.style.display = use_doc ? '' : 'none';
 
+    calculatorToolBtn2.style.display = use_calc ? '' : 'none';
+    googleToolBtn2.style.display = use_web ? '' : 'none';
+    contentSelectorToolBtn2.style.display = use_doc ? '' : 'none';
+
     calculatorResultBtn.style.display = use_calc ? '' : 'none';
     calculatorResult.style.display = use_calc ? '' : 'none';
     copyMathBtn.style.display = use_calc ? '' : 'none';
@@ -491,6 +501,8 @@ function disablePlan() {
   buttonsAndTextareas.forEach(element => {
     element.disabled = true;
   });
+  const notes = iframeDoc.getElementById('rogue-notes-area');
+  notes.disabled = true;
 }
 
 function toggleDisableButtons(flag) {
@@ -499,6 +511,10 @@ function toggleDisableButtons(flag) {
     calculatorToolBtn.disabled = flag;
     googleToolBtn.disabled = flag;
     contentSelectorToolBtn.disabled = flag;
+
+    calculatorToolBtn2.disabled = flag;
+    googleToolBtn2.disabled = flag;
+    contentSelectorToolBtn2.disabled = flag;
 
     calculatorToolInput.disabled = flag;
     googleToolInput.disabled = flag;
@@ -564,15 +580,28 @@ function updateStatus(status, player, answer, allowSwaps) {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed</span>`;
     } else if (status === "buzz_correct") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-success>correctly</span> with <span class=text-success>"${answer}"</span></span>`;
+        statusText.classList.add('flash-highlight');
+        setTimeout(() => {
+          statusText.classList.remove('flash-highlight');
+        }, 1000);
         sendSubanswers(true, true);
         gameState = 'idle';
+
       } else if (status === "buzz_incorrect") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>`;
+        statusText.classList.add('flash-highlight');
+        setTimeout(() => {
+          statusText.classList.remove('flash-highlight');
+        }, 1000);
         gameState = 'playing';
         sendSubanswers(false, false);
         toggleCloseButtonVisibility(true);
     } else if (status === "buzz_abstain") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed and </span><span class=text-danger>did not answer</span>`;
+        statusText.classList.add('flash-highlight');
+        setTimeout(() => {
+          statusText.classList.remove('flash-highlight');
+        }, 1000);
         gameState = 'playing';
         sendSubanswers(true, false);
         toggleCloseButtonVisibility(true);
@@ -740,6 +769,7 @@ function clearToolHistory() {
   }
 
 function toggleRogueCheckbox(checkbox) {
+
   if (checkbox.checked) {
     buzzBtn.style.display = '';
     swapBtn.style.display = 'none';
@@ -752,6 +782,7 @@ function toggleRogueCheckbox(checkbox) {
   const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
   const instructions = iframeDoc.getElementById('instructions-container');
   const notes = iframeDoc.getElementById('rogue-notes');
+  notes.disabled = false;
   instructions.style.display = checkbox.checked ? 'none' : '';
   notes.style.display = checkbox.checked ? '' : 'none';
 
