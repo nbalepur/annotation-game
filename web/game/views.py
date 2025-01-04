@@ -124,9 +124,9 @@ def register(request):
 
 
     if User.objects.filter(Q(email=email)).exists():
-        return JsonResponse({'success': False, 'message': 'Email already exists. Please log in, or use a different email.'}, status=400)
+        return JsonResponse({'success': False, 'message': 'Email already exists. Please log in, or choose a different email.'}, status=400)
     if User.objects.filter(Q(name=username)).exists():
-        return JsonResponse({'success': False, 'message': 'Username already exists. Please log in, or user a different email.'}, status=400)
+        return JsonResponse({'success': False, 'message': 'Username already exists. Please log in, or choose a different username.'}, status=400)
 
     user = User.objects.create(email=email, name=username, user_id=generate_id())
     user.set_password(password)
@@ -156,37 +156,36 @@ def logout(request):
 
 def game_room(request, label):
     if 'user_id' not in request.session:
-        return redirect('login')
+        return redirect('home')
     user = User.objects.filter(user_id=request.session['user_id']).first()
     if not user:
-        return redirect('login')
+        return redirect('home')
     room, _ = Room.objects.get_or_create(label=label, collects_feedback=False, defaults={"max_players": 20})
     return render(request, "game/game.html", {"room": room, "user": user})
 
 def evaluation_game_room(request, label):
     if 'user_id' not in request.session:
-        return redirect('login')
+        return redirect('home')
     user = User.objects.filter(user_id=request.session['user_id']).first()
     if not user:
-        return redirect('login')
+        return redirect('home')
     room, _ = Room.objects.get_or_create(label=label, collects_feedback=True, uses_instructions=True, defaults={"max_players": 1})
     return render(request, "game/game.html", {
         "room": room,
         "user": user,
+        "is_pairwise": user.experiment_group == User.ExperimentGroup.PAIRWISE
     })
 
 
 def instructions(request):
-    return render(request, "base_instructions.html", {})
 
-def instructions_default(request):
-    return render(request, "instructions/default.html", {})
+    if 'user_id' not in request.session:
+        return redirect('home')
+    user = User.objects.filter(user_id=request.session['user_id']).first()
+    if not user:
+        return redirect('home')
 
-def instructions_modal_pairwise(request):
-    return render(request, "instructions/pairwise_phase_panel.html", {})
-
-def instructions_modal_swap(request):
-    return render(request, "instructions/swap_phase_panel.html", {})
+    return render(request, "base_instructions.html", {'is_pairwise': user.experiment_group == User.ExperimentGroup.PAIRWISE})
 
 def incentives(request):
     return render(request, "incentives.html", {})
@@ -272,8 +271,6 @@ def leaderboard(request):
     math_leaderboard = compute_leaderboard(Question.Category.MATH)
     trivia_leaderboard = compute_leaderboard(Question.Category.MULTIHOP)
     everything_leaderboard = compute_leaderboard(Question.Category.EVERYTHING)
-
-    print('leaderboard:', everything_leaderboard)
 
     leaderboard_data = {
         'Math': math_leaderboard,

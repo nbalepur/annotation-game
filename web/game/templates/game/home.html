@@ -76,6 +76,7 @@
     });
 
     logoutButton.addEventListener('click', () => {
+      sessionStorage.setItem('seenInstructions', false);
       fetch('/logout/', {
         method: 'POST',
         headers: {

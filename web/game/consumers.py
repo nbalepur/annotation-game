@@ -52,16 +52,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         self.room_name = self.scope["url_route"]["kwargs"]["label"]
         self.room_group_name = f"game-{self.room_name}"
 
-        # make sure there's a user
+        # Validate user session
         self.user_id = self.scope["session"].get("user_id")
         if not self.user_id:
-            return redirect('home')
+            self.close()  # Close WebSocket connection for unauthenticated users
+            return
 
-        # Join room
+        # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name, self.channel_name
         )
-
         self.accept()
 
     def disconnect(self, close_code):
@@ -76,6 +76,12 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         data = json.loads(text_data)
         if "content" not in data or data["content"] == None:
             data["content"] = ""
+
+        # ensure the session is still valid
+        session_user_id = self.scope["session"].get("user_id")
+        if not session_user_id or session_user_id != self.user_id:
+            self.close()
+            return
         
         room = Room.objects.get(label=self.room_name)
         
@@ -203,6 +209,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             'Math': Question.Category.MATH,
             'Trivia': Question.Category.MULTIHOP
         }
+        
+        user = player.user
+        user.category_preference = category_map[category]
+        user.save()
+
         room.category = category_map[category]
         room.save()
         async_to_sync(self.channel_layer.group_send)(
@@ -223,7 +234,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             print("No experiment group found!")
             return
         
-        # immediately pass the experiment group to the front-end
+        # pass the experiment group to the front-end
         self.update_experiment_type(user)
         
         room.steps_seen_a = 1
@@ -231,6 +242,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         room.curr_instructions_letter = None
         room.curr_subanswers_a = None
         room.curr_subanswers_b = None
+
+        room.category = user.category_preference
 
         # Create player if doesn't exist
         p = user.players.filter(room=room).first()
@@ -240,8 +253,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             Q(last_seen__gte=timezone.now().timestamp() - 10)
             & ~Q(user__user_id=data["user_id"])
         )
-
-        print("Current Players:", len(current_players))
 
         if p == None and len(current_players) < room.max_players:
             p = Player.objects.create(room=room, user=user)
@@ -1022,7 +1033,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 'type': 'update_room',
                 'data': {
                     "response_type": "set_experiment_type",
-                    "experiment_type": user.experiment_group
+                    "experiment_type": user.experiment_group,
+                    "category_preference": user.category_preference,
                 },
             }
         )
@@ -1872,8 +1884,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 )
                 return
 
-            print("page not found")
-
             params = {
                 "action": "parse",
                 "page": page_title,
@@ -2022,7 +2032,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         #self.clear_instructions(room=room, player=p)
         self.show_and_disable_tools(room=room, player=p)
-        self.get_shown_question(room=room)
+        #self.get_shown_question(room=room)
         self.next(room, p)
 
     def clean_query(self, query):

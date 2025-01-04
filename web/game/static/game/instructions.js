@@ -501,8 +501,6 @@ function disablePlan() {
   buttonsAndTextareas.forEach(element => {
     element.disabled = true;
   });
-  const notes = iframeDoc.getElementById('rogue-notes-area');
-  notes.disabled = true;
 }
 
 function toggleDisableButtons(flag) {
@@ -529,6 +527,11 @@ function toggleDisableButtons(flag) {
     for (const btn of calculatorOperators.querySelectorAll('.btn')) {
       btn.disabled = flag;
     }     
+
+    const instructionFrame = document.getElementById('instruction-frame')
+    const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
+    const notes = iframeDoc.getElementById('rogue-notes-area');
+    notes.disabled = flag;
 }
 
 function updateDoc(use_doc, doc_content) {
@@ -781,15 +784,31 @@ function toggleRogueCheckbox(checkbox) {
   // swap plan for notes
   const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
   const instructions = iframeDoc.getElementById('instructions-container');
-  const notes = iframeDoc.getElementById('rogue-notes');
-  notes.disabled = false;
   instructions.style.display = checkbox.checked ? 'none' : '';
+
+  const notes = iframeDoc.getElementById('rogue-notes');
   notes.style.display = checkbox.checked ? '' : 'none';
 
   instructionHeader.innerHTML = checkbox.checked ? '<h6>Custom Plan</h6>' : '<h6>Plan (p)</h6>';
 
   // add/remove the close button
   toggleCloseButtonVisibility(!checkbox.checked);
+}
+
+function resetRogueCheckbox() {
+  const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
+  const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+  if (!checkbox.checked) {
+    return;
+  }
+  
+  // uncheck and reset the field
+  checkbox.checked = false;
+  self.toggleRogueCheckbox(checkbox);
+
+  // reset the notes
+  const notes = iframeDoc.getElementById('rogue-notes-area');
+  notes.value = '';
 }
 
 docContent.addEventListener('load', function() {

@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="shortcut icon" href={% static "game/science-discovery.svg" %} />
+<link rel="shortcut icon" href={% static "game/instruction_images/science-discovery.svg" %} />
 
 <head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.22.5/dist/bootstrap-table.min.css">
@@ -22,11 +22,20 @@
       <h1 style="margin-bottom: 30px;">Instructions</h1>
     
       <p>
-        Thank you for participating in our user study! Below, we have instructions on how to participate and how you will be compensated. You can return to this page at any time by hitting the "Instructions" tab in the header of the website.
+        Thank you for participating in our user study! Below, we have instructions on how to participate and how you will be compensated. You can return to this page at any time by hitting the "Instructions" tab in the header of the website. We also have a tutorial video below which you can watch instead of reading all of the instructions.
       </p>
+
+      <div style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+        <div style="position: relative; width: 50%; aspect-ratio: 16 / 9;">
+          <iframe 
+            allowfullscreen 
+            src="https://www.youtube.com/embed/YOWfmTI4EW4?modestbranding=1&rel=0" 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;">
+          </iframe>
+        </div>
+      </div>
     
-    
-      <h2 style="margin-bottom: 20px;">Table of Contents</h2>
+      <h2 style="margin-bottom: 20px; margin-top: 20px;">Table of Contents</h2>
       <ul>
         <li><a href="#setup">Setup</a></li>
         <li><a href="#read">Step 1: Read the Question</a></li>
@@ -44,27 +53,40 @@
     
       <h2 id="setup" style="margin-top: 40px; margin-bottom: 20px;">Setup</h2>
       <p>
-        The first thing you should do is hit the “settings” button and enter your email address. This is the email we will be using to communicate with you and send you compensation. After providing your email and once you are ready to participate in our user study, please hit the “Next” button. We show where both of these buttons are below:
+        The first thing you should do is hit the “Settings” button to adjust the type of questions you would like to see along with your account details. After adjusting these settings and once you are ready to participate in our user study, please hit the “Next” button. We show where both of these buttons are below:
       </p>
+
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/getting_started.png' %}" alt="getting started" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-4" src="{% static 'game/instruction_images/getting_started.png' %}" alt="getting started" style="max-width: 100%; height: auto; border: 1px solid black;">
+      </div>
+
+      <p>After hitting the "Settings" button, you will see a modal divided into three sections:</p>
+      <ol>
+        <li><strong>Question Type (top):</strong> The Question Type panel allows you to choose the questions you would like to answer in the study. You can choose from <code>Math</code> (algebraic word problems using a calculator), <code>Trivia</code> (multi-step trivia questions using a search engine), and <code>Everything</code> (both math and trivia). We encourage you to choose <code>Everything</code>, as we have extra rewards for the top-performing users in <i>each</i> category</li>
+        <li><strong>Account (middle):</strong> The Account panel allows you to alter your email or username. The email linked to your account is what we will use to distribute rewards, so make sure you put the right email. The username is just for visual purposes and will be displayed on the Leaderboard</li>
+        <li><strong>Game Log (bottom):</strong> The Game Log shows your past interactions, like when you have joined the room, if you have answered questions correctly, etc.</li>
+      </ol>
+
+
+      <div style="text-align: center;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/settings.png' %}" alt="web search tool" style="max-width: 20%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
-        After hitting "Next", the user study will begin. As a summary, you will first be given some time to read the question. Afterwards, you will be asked to answer the question while following one of these plans. We provide details on both of these steps below.
+        After closing the settings and hitting "Next", the user study will begin. As a summary, you will first be given some time to read the question. Afterwards, you will be asked to answer the question while following one of these plans. We provide details on both of these steps below.
       </p>
     
       <h2 id="read" style="margin-top: 40px; margin-bottom: 20px;">Step 1: Read the Question</h2>
       <p>
-        The first thing you will do is read the question for 60 seconds. You will not be allowed to interact with the rest of the interface until this time is up. You can also press the "Skip" button if you are ready to move onto the question:
+        The first thing you will do is read the question and plan for 30 seconds. You will not be allowed to interact with the rest of the interface until this time is up. You can also press the "Skip" button if you are ready to move onto the question:
       </p>
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/read.png' %}" alt="reading" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/read.png' %}" alt="reading" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
     
       <h2 id="answering" style="margin-top: 40px; margin-bottom: 20px;">Step 2: Answering Questions</h2>
       <p>
-        In the next step, you will be asked to follow a plan of step-by-step instructions to answer the question. Specifically, you will see one step at a time and will be asked to compute the intermediate result of each step while having access to either a Calculator or a version of Google search. You will also be able to swap between two different plans if you find one of them not helpful. Once you reach the end of the instructions, you will provide a final answer. <b>The first question will also be a tutorial question that will not count towards your progress to get you familiar with the interface.</b>
+        As a high-level overview of the second step, you will be asked to follow a plan of step-by-step instructions to answer the question. Specifically, you will see one step at a time and will be asked to compute the intermediate result of each step while having access to either a Calculator or a version of Google search. You will also be able to swap between two different plans if you find one of them not helpful. Once you reach the end of the instructions, you will provide a final answer. <b>The first question will also be an untimed tutorial question that will not count towards your progress to get you familiar with the interface.</b> We will now demo each part of our interface.
       </p>
     
       <h4 id="following" style="margin-top: 30px; margin-bottom: 20px;">a. Following the Plan</h4>
@@ -80,7 +102,7 @@
         We display and point out all of these visual elements below:
       </p>
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/overview2.png' %}" alt="overview of the plan" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/overview2.png' %}" alt="overview of the plan" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
@@ -97,10 +119,10 @@
       </p>
     
       <p>
-        For the calculator tool, you can manually write a math equation or press operation buttons with mathematical symbols (e.g. "+", "-", etc.) to build an equation in the upper input field. After hitting the calculator icon, the result will be stored in the bottom input field:
+        For the calculator tool, you can manually write a math equation or press operation buttons with mathematical symbols (e.g. "+", "-", etc.) to build an equation in the upper input field. After hitting the calculator icon or the Calculate button, the result will be stored in the bottom input field:
       </p>
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/calculator.png' %}" alt="calculator tool" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/calculator.png' %}" alt="calculator tool" style="max-width: 80%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
@@ -108,7 +130,7 @@
       </p>
 
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/web.png' %}" alt="web search tool" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/web.png' %}" alt="web search tool" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
@@ -124,14 +146,14 @@
         Once you reach the end of the plan, you will see buttons named "Buzz" that you can press to input your final answer to the question. The buttons are shown below:
       </p>
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/buzz.png' %}" alt="buzzing" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/buzz2.png' %}" alt="buzzing" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
-        Once you hit buzz, you will see an input field at the top of your screen where you can type in your answer to the question. You will have 8 seconds to answer the question and can hit "Enter" to submit your answer. By default, this input area will be filled with whatever is typed in the last step of the plan:
+        Once you hit buzz, you will see an input field at the top of your screen where you can type in your answer to the question. You will have 5 seconds to answer the question and can hit "Enter" to submit your answer. By default, this input area will be filled with whatever is typed in the last step of the plan:
       </p>
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/answer.png' %}" alt="providing a final answer" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/answer.png' %}" alt="providing a final answer" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
@@ -144,6 +166,7 @@
       </p>
       <ul>
         <li><code>N</code>: Start the next question or move onto the next step (depending on which button appears).</li>
+        <li><code>P</code>: Focus on the next step in the plan.</li>
         <li><code>S</code>: Swap plan, or skip the timer (depending on which button appears).</li>
         <li><code>ctrl/cmd + Z</code>: Undo the current step that was loaded.</li>
         <li><code>M</code>: Focus on the calculator tool input.</li>
@@ -164,32 +187,32 @@
         If you believe there is an error or you want to move onto the next question, you can report the current question by hitting the "Report" button in the top left. This button will appear after 90 seconds to ensure that you gave a good-faith effort in answering the question:
       </p>
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/report_button.png' %}" alt="reporting a question (button)" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/report_button.png' %}" alt="reporting a question (button)" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
         After hitting this button, you will have to select one of the following reasons why you are reporting the question, or provide a textual description of your issue:
       </p>
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/report_pane.png' %}" alt="reporting a question (pane)" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/report_pane.png' %}" alt="reporting a question (pane)" style="max-width: 40%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
-        After reporting the question, you will be able to move onto the next question. Reported questions do not count as questions completed for the compensation below.
+        After reporting the question, you will be able to move onto the next question. Reported questions do not count as questions completed for the compensation below. The time spent in the pairwise comparison and the run time of tools does not count towards the calculation.
       </p>
     
       <h2 id="compensation" style="margin-top: 40px; margin-bottom: 20px;">Compensation</h2>
       <p>
-        You must answer at least 10 questions to be eligible for compensation. We will pay $5 for every 5 questions you answer. We will additionally give $50 to the 3 users with the highest average accuracy scores and $50 to the 3 users with the lowest time taken (i.e. fastest speed) across both question types (12 extra rewards total). You are eligible to obtain up to four of the $50 rewards. Reported questions are not included in this calculation.
+        You must answer at least 10 questions to be eligible for compensation. We will pay $5 for every 5 questions you answer. We will additionally give $50 to the 3 users with the highest average accuracy scores and $50 to the 3 users with the lowest time taken (i.e. fastest speed) across both question types (12 extra rewards total). You are eligible to obtain up to four of the $50 rewards. Reported questions are not included in this calculation. The time spent reading the plans in the beginning and the run time of tools does not count towards the calculation.
       </p>
 
       <p>
-        More compensation details can be found on the Incentives page. You can track your accuracy and speed scores on the Leaderboard page.
+        More compensation details can be found on the Incentives page. You can track your accuracy, speed scores, and number of questions finished on the Leaderboard page.
       </p>
     
       <h2 id="contact" style="margin-top: 40px; margin-bottom: 20px;">Contact</h2>
       <p>
-        If you have any questions or if you run into any issues, please email <a href="mailto:nbalepur@umd.edu">nbalepur@umd.edu</a>
+        If you have any questions or if you run into any issues, please email <a href="mailto:planstudyumd@gmail.com">planstudyumd@gmail.com</a> or <a href="mailto:nbalepur@umd.edu">nbalepur@umd.edu</a>
       </p>
     </div>
     

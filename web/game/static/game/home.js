@@ -41,12 +41,10 @@ function sendToInstructions() {
 }
 
 function joinNewRoom(showInstructions) {
-
   // user has already seen it
-  if (showInstructions && sessionStorage.getItem('instructionsURL')) {
+  if (showInstructions && sessionStorage.getItem('seenInstructions') == 'true') {
     showInstructions = false;
   }
-
   const queryParams = new URLSearchParams({ instructions: showInstructions });
   const roomName = '';
   const evaluationRoom = setAndGetEvalRoomCookie(roomName);

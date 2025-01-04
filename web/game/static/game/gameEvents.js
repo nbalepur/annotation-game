@@ -4,6 +4,7 @@
 const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");
 const optOutInput = document.getElementById("optOutCheck");
+const offcanvasElement = document.getElementById('offcanvasSettings');
 const instructionAnnotationModal = document.getElementById("instruction-annotation-frame");
 const instructionAnnotationPage = document.getElementById("instruction-annotation-page");
 const requestContentInput = document.getElementById("request-content");

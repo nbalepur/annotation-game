@@ -255,7 +255,7 @@ class Room(models.Model):
 
         words_to_show = ceil(time_elapsed / time_per_chunk)
         return min(words_to_show, len(self.current_question.content.split()))
-
+    
     def get_shown_question(self):
         if self.current_question and self.current_question.content:
             return self.current_question.content
@@ -309,6 +309,13 @@ class User(models.Model):
         blank=True,
         null=True
     )
+
+    category_preference = models.CharField(
+        max_length=30,
+        choices=Question.Category.choices,
+        default=Question.Category.EVERYTHING
+    )
+
     reset_token = models.CharField(max_length=255, null=True, blank=True)
 
     def set_password(self, raw_password):

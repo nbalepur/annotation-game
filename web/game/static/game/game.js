@@ -247,7 +247,7 @@ gamesock.onmessage = message => {
     ping();
 
   } else if (data['response_type'] === "set_experiment_type") {
-    setExperimentInstructions(data['experiment_type']);
+    setExperimentInstructions(data['experiment_type'], data['category_preference']);
   }
   else if (data['response_type'] === "send_answer") {
     setAnswer(data['answer']);
@@ -383,10 +383,10 @@ function setReadingTime(is_tutorial) {
 //   answerHeader.innerHTML = answer !== '' ? `Answer: ${answer}` : 'Answer:';
 // }
 
-function setExperimentInstructions(experimentType) {
-  const url = `/instructions_modal_${experimentType}/`
-  instructionAnnotationModal.src = url;
-  sessionStorage.setItem('instructionsURL', url);
+// cache the instructions so we dont keep seeing it
+function setExperimentInstructions(experimentType, categoryPreference) {
+  sessionStorage.setItem('seenInstructions', true);
+  categorySelect.value = categoryPreference === 'Multi-Hop' ? 'Trivia': categoryPreference;
 }
 
 function setCalculation(res) {
@@ -805,17 +805,23 @@ function settings() {
 
 document.addEventListener("DOMContentLoaded", () => {
   const offcanvasElement = document.getElementById('offcanvasSettings');
-  offcanvasElement.addEventListener('hidden.bs.offcanvas', () => {
-      nameInput.classList.remove('is-valid');
-      nameInput.classList.remove('is-invalid');
-      emailInput.classList.remove('is-valid');
-      emailInput.classList.remove('is-invalid');
-      saveStatus.style.display = 'none'
+
+  offcanvasElement.addEventListener('hide.bs.offcanvas', () => {
+      nameInput.classList.remove('is-valid', 'is-invalid');
+      emailInput.classList.remove('is-valid', 'is-invalid');
+      saveStatus.style.display = 'none';
 
       nameInput.value = userName;
       emailInput.value = userEmail;
+      
+      let fade = document.getElementsByClassName('offcanvas-backdrop fade show')
+      for(let i = 0; i < fade.length; i++) {
+        fade[i].remove();
+      }
   });
 });
+
+
 
 function focusTextInput(elem_id) {
   const focusInput = document.getElementById(elem_id);
@@ -826,24 +832,15 @@ function focusTextInput(elem_id) {
   }
 }
 
-function toggleTools() {
-  const offCanvasElement = document.querySelector('#offcanvasToolbox');
-  isToggled = offCanvasElement.classList.contains('show');
-  if (isToggled) {
-    document.querySelector('#tools-close-btn').click();
-  } else {
-    document.querySelector('#open-toolbox-button').click();
-  }
-}
-
 function next() {
   if (gameState === 'idle') {
       statusText.scrollIntoView({ block: 'start' });
       sendRequest("next");
-  } else {
-    settings();
-    alert("Please input a valid username and email before continuing.");
- }
+  }
+//   } else {
+//     settings();
+//     alert("Please input a valid username and email before continuing.");
+//  }
 }
 
 function next_step() {
