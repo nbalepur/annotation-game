@@ -350,7 +350,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     
     def check_duplicate_user_data(self, adj_username, adj_email):
         """Check if there's duplicate information in the user data"""
-        print('adjusted:', adj_username, adj_email)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -1075,7 +1074,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             instruction_obj.filter(final_instructions_letter="B").values("user_id").distinct(),
         )
         num_shown_A, num_shown_B = seen_instr_A.count(), seen_instr_B.count()
-        print(num_shown_A, num_shown_B)
         if num_shown_A == num_shown_B:
             return "A" if random.uniform(0, 1) > 0.5 else "B"
         return "A" if num_shown_A < num_shown_B else "B"
@@ -1264,8 +1262,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
         curr_steps = instructions["steps"] if room.current_question.generation_method != Question.GenerationMethod.ATTENTION_PAIRWISE else instructions["steps_leaked"]
-
-        print(room.current_question.generation_method)
 
         # Send instructions only to the player's WebSocket
         async_to_sync(self.channel_layer.send)(
@@ -1654,7 +1650,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         else:
             correctness = (1.0 * num_correct_buzzes) / num_buzzes
 
-        print("Tools:", [(t.tool_name, t.tool_execution_status, t.queried_at) for t in tool_calls])
+        # print("Tools:", [(t.tool_name, t.tool_execution_status, t.queried_at) for t in tool_calls])
 
         tool_calls = list(tool_calls)
         total_time_taken = (
@@ -1851,7 +1847,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         wiki_pages, status = self.get_wiki_pages(room, p, query)
         if status == "error":
-            print(wiki_pages, status)
             self.send_web_search_error(room, p, query, wiki_pages[0])
             return
 
@@ -2047,8 +2042,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         # if current document doesnt exist
         if (room.current_question.category == Question.Category.LONGCONTEXT and not room.current_question.document_context) or (not room.curr_query):
             return
-        
-        print("current query:", room.curr_query)
         
         search_query = 'long_context:' + room.current_question.document_context if (room.current_question.category == Question.Category.LONGCONTEXT) else 'wiki_page_query:' + room.curr_query
         html = self.retrieve_from_document_cache(search_query)

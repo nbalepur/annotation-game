@@ -254,6 +254,7 @@ gamesock.onmessage = message => {
   } else if (data['response_type'] === "get_shown_question") {
     setQuestion(data['shown_question'], data['state']);
     isTutorial = data['is_tutorial'];
+    resetRogueCheckbox();
   } else if (data['response_type'] === 'clear_instructions') {
     clearInstructions();
   } else if (data['response_type'] === 'check_duplicate_user_data') {
