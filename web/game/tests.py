@@ -30,10 +30,10 @@ class TestConsumers:
         self.room = Room.objects.create(
             current_question=question
         )
-        self.user = User.objects.create(name="testuser", user_id=1000)
+        self.user = User.objects.create(name="testuser", email="testuser", user_id=1000)
         self.player = Player.objects.create(user=self.user, room=self.room)
 
-        self.all_users = [User.objects.create(user_id=idx, name=f"user{idx}") for idx in range(10)]
+        self.all_users = [User.objects.create(user_id=idx, name=f"user{idx}", email=f"user{idx}") for idx in range(10)]
 
         self.extra_questions = [
             Question.objects.create(
@@ -442,7 +442,7 @@ class TestExperimentGroup:
 
 
     def test_user_exists(self):
-        user = User.objects.create(name="testuser", user_id=1000, experiment_group=User.ExperimentGroup.PAIRWISE)
+        user = User.objects.create(name="testuser", email="testuser", user_id=1000, experiment_group=User.ExperimentGroup.PAIRWISE)
         assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.PAIRWISE
 
         user.experiment_group = User.ExperimentGroup.SWAP
@@ -451,10 +451,10 @@ class TestExperimentGroup:
 
     def test_rogue_report_unfinal_dont_count(self):
 
-        user = User.objects.create(name="testuser", user_id=1000)
+        user = User.objects.create(name="testuser", email="testuser", user_id=1000)
 
         for user_num in range(6):
-            pairwise_user, _ = User.objects.get_or_create(name="pairwise_" + str(user_num), user_id=user_num, experiment_group=User.ExperimentGroup.PAIRWISE)
+            pairwise_user, _ = User.objects.get_or_create(name="pairwise_" + str(user_num), email="pairwise_" + str(user_num), user_id=user_num, experiment_group=User.ExperimentGroup.PAIRWISE)
 
             AnswerData.objects.create(
                 question_id=self.math_questions[0].question_id,
@@ -478,7 +478,7 @@ class TestExperimentGroup:
 
         for _ in range(2):
             for user_num in range(18):
-                swap_user, _ = User.objects.get_or_create(name="swap_" + str(user_num), user_id=user_num + 200, experiment_group=User.ExperimentGroup.PAIRWISE)
+                swap_user, _ = User.objects.get_or_create(name="swap_" + str(user_num), email="swap_" + str(user_num), user_id=user_num + 200, experiment_group=User.ExperimentGroup.PAIRWISE)
 
                 if user_num < 6:
                     AnswerData.objects.create(
@@ -548,7 +548,7 @@ class TestExperimentGroup:
         user = User.objects.create(name="testuser", user_id=1000)
 
         for user_num in range(6):
-            swap_user, _ = User.objects.get_or_create(name="swap_" + str(user_num), user_id=user_num + 200, experiment_group=User.ExperimentGroup.PAIRWISE)
+            swap_user, _ = User.objects.get_or_create(name="swap_" + str(user_num), email="swap_" + str(user_num), user_id=user_num + 200, experiment_group=User.ExperimentGroup.PAIRWISE)
 
             AnswerData.objects.create(
                 question_id=self.math_questions[0].question_id,
@@ -572,7 +572,7 @@ class TestExperimentGroup:
 
         for _ in range(2):
             for user_num in range(18):
-                pairwise_user, _ = User.objects.get_or_create(name="pairwise_" + str(user_num), user_id=user_num, experiment_group=User.ExperimentGroup.PAIRWISE)
+                pairwise_user, _ = User.objects.get_or_create(name="pairwise_" + str(user_num), email="pairwise_" + str(user_num), user_id=user_num, experiment_group=User.ExperimentGroup.PAIRWISE)
 
                 if user_num < 6:
                     AnswerData.objects.create(
@@ -648,7 +648,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(random.randint(6, 9)):
-                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -674,7 +674,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(random.randint(3, 7)):
-                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
+                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
                             user=swap_user,
@@ -707,7 +707,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(random.randint(6, 9)):
-                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -733,7 +733,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(random.randint(3, 7)):
-                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
+                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
                             user=swap_user,
@@ -758,10 +758,10 @@ class TestExperimentGroup:
 
     def test_equal_questions_done_and_more_swap_users(self):
 
-        user = User.objects.create(name="testuser", user_id=1000)
+        user = User.objects.create(name="testuser", email="testuser", user_id=1000)
         
         # extra swap user
-        User.objects.create(name="randuser", user_id=2134561923, experiment_group = User.ExperimentGroup.SWAP)
+        User.objects.create(name="randuser", email="email", user_id=2134561923, experiment_group = User.ExperimentGroup.SWAP)
 
         for num_swap_done in range(5):
 
@@ -771,7 +771,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
-                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -797,7 +797,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
-                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
+                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
                             user=swap_user,
@@ -821,10 +821,10 @@ class TestExperimentGroup:
 
     def test_equal_questions_done_and_more_pairwise_users(self):
 
-        user = User.objects.create(name="testuser", user_id=1000)
+        user = User.objects.create(name="testuser", email="t", user_id=1000)
         
         # extra swap user
-        User.objects.create(name="randuser", user_id=2134561923, experiment_group = User.ExperimentGroup.PAIRWISE)
+        User.objects.create(name="randuser", email="r", user_id=2134561923, experiment_group = User.ExperimentGroup.PAIRWISE)
 
         for num_swap_done in range(5):
 
@@ -834,7 +834,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
-                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -860,7 +860,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
-                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
+                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
                             user=swap_user,
@@ -884,7 +884,7 @@ class TestExperimentGroup:
 
     def test_equal_questions_done_and_equal_users(self):
 
-        user = User.objects.create(name="testuser", user_id=1000)
+        user = User.objects.create(name="testuser", email="test", user_id=1000)
 
         for num_swap_done in range(5):
 
@@ -898,7 +898,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
-                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -924,7 +924,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
-                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
+                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
                             user=swap_user,
@@ -955,7 +955,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
-                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -981,7 +981,7 @@ class TestExperimentGroup:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
-                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
+                        swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
                             user=swap_user,
@@ -1003,8 +1003,8 @@ class TestExperimentGroup:
                         )
 
         for user_num in range(6):
-            swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
-            pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
+            swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
+            pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
             AnswerData.objects.create(
                 question_id=self.math_questions[-1].question_id,
                 user=swap_user,
@@ -1078,7 +1078,7 @@ class TestEverythingQuestions:
             current_question=self.trivia_questions[0]
         )
 
-        self.user = User.objects.create(name="testuser", user_id=1000)
+        self.user = User.objects.create(name="testuser", email="testuser", user_id=1000)
         self.player = Player.objects.create(user=self.user, room=self.room)
 
     def test_report_does_nothing(self):
@@ -1333,10 +1333,10 @@ class TestConsumersTrivia:
         self.room = Room.objects.create(
             current_question=question
         )
-        self.user = User.objects.create(name="testuser", user_id=1000)
+        self.user = User.objects.create(name="testuser", email="testuser", user_id=1000)
         self.player = Player.objects.create(user=self.user, room=self.room)
 
-        self.all_users = [User.objects.create(user_id=idx, name=f"user{idx}") for idx in range(10)]
+        self.all_users = [User.objects.create(user_id=idx, name=f"user{idx}", email=f"user{idx}") for idx in range(10)]
 
         self.extra_questions = [
             Question.objects.create(
@@ -1381,14 +1381,15 @@ class TestConsumersTrivia:
     def test_decide_instruction_to_show_swap_distribution(self):
         """Test when SETTING_TYPE is 'swap'."""
         consumer = QuizbowlConsumer()
-        with patch.dict("os.environ", {"SETTING_TYPE": "swap"}):
-            # Should follow the mocked random.uniform values
-            self.room.current_question.generation_method = Question.GenerationMethod.LLAMA
-            out = []
-            for _ in range(1000):
-                out.append(consumer.decide_instruction_to_show(self.room, self.player))
-            sum_a = sum([o == 'A' for o in out])
-            assert 450 <= sum_a <= 550
+        self.user.experiment_group = User.ExperimentGroup.SWAP
+        self.user.save()
+        # Should follow the mocked random.uniform values
+        self.room.current_question.generation_method = Question.GenerationMethod.LLAMA
+        out = []
+        for _ in range(1000):
+            out.append(consumer.decide_instruction_to_show(self.room, self.player))
+        sum_a = sum([o == 'A' for o in out])
+        assert 450 <= sum_a <= 550
 
     def test_decide_instruction_to_show_pairwise_balancing(self):
         """Test when SETTING_TYPE is 'pairwise'."""
@@ -1654,7 +1655,7 @@ class TestDecideNextQuestion:
         self.consumer = QuizbowlConsumer()
 
         self.room = Room.objects.create()
-        self.user = User.objects.create(name="testuser", user_id=1000)
+        self.user = User.objects.create(name="testuser", email="testuser", user_id=1000)
         self.player = Player.objects.create(user=self.user, room=self.room)
 
         # Create tutorial, sanity, and regular questions
@@ -1898,7 +1899,7 @@ class TestDecideNextQuestion:
             for question in overflow_questions:
                 num_annot = random.randint(6, 10)
                 for epoch in range(num_annot):
-                    curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                    curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                     AnswerData.objects.create(
                         user=curr_user,
                         question_id=question.question_id,
@@ -1918,7 +1919,7 @@ class TestDecideNextQuestion:
 
             # questions with 1 to 5 (inclusive) diff users who have looked at it
             for epoch in range(1, 6):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
 
                 if epoch != 1:
                     AnswerData.objects.create(
@@ -1976,7 +1977,7 @@ class TestDecideNextQuestion:
                 assert next_question == return_question
 
         epoch = 6
-        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
         AnswerData.objects.create(
                 user=curr_user,
                 question_id=return_question.question_id,
@@ -2030,7 +2031,7 @@ class TestDecideNextQuestion:
         for question in overflow_questions:
             num_annot = random.randint(3, 10)
             for epoch in range(num_annot):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=20000+epoch, name=f"overflow_user{epoch}", email=f"overflow_user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -2050,7 +2051,7 @@ class TestDecideNextQuestion:
 
         # questions with 1 to 5 (inclusive) diff users who have looked at it
         for epoch in range(1, 3):
-            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+            curr_user, _ = User.objects.get_or_create(user_id=200+epoch, name=f"notoverflow_user{epoch}", email=f"notoverflow_user{epoch}")
 
             if epoch != 1:
                 AnswerData.objects.create(
@@ -2109,7 +2110,7 @@ class TestDecideNextQuestion:
             assert next_question == return_question
 
         epoch = 3
-        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email="aaaa")
         AnswerData.objects.create(
                 user=curr_user,
                 question_id=return_question.question_id,
@@ -2135,7 +2136,7 @@ class TestDecideNextQuestion:
 
         for question in self.regular_questions:
             for epoch in range(20):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -2182,7 +2183,7 @@ class TestDecideNextQuestion:
 
         for question in self.regular_questions:
             for epoch in range(20):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -2255,7 +2256,7 @@ class TestDecideNextQuestion:
             is_report=False
         )
 
-        report_user, _ = User.objects.get_or_create(user_id=123456789, name=f"reporter")
+        report_user, _ = User.objects.get_or_create(user_id=123456789, email="123456789", name=f"reporter")
         AnswerData.objects.create(
             user=report_user,
             question_id=reported_question.question_id,
@@ -2278,7 +2279,7 @@ class TestDecideNextQuestion:
         for question in overflow_questions:
             num_annot = random.randint(3, 10)
             for epoch in range(num_annot):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -2298,7 +2299,7 @@ class TestDecideNextQuestion:
 
         # questions with 1 to 5 (inclusive) diff users who have looked at it
         for epoch in range(1, 3):
-            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
 
             if epoch != 1:
                 AnswerData.objects.create(
@@ -2359,7 +2360,7 @@ class TestDecideNextQuestion:
             assert next_question == return_question
 
         epoch = 3
-        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
         AnswerData.objects.create(
                 user=curr_user,
                 question_id=return_question.question_id,
@@ -2409,7 +2410,7 @@ class TestDecideNextQuestion:
             is_report=False
         )
 
-        rogue_user, _ = User.objects.get_or_create(user_id=123456789, name=f"rogue")
+        rogue_user, _ = User.objects.get_or_create(user_id=123456789, name=f"rogue", email="rogue")
         AnswerData.objects.create(
             user=rogue_user,
             question_id=reported_question.question_id,
@@ -2432,7 +2433,7 @@ class TestDecideNextQuestion:
         for question in overflow_questions:
             num_annot = random.randint(3, 10)
             for epoch in range(num_annot):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -2452,7 +2453,7 @@ class TestDecideNextQuestion:
 
         # questions with 1 to 5 (inclusive) diff users who have looked at it
         for epoch in range(1, 3):
-            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
 
             if epoch != 1:
                 AnswerData.objects.create(
@@ -2513,7 +2514,7 @@ class TestDecideNextQuestion:
             assert next_question == return_question
 
         epoch = 3
-        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
         AnswerData.objects.create(
                 user=curr_user,
                 question_id=return_question.question_id,
@@ -2637,7 +2638,7 @@ class TestDecideNextQuestionTrivia:
         self.consumer = QuizbowlConsumer()
 
         self.room = Room.objects.create()
-        self.user = User.objects.create(name="testuser", user_id=1000)
+        self.user = User.objects.create(name="testuser", email="testuser", user_id=1000)
         self.player = Player.objects.create(user=self.user, room=self.room)
 
         # Create tutorial, sanity, and regular questions
@@ -2881,7 +2882,7 @@ class TestDecideNextQuestionTrivia:
             for question in overflow_questions:
                 num_annot = random.randint(6, 10)
                 for epoch in range(num_annot):
-                    curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                    curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                     AnswerData.objects.create(
                         user=curr_user,
                         question_id=question.question_id,
@@ -2901,7 +2902,7 @@ class TestDecideNextQuestionTrivia:
 
             # questions with 1 to 5 (inclusive) diff users who have looked at it
             for epoch in range(1, 6):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
 
                 if epoch != 1:
                     AnswerData.objects.create(
@@ -2959,7 +2960,7 @@ class TestDecideNextQuestionTrivia:
                 assert next_question == return_question
 
         epoch = 6
-        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
         AnswerData.objects.create(
                 user=curr_user,
                 question_id=return_question.question_id,
@@ -3013,7 +3014,7 @@ class TestDecideNextQuestionTrivia:
         for question in overflow_questions:
             num_annot = random.randint(3, 10)
             for epoch in range(num_annot):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=2000+epoch, name=f"overflow_user{epoch}", email=f"overflow_user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -3033,7 +3034,7 @@ class TestDecideNextQuestionTrivia:
 
         # questions with 1 to 5 (inclusive) diff users who have looked at it
         for epoch in range(1, 3):
-            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+            curr_user, _ = User.objects.get_or_create(user_id=200+epoch, name=f"user{epoch}", email=f"user{epoch}")
 
             if epoch != 1:
                 AnswerData.objects.create(
@@ -3092,7 +3093,7 @@ class TestDecideNextQuestionTrivia:
             assert next_question == return_question
 
         epoch = 3
-        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}asdasd", email=f"user{epoch}asdasd")
         AnswerData.objects.create(
                 user=curr_user,
                 question_id=return_question.question_id,
@@ -3118,7 +3119,7 @@ class TestDecideNextQuestionTrivia:
 
         for question in self.regular_questions:
             for epoch in range(20):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -3165,7 +3166,7 @@ class TestDecideNextQuestionTrivia:
 
         for question in self.regular_questions:
             for epoch in range(20):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -3238,7 +3239,7 @@ class TestDecideNextQuestionTrivia:
             is_report=False
         )
 
-        report_user, _ = User.objects.get_or_create(user_id=123456789, name=f"reporter")
+        report_user, _ = User.objects.get_or_create(user_id=123456789, name=f"reporter", email=f"reporter")
         AnswerData.objects.create(
             user=report_user,
             question_id=reported_question.question_id,
@@ -3261,7 +3262,7 @@ class TestDecideNextQuestionTrivia:
         for question in overflow_questions:
             num_annot = random.randint(3, 10)
             for epoch in range(num_annot):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -3281,7 +3282,7 @@ class TestDecideNextQuestionTrivia:
 
         # questions with 1 to 5 (inclusive) diff users who have looked at it
         for epoch in range(1, 3):
-            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
 
             if epoch != 1:
                 AnswerData.objects.create(
@@ -3342,7 +3343,7 @@ class TestDecideNextQuestionTrivia:
             assert next_question == return_question
 
         epoch = 3
-        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
         AnswerData.objects.create(
                 user=curr_user,
                 question_id=return_question.question_id,
@@ -3392,7 +3393,7 @@ class TestDecideNextQuestionTrivia:
             is_report=False
         )
 
-        report_user, _ = User.objects.get_or_create(user_id=123456789, name=f"reporter")
+        report_user, _ = User.objects.get_or_create(user_id=123456789, name=f"reporter", email=f"reporter")
         AnswerData.objects.create(
             user=report_user,
             question_id=reported_question.question_id,
@@ -3415,7 +3416,7 @@ class TestDecideNextQuestionTrivia:
         for question in overflow_questions:
             num_annot = random.randint(3, 10)
             for epoch in range(num_annot):
-                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+                curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
                 AnswerData.objects.create(
                     user=curr_user,
                     question_id=question.question_id,
@@ -3435,7 +3436,7 @@ class TestDecideNextQuestionTrivia:
 
         # questions with 1 to 5 (inclusive) diff users who have looked at it
         for epoch in range(1, 3):
-            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+            curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
 
             if epoch != 1:
                 AnswerData.objects.create(
@@ -3496,7 +3497,7 @@ class TestDecideNextQuestionTrivia:
             assert next_question == return_question
 
         epoch = 3
-        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}")
+        curr_user, _ = User.objects.get_or_create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}")
         AnswerData.objects.create(
                 user=curr_user,
                 question_id=return_question.question_id,
