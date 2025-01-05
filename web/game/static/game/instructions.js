@@ -556,6 +556,28 @@ function updateDoc(use_doc, doc_content) {
     }
 }
 
+function loadingDoc() {
+  const content =  `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedded Page</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="d-flex align-items-center justify-content-center" style="height: 100vh;">
+      <div class="spinner-border" role="status" aria-hidden="true"></div>
+      <span class="ms-3">Loading...</span>
+  </div>
+  </body>
+  </html>
+`
+  docContent.srcdoc = content;
+}
+
 function updateStatus(status, player, answer, allowSwaps) {
     gameState = status;
     if (status === "compare") {
@@ -756,6 +778,15 @@ function clearToolHistory() {
     if (!query) {
       return;
     }
+    loadingDoc();
+    
+
+    // setTimeout(() => {
+    //   console.log("Delay complete. Proceeding with search...");
+    //   googleToolInput.blur();
+    //   sendRequest("web_search", query);
+    // }, 10000);
+
     googleToolInput.blur();
     sendRequest("web_search", query);
   }

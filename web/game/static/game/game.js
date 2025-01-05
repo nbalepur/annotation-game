@@ -290,8 +290,9 @@ gamesock.onmessage = message => {
     }
   } else if (data['response_type'] === 'disable_plan') {
     disablePlan();
-  }
-  else if (data['response_type'] === 'update_doc') {
+  } else if (data['response_type'] === 'loading_doc') {
+    loadingDoc();
+  } else if (data['response_type'] === 'update_doc') {
     updateDoc(data['use_doc'], data['doc_content']);
   } else if (data['response_type'] === 'update_status') {
     updateStatus(data['status'], data['player'], data['answer'], data['allow_swaps']);

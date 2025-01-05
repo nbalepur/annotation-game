@@ -88,11 +88,11 @@ window.addEventListener("load", function () {
     .query({ name: "clipboard-read" })
     .then((result) => {
       if (result.state === "granted") {
-        console.log("Clipboard read access granted");
+        // console.log("Clipboard read access granted");
       } else if (result.state === "prompt") {
-        console.log("Clipboard read access needs to be granted by user");
+        // console.log("Clipboard read access needs to be granted by user");
       } else if (result.state === "denied") {
-        console.log("Clipboard read access denied");
+        // console.log("Clipboard read access denied");
       }
     })
     .catch((error) => {

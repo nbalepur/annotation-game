@@ -189,7 +189,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
     def ping(self, room, p):
         """Receive ping"""
 
-        print("ping", p)
+        # print("ping", p)
         p.last_seen = timezone.now().timestamp()
         p.save()
 
@@ -1363,6 +1363,18 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             },
         )
 
+    def document_loading_page(self, channel_layer_send, player_channel):
+        """Helper function to update document info"""
+        async_to_sync(channel_layer_send)(
+            player_channel,
+            {
+                "type": "update_room",
+                "data": {
+                    "response_type": "loading_doc",
+                },
+            },
+        )
+
     def update_doc(self, channel_layer_send, player_channel, use_doc, doc_content):
         """Helper function to update document info"""
         async_to_sync(channel_layer_send)(
@@ -1709,13 +1721,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         self.send(text_data=json.dumps({
             'response_type': 'web_search_result',
-            'result': f"<p>No results found: {error}\nTry another search query!</p>"
+            'result': f"<p>No results found: {error}\n\nTry another search query. If the issue persists, please contact <a href='mailto:planstudyumd@gmail.com'>planstudyumd@gmail.com</a>.</p>"
         }))
         self.send(
             text_data=json.dumps(
                 {
                     "response_type": "web_search_result",
-                    "result": f"<p>No results found: {error}\nTry another search query!</p>",
+                    "result": f"<p>No results found: {error}\n\nTry another search query. If the issue persists, please contact <a href='mailto:planstudyumd@gmail.com'>planstudyumd@gmail.com</a>.</p>"
                 }
             )
         )
@@ -1867,7 +1879,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 room.curr_query = page_title_clean
                 room.save()
 
-                print("page found in cache!")
+                # print("page found in cache!")
                 self.send_web_search_success(
                     room=room,
                     p=p,
@@ -1988,7 +2000,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 </body>
                 </html>
                 """
-                print("new page")
+                # print("new page")
                 self.send_web_search_success(
                     room=room,
                     p=p,
