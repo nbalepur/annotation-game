@@ -167,6 +167,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.report_message(room, p, data["content"])
             elif data["request_type"] == "report_issue":
                 self.report_issue(room, p, data["content"])
+            elif data["request_type"] == "skip_plan":
+                self.skip_plan(room, p)
             elif data["request_type"] == "calculate":
                 self.calculate(room, p, data["content"])
             elif data["request_type"] == "web_search":
@@ -493,7 +495,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         all_questions_math = Question.objects.filter(
             Q(category=Question.Category.MATH) & (
                 Q(generation_method=Question.GenerationMethod.LLAMA) |
-                Q(generation_method=Question.GenerationMethod.QWEN)
+                Q(generation_method=Question.GenerationMethod.QWEN) |
+                Q(generation_method=Question.GenerationMethod.COMMANDR) |
+                Q(generation_method=Question.GenerationMethod.GPT) |
+                Q(generation_method=Question.GenerationMethod.CLAUDE)
             )
         )
         seen_questions_overall_math = AnswerData.objects.filter(
@@ -507,7 +512,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         all_questions_trivia = Question.objects.filter(
             Q(category=Question.Category.MULTIHOP) & (
                 Q(generation_method=Question.GenerationMethod.LLAMA) |
-                Q(generation_method=Question.GenerationMethod.QWEN)
+                Q(generation_method=Question.GenerationMethod.QWEN) |
+                Q(generation_method=Question.GenerationMethod.COMMANDR) |
+                Q(generation_method=Question.GenerationMethod.GPT) |
+                Q(generation_method=Question.GenerationMethod.CLAUDE)
             )
         )
         seen_questions_overall_trivia = AnswerData.objects.filter(
@@ -568,7 +576,10 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         all_questions = Question.objects.filter(
             Q(category=category) & (
                 Q(generation_method=Question.GenerationMethod.LLAMA) |
-                Q(generation_method=Question.GenerationMethod.QWEN)
+                Q(generation_method=Question.GenerationMethod.QWEN) |
+                Q(generation_method=Question.GenerationMethod.COMMANDR) |
+                Q(generation_method=Question.GenerationMethod.GPT) |
+                Q(generation_method=Question.GenerationMethod.CLAUDE)
             )
         )
         unseen_questions = all_questions.exclude(
@@ -742,145 +753,143 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         self.log_tool_use(room, player, "", dict(), "buzz", "start")
 
-        # Reject when not in contest
-        if room.state != Room.GameState.CONTEST:
+        # Reject when not in contest or playing
+        if room.state not in {Room.GameState.CONTEST, Room.GameState.PLAYING}:
             return
 
         # Abort if no buzz player or current question
-        if room.buzz_player == None or room.current_question == None:
+        if room.current_question == None:
             return
 
-        if player.player_id == room.buzz_player.player_id:
+        cleaned_content = clean_content(content)
+        answered_correctly: bool = judge_answer(
+            cleaned_content, room.current_question
+        )
+        # answered_correctly: bool = judge_answer_kuiperbowl(cleaned_content, room.current_question.answer)
+        #words_to_show: int = room.compute_words_to_show()
 
-            cleaned_content = clean_content(content)
-            answered_correctly: bool = judge_answer(
-                cleaned_content, room.current_question
+        room.last_guess = cleaned_content
+        room.save()
+
+        if answered_correctly:
+            player.score += 10
+            player.correct += 1
+            player.save()
+
+            # Quick end question
+            room.end_time = room.start_time
+            room.buzz_player = None
+
+            room.save()
+            create_message(
+                "buzz_correct",
+                player,
+                cleaned_content,
+                room,
             )
-            # answered_correctly: bool = judge_answer_kuiperbowl(cleaned_content, room.current_question.answer)
-            #words_to_show: int = room.compute_words_to_show()
 
-            room.last_guess = cleaned_content
+            self.log_tool_use(room, player, {'guess': cleaned_content, 'true': room.current_question.answer_accept}, {'prediction': answered_correctly}, "buzz", "success")
+
+            room.state = Room.GameState.IDLE
+            self.update_status(room, "buzz_correct", player, cleaned_content)
+
+            room.save()
+            self.log_leaderboard(room, player)
+            self.show_and_disable_tools(room=room, player=player)
+            self.disable_plan()
+        else:
+
+            # keep playing if it's wrong
+            room.state = Room.GameState.PLAYING
+
+            room.buzz_player = None
             room.save()
 
-            if answered_correctly:
-                player.score += 10
-                player.correct += 1
+            # Question reading ended, do penalty
+            if room.end_time - room.buzz_start_time >= GRACE_TIME:
+                player.score -= 10
+                player.negs += 1
                 player.save()
 
-                # Quick end question
-                room.end_time = room.start_time
-                room.buzz_player = None
-
-                room.save()
-                create_message(
-                    "buzz_correct",
-                    player,
-                    cleaned_content,
-                    room,
-                )
-
-                self.log_tool_use(room, player, {'guess': cleaned_content, 'true': room.current_question.answer_accept}, {'prediction': answered_correctly}, "buzz", "success")
-
-                room.state = Room.GameState.IDLE
-                self.update_status(room, "buzz_correct", player, cleaned_content)
-
-                room.save()
-                self.log_leaderboard(room, player)
-                self.show_and_disable_tools(room=room, player=player)
-                self.disable_plan()
-            else:
-
-                # keep playing if it's wrong
-                room.state = Room.GameState.PLAYING
-
-                room.buzz_player = None
-                room.save()
-
-                # Question reading ended, do penalty
-                if room.end_time - room.buzz_start_time >= GRACE_TIME:
-                    player.score -= 10
-                    player.negs += 1
-                    player.save()
-
-                create_message(
-                    "buzz_wrong",
-                    player,
-                    cleaned_content,
-                    room,
-                )
-
-                # self.send_json({
-                #     "response_type": "lock_out",
-                #     "locked_out": True,
-                # })
-
-                buzz_duration = timezone.now().timestamp() - room.buzz_start_time
-                room.start_time += buzz_duration
-                room.end_time += buzz_duration
-                room.save()
-
-                self.log_tool_use(room, player, {'guess': cleaned_content, 'true': room.current_question.answer_accept}, {'prediction': answered_correctly}, "buzz", "failure")
-                self.update_status(room, "buzz_incorrect", player, cleaned_content)
-
-            # current_question: Question = room.current_question
-            # try:
-            #     feedback = QuestionFeedback.objects.get(
-            #         question=current_question, player=player
-            #     )
-            # except QuestionFeedback.DoesNotExist:
-            #     feedback = QuestionFeedback.objects.create(
-            #         question=current_question,
-            #         player=player,
-            #         guessed_answer=cleaned_content,
-            #         submitted_clue_list=current_question.clue_list,
-            #         submitted_clue_order=list(range(current_question.length)),
-            #         submitted_factual_mask_list=[0.5] * current_question.length,
-            #         answered_correctly=answered_correctly,
-            #         buzzed=True,
-            #         buzz_position_word=words_to_show,
-            #         buzz_position_norm=words_to_show
-            #         / len(current_question.content.split()),
-            #         buzz_datetime=timezone.now(),
-            #     )
-            #     feedback.save()
-            # except ValidationError as e:
-            #     pass
-
-            #self.get_shown_question(room=room)
-
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    "type": "update_room",
-                    "data": get_room_response_json(room),
-                },
+            create_message(
+                "buzz_wrong",
+                player,
+                cleaned_content,
+                room,
             )
 
-        # Forfeit question if buzz time up
-        elif timezone.now().timestamp() >= room.buzz_start_time + GRACE_TIME:
+            # self.send_json({
+            #     "response_type": "lock_out",
+            #     "locked_out": True,
+            # })
+
             buzz_duration = timezone.now().timestamp() - room.buzz_start_time
-            room.state = Room.GameState.PLAYING
             room.start_time += buzz_duration
             room.end_time += buzz_duration
             room.save()
 
-            create_message(
-                "buzz_forfeit",
-                room.buzz_player,
-                None,
-                room,
-            )
+            self.log_tool_use(room, player, {'guess': cleaned_content, 'true': room.current_question.answer_accept}, {'prediction': answered_correctly}, "buzz", "failure")
+            self.update_status(room, "buzz_incorrect", player, cleaned_content)
 
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    "type": "update_room",
-                    "data": get_room_response_json(room),
-                },
-            )
+        # current_question: Question = room.current_question
+        # try:
+        #     feedback = QuestionFeedback.objects.get(
+        #         question=current_question, player=player
+        #     )
+        # except QuestionFeedback.DoesNotExist:
+        #     feedback = QuestionFeedback.objects.create(
+        #         question=current_question,
+        #         player=player,
+        #         guessed_answer=cleaned_content,
+        #         submitted_clue_list=current_question.clue_list,
+        #         submitted_clue_order=list(range(current_question.length)),
+        #         submitted_factual_mask_list=[0.5] * current_question.length,
+        #         answered_correctly=answered_correctly,
+        #         buzzed=True,
+        #         buzz_position_word=words_to_show,
+        #         buzz_position_norm=words_to_show
+        #         / len(current_question.content.split()),
+        #         buzz_datetime=timezone.now(),
+        #     )
+        #     feedback.save()
+        # except ValidationError as e:
+        #     pass
 
-            self.log_tool_use(room, player, "", dict(), "buzz", "forfeit")
-            self.update_status(room, "buzz_abstain", player)
+        #self.get_shown_question(room=room)
+
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                "type": "update_room",
+                "data": get_room_response_json(room),
+            },
+        )
+
+    # # Forfeit question if buzz time up
+    # elif timezone.now().timestamp() >= room.buzz_start_time + GRACE_TIME:
+    #     buzz_duration = timezone.now().timestamp() - room.buzz_start_time
+    #     room.state = Room.GameState.PLAYING
+    #     room.start_time += buzz_duration
+    #     room.end_time += buzz_duration
+    #     room.save()
+
+    #     create_message(
+    #         "buzz_forfeit",
+    #         room.buzz_player,
+    #         None,
+    #         room,
+    #     )
+
+    #     async_to_sync(self.channel_layer.group_send)(
+    #         self.room_group_name,
+    #         {
+    #             "type": "update_room",
+    #             "data": get_room_response_json(room),
+    #         },
+    #     )
+
+    #     self.log_tool_use(room, player, "", dict(), "buzz", "forfeit")
+    #     self.update_status(room, "buzz_abstain", player)
 
     def submit_initial_feedback(self, room: Room, player: Player, content):
         if room.state == Room.GameState.IDLE:
@@ -1292,7 +1301,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             self.channel_layer.group_send,
             self.room_group_name,
             (question is None and room.category in {Question.Category.MATH, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MATH),
-            (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
+            False,
             (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
         )
         curr_doc = ""
@@ -1568,6 +1577,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         )
 
     def report_issue(self, room: Room, p: Player, report_data):
+        """User reported an issue"""
         ReportIssue.objects.create(
             user=p.user,
             question_id=room.current_question.question_id,
@@ -1578,6 +1588,14 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             feedback=report_data['feedback']
         )
         self.handle_no_buzz(room, p, True)
+
+    def skip_plan(self, room: Room, p: Player):
+        """User said that the plan was bad"""
+        self.report_issue(room, p, {'is_bad_question': False,
+                                    'is_bad_instruction': False,
+                                    'is_bad_answer_verifier': False,
+                                    'is_frustrated': True,
+                                    'feedback': ''})
 
     def report_message(self, room: Room, p: Player, message_id):
         """Handle reporting messages"""
@@ -1844,13 +1862,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 {"response_type": "web_search_result", "result": final_html}
             )
         )
-        self.update_tools(
-            self.channel_layer.send,
-            p.channel_name,
-            room.current_question.uses_calculator,
-            True,
-            True,
-        )
+        # self.update_tools(
+        #     self.channel_layer.send,
+        #     p.channel_name,
+        #     room.current_question.uses_calculator,
+        #     True,
+        #     True,
+        # )
 
         # auto-search for the relevant paragraph
         self.select_content(room, p, query, final_html)

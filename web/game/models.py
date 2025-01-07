@@ -63,6 +63,10 @@ class Question(models.Model):
         AI = "ai", _("AI-generated") 
         LLAMA = "llama", _("llama")
         QWEN = "qwen", _("qwen")
+        CLAUDE = "claude", _("claude")
+        COMMANDR = "commandr", _("commandr")
+        GPT = "gpt", _("gpt")
+
         ATTENTION_SWAP = "attention_s", _("attention_s")
         ATTENTION_PAIRWISE = "attention_p", _("attention_p")
         TUTORIAL = "tutorial", _("tutorial")

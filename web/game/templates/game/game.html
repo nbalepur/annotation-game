@@ -23,7 +23,7 @@
               <button id="skip-btn" class="btn btn-primary btn me-2" title="Shortcut: S" style="display: none;">Skip Reading (s)</button>
               <button id="swap-btn" class="btn btn-dark btn me-2" title="Shortcut: S" style="display: none;">Swap Plan (s)</button>
               <button id="step-btn" class="btn btn-warning btn me-2" title="Shortcut: N" style="display: none;">Next Step (n)</button>
-              <button id="buzz-btn" class="btn btn-danger btn me-5" style="display: none;">Buzz (space)</button>
+              <button id="buzz-btn" class="btn btn-danger btn me-2" style="display: none;">Buzz (space)</button>
                 <button id="report-btn" class="btn btn-outline-danger btn me-2" data-bs-toggle="modal" data-bs-target="#reportModal" style="display: none;">Report</button>
               <button id="settings-btn" class="btn btn-secondary btn" data-bs-toggle="offcanvas"
                 data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings"
@@ -190,25 +190,19 @@
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="1" id="issue1">
                 <label class="form-check-label" for="issue1">
-                  The question was incorrect or had an error
+                  The question has an error that is stopping me from continuing
                 </label>
               </div>
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="2" id="issue2">
                 <label class="form-check-label" for="issue2">
-                  The instructions were incorrect or had an error
+                  The instructions have an error that is stopping me from continuing
                 </label>
               </div>
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="3" id="issue3">
                 <label class="form-check-label" for="issue3">
                   My answer was incorrectly marked as correct/incorrect
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="4" id="issue4">
-                <label class="form-check-label" for="issue4">
-                  I am frustrated and cannot finish the question
                 </label>
               </div>
             </div>
@@ -232,7 +226,7 @@
     <div class="modal-dialog modal-fullscreen" style="padding: 20px;">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="welcomeModalLabel">Read all of the instructions below before starting!</h5>
+          <h5 class="modal-title" id="welcomeModalLabel">Read all of the instructions or watch the video below before starting!</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-instruction-modal1"></button>
         </div>
         <div class="modal-body">

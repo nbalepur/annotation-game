@@ -18,16 +18,20 @@
   </head>
 
     <body>
-      <div style="display: flex; justify-content: right; margin: 10px; visibility: hidden" id="follow-plan-div">
+      <div style="display: flex; justify-content: space-between; margin: 10px; visibility: hidden" id="follow-plan-div">
+        <button class="btn btn-info btn-sm" style="align-self: flex-start; visibility: hidden;" class="btn btn-primary" id="skip-plan-button" onclick="window.parent.skip_plan()">
+          Skip (and receive no credit)
+        </button>
+      
         <div class="form-check" id="edit-instructions-container">
           <input class="form-check-input" type="checkbox" value="" id="edit-instructions-checkbox">
           <label class="form-check-label" for="edit-instructions-checkbox">
-            I will not follow any plan
+            I have faced challenges with the given plan(s)
           </label>
         </div>
       </div>
 
-      <div class="form-group m-3" style="display: none;" id="rogue-notes">
+      <div class="form-group m-2" style="display: none;" id="rogue-notes">
         <textarea id="rogue-notes-area" class="form-control" placeholder="Enter any notes here..." rows=10></textarea>
       </div>
 

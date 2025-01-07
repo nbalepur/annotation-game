@@ -228,7 +228,7 @@ function handleKeyDown(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === "f" && gameState === 'playing') {
     focusTextInput("content-search");
     e.preventDefault();
-  } else if ((e.ctrlKey || e.metaKey) && e.key === "z" && gameState === 'playing') {
+  } else if ((e.key === "z" || (e.ctrlKey || e.metaKey) && e.key === "z") && gameState === 'playing') {
     closeLastButton();
     e.preventDefault();
   } else if ((e.ctrlKey || e.metaKey) && e.key === "s" && gameState === 'playing') {
@@ -254,7 +254,7 @@ document.addEventListener("keydown", function (e) {
 requestContentInput.addEventListener("keypress", (e) => {
   if (e.key == "Enter") {
     if (currentAction == "buzz") {
-      answer();
+      answer(requestContentInput.value);
     }
     // else if (currentAction == 'chat') {
     //   sendChat();
@@ -312,11 +312,23 @@ docSearchInput.addEventListener("keydown", (e) => {
   }
 });
 
+function clearReportData() {
+  const isBadQuestion = document.getElementById("issue1");
+  const isBadInstructions = document.getElementById("issue2");
+  const isBadAnswerVerifier = document.getElementById("issue3");
+  const textFeedback = document.getElementById("feedback");
+
+  isBadQuestion.checked = false;
+  isBadInstructions.checked = false;
+  isBadAnswerVerifier.checked = false;
+  textFeedback.value = '';
+}
+
 document.getElementById("submitReportBtn").addEventListener("click", function () {
   const isBadQuestion = document.getElementById("issue1").checked;
   const isBadInstructions = document.getElementById("issue2").checked;
   const isBadAnswerVerifier = document.getElementById("issue3").checked;
-  const isFrustrated = document.getElementById("issue4").checked;
+  const isFrustrated = false;
   const textFeedback = document.getElementById("feedback").value;
 
   if (!textFeedback && !isBadQuestion && !isBadInstructions && !isBadAnswerVerifier && !isFrustrated) {
@@ -336,6 +348,7 @@ document.getElementById("submitReportBtn").addEventListener("click", function ()
 
   const btn = document.getElementById('report-issue-close');
   btn.click();
+  clearReportData();
 });
 
 

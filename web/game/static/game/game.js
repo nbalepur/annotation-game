@@ -155,9 +155,9 @@ function update() {
         contentProgress.style.width = (100 * passed_prop).toFixed(4) + '%';
       }
 
-      if (passed_prop > 0.5) {
-        reportBtn.style.display = '';
-      }
+      // if (passed_prop > 0) {
+      //   reportBtn.style.display = '';
+      // }
 
       buzzPassedTime = 0;
       currentTime += 0.1;
@@ -186,7 +186,7 @@ function update() {
 
       // auto answer if over buzz time
       if (buzzPassedTime >= buzzTime) {
-        answer();
+        answer(requestContentInput.value);
         buzzProgress.style.width = '0%';
       }
       buzzPassedTime += 0.1;
@@ -255,6 +255,7 @@ gamesock.onmessage = message => {
     setQuestion(data['shown_question'], data['state']);
     isTutorial = data['is_tutorial'];
     resetRogueCheckbox();
+    clearReportData();
   } else if (data['response_type'] === 'clear_instructions') {
     clearInstructions();
   } else if (data['response_type'] === 'check_duplicate_user_data') {
@@ -346,6 +347,7 @@ gamesock.onmessage = message => {
   }
   else if (data['response_type'] === 'web_search_result') {
     search_result = data['result'];
+    updateTools(false, true, true);
     setWebSearch(search_result);
   }
   else if (data['response_type'] === 'content_selection_result') {
@@ -510,7 +512,7 @@ function showButtonsForState(currGameState, allowSwaps) {
       // is it time for the next step or to buzz?
       const shouldShowStep = shouldShowStepBtn();
 
-      reportBtn.style.display = 'none';
+      reportBtn.style.display = '';
       nextBtn.style.display = 'none';
       skipBtn.style.display = 'none';
       stepBtn.style.display = shouldShowStep ? '' : 'none';
@@ -714,28 +716,24 @@ function buzz() {
     if (container.style.display === 'none') {
       sendRequest("buzz_init", '');
       return;
+    } else {
+      const currentLastStep = container.querySelector('.step-div:first-child');
+      const guess = currentLastStep.querySelector('textarea').value;
+      answer(guess);
     }
+    // sendRequest("buzz_init", guess);
 
-    const currentLastStep = container.querySelector('.step-div:first-child');
-    const guess = currentLastStep.querySelector('textarea').value;
-    sendRequest("buzz_init", guess);
-
-    toggleCloseButtonVisibility(false);
+    // toggleCloseButtonVisibility(false);
   }
 }
 
-function answer() {
-  if (gameState === 'contest') {
-
-    showButtons();
-
-    requestContentInput.style.display = 'none';
-    // gameState = 'playing';
-    currentAction = 'idle';
-    sendRequest("buzz_answer", requestContentInput.value);
-    getShownQuestion();
-    
-  }
+function answer(guess) {
+  console.log('answering with:', guess);
+  showButtons();
+  requestContentInput.style.display = 'none';
+  currentAction = 'idle';   
+  sendRequest("buzz_answer", guess);
+  getShownQuestion();
 }
 
 function submitInitialFeedback() {
@@ -846,8 +844,28 @@ function next() {
 }
 
 function next_step() {
-  subanswers = getSubanswers();
+  const subanswers = getSubanswers();
+
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+  if (subanswers[subanswers.length - 1].trim() === '') {
+    const warningDiv = container.querySelector(`#step-warning-${subanswers.length}`);
+    if (warningDiv.style.display === 'none') {
+      warningDiv.style.display = '';
+      focusTextInput(`answer-step-${index + 1}`);
+      return;
+    }
+    warningDiv.style.display = 'none';
+  }
+
   sendRequest("show_next_step", subanswers);
+}
+
+
+
+function skip_plan() {
+  sendRequest("skip_plan");
 }
 
 function swap_plan() {

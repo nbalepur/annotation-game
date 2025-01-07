@@ -87,55 +87,6 @@ function focusLastInstruction() {
   }
 }
 
-function addBlankInstruction() {
-
-  const iframe = document.getElementById('instruction-frame');
-  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-  const container = iframeDoc.getElementById('instructions-container');
-
-  const currentLastStep = container.querySelector('.step-div:first-child .close-btn');
-  if (currentLastStep) {
-    currentLastStep.remove();
-  }
-
-  const lastIndex = container.querySelectorAll('.step-div').length;
-  const lastInstruction = "Edit this step to fit your needs"
-
-  const shouldEdit = true;
-
-  const stepDiv = iframeDoc.createElement('div');
-  stepDiv.className = 'p-4 mb-2 border bg-light position-relative step-div';
-  stepDiv.id = `step-div-${lastIndex + 1}`
-
-  stepDiv.innerHTML = `
-  <button type="button" class="close-btn" style="position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
-  <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit" contenteditable="${shouldEdit}">${lastInstruction}</span></p>
-  <div class="input-group">
-    <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
-    <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
-      <i class="bi bi-copy"></i> Copy to Tool
-    </button>
-  </div>
-`;
-
-container.prepend(stepDiv);
-
-const closeButton = stepDiv.querySelector('.close-btn');
-closeButton.addEventListener('click', () => {
-  removeStep(stepDiv, false);
-});
-
-const clipboardButtons = stepDiv.querySelectorAll('.copy-btn');
-clipboardButtons.forEach(button => {
-  button.addEventListener('click', function() {
-    const inputId = this.getAttribute('data-copy-id');
-    const textToCopy = iframeDoc.getElementById(inputId).value;
-    copyTextToTool(textToCopy);
-  });
-});
-}
-
-
 function clearInstructions() {
   const iframe = document.getElementById('instruction-frame');
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -157,17 +108,24 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     stepDiv.id = `step-div-${index + 1}`;
     stepDiv.setAttribute('is-custom', false);
 
-    const buttonHTML = isLastStep && index === inputInstructions['steps'].length - 1
-      ? `<button type="button" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">Buzz</button>`
-      : `<button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${index + 1}">
-           <i class="bi bi-copy"></i> Copy to Tool
-         </button>`;
+    const buttonHTML = !addCloseBtn ? '' : (isLastStep && index === inputInstructions['steps'].length - 1
+      ? `<button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">Buzz</button>`
+      : `<button type="button" style="border-radius: 0;" class="btn btn-sm btn-warning step-btn" data-copy-id="answer-step-${index + 1}">
+          Next Step (n)
+        </button>
+        <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary copy-btn" data-copy-id="answer-step-${index + 1}">
+           Copy to Tool
+         </button>
+         `);
 
     stepDiv.innerHTML = `
-      <p style="margin-bottom: 5px;"><strong>Step ${index + 1}: </strong><span id="step-${index + 1}" class="instructions-edit">${instruction}</span></p>
-      <div class="input-group">
+      <p style="margin-bottom: 0px;"><strong>Step ${index + 1}: </strong><span id="step-${index + 1}" class="instructions-edit">${instruction}</span></p>
+      <div class="input-group" style="margin-top: 5px;">
         <textarea id="answer-step-${index + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${buttonHTML}
+      </div>
+      <div id="step-warning-${lastIndex + 1}" style="display: none;">
+        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
       </div>
     `;
 
@@ -196,7 +154,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
       if (event.key === 'Enter') {
         event.preventDefault();
         if (isLastStep && index === inputInstructions['steps'].length - 1) {
-          buzz();
+          answer(textarea.value);
         } else {
           next_step();
           textarea.blur();
@@ -208,11 +166,12 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
       const stepBuzzButton = stepDiv.querySelector('.buzz-btn');
       if (stepBuzzButton) {
         stepBuzzButton.addEventListener('click', () => {
-          buzz();
+          answer(textarea.value);
         });
       }
       buzzBtn.style.display = '';
-    } else {
+      stepBtn.style.display = 'none';
+    } else if (addCloseBtn) {
       const copyButton = stepDiv.querySelector('.copy-btn');
       if (copyButton) {
         copyButton.addEventListener('click', function() {
@@ -221,8 +180,22 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
           copyTextToTool(textToCopy);
         });
       }
+      
+
+      const stepButton = stepDiv.querySelector('.step-btn');
+      if (stepButton) {
+        if (index === inputInstructions['steps'].length - 1) {
+          stepButton.style.display = '';
+          stepButton.addEventListener('click', function(e) {
+            next_step();
+          });
+        } else {
+          stepButton.style.display = 'none';
+        }
+      }
 
       buzzBtn.style.display = 'none';
+      stepBtn.style.display = '';
     }
 
     container.prepend(stepDiv);
@@ -248,37 +221,57 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
   stepDiv.className = 'p-4 mb-2 border bg-light position-relative step-div';
   stepDiv.id = `step-div-${lastIndex + 1}`;
 
+  if (isLastStep) {
+    const stepButtons = container.querySelectorAll('.step-btn');
+    stepButtons.forEach((button, index) => {
+      button.style.display = 'none';
+    });
+  }
+
   if (stepNum === 1) {
     stepDiv.innerHTML = `
-      <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
-      <div class="input-group">
+      <p style="margin-bottom: 0px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
+      <div class="input-group" style="margin-top: 5px;">
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
-          <button type="button" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">
+          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">
             Buzz
           </button>
         ` : `
-          <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
-            <i class="bi bi-copy"></i> Copy to Tool
+          <button type="button" style="border-radius: 0;" class="btn btn-sm btn-warning step-btn" data-copy-id="answer-step-${lastIndex + 1}">
+            Next Step (n)
+          </button>
+          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+            Copy to Tool 
           </button>
         `}
       </div>
+      <div id="step-warning-${lastIndex + 1}" style="display: none;">
+        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
+      </div>
     `;
+
   } else {
     stepDiv.innerHTML = `
       <button type="button" class="close-btn" style="position: absolute; top: 0px; right: 0px; border: none; background: none; font-size: 20px; cursor: pointer;">&times;</button>
-      <p style="margin-bottom: 5px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
-      <div class="input-group">
+      <p style="margin-bottom: 0px;"><strong>Step ${lastIndex + 1}: </strong><span id="step-${lastIndex + 1}" class="instructions-edit">${lastInstruction}</span></p>
+      <div class="input-group" style="margin-top: 5px;">
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
-          <button type="button" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">
+          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">
             Buzz
           </button>
         ` : `
-          <button type="button" class="btn btn-sm btn-warning copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
-            <i class="bi bi-copy"></i> Copy to Tool
+          <button type="button" style="border-radius: 0;" class="btn btn-sm btn-warning step-btn" data-copy-id="answer-step-${lastIndex + 1}">
+            Next Step (n)
+          </button>
+          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+            Copy to Tool
           </button>
         `}
+      </div>
+      <div id="step-warning-${lastIndex + 1}" style="display: none;">
+        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
       </div>
     `;
   }
@@ -297,7 +290,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     if (event.key === 'Enter') {
       event.preventDefault();
       if (isLastStep) {
-        buzz();
+        answer(textarea.value);
       } else {
         next_step();
         textarea.blur();
@@ -305,6 +298,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     }
   });
 
+  // copy to tool
   if (!isLastStep) {
     const clipboardButtons = stepDiv.querySelectorAll('.copy-btn');
     clipboardButtons.forEach(button => {
@@ -314,15 +308,29 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         copyTextToTool(textToCopy);
       });
     });
+
+    const stepButtons = container.querySelectorAll('.step-btn');
+    stepButtons.forEach((button, index) => {
+      if (index === 0) {
+        button.addEventListener('click', function (e) {
+          next_step();
+        });
+      } else {
+        button.style.display = 'none';
+      }
+    });
+
     buzzBtn.style.display = 'none';
+    stepBtn.style.display = '';
   } else {
     const stepBuzzButton = stepDiv.querySelector('.buzz-btn');
     if (stepBuzzButton) {
       stepBuzzButton.addEventListener('click', () => {
-        buzz();
+        answer(textarea.value);
       });
     }
     buzzBtn.style.display = '';
+    stepBtn.style.display = 'none';
   }
 }
 
@@ -362,7 +370,7 @@ function sendSubanswers(isCorrect, isFinal) {
                                 });
 }
 
-function reassignCloseButton() {
+function reassignCloseAndStepButton() {
   const iframe = document.getElementById('instruction-frame');
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
   const container = iframeDoc.getElementById('instructions-container');
@@ -383,13 +391,18 @@ function reassignCloseButton() {
         removeStep(newLastStep, false);
       });
     }
+
+    const stepButton = newLastStep.querySelector('.step-btn');
+    if (stepButton) {
+      stepButton.style.display = '';
+    }
   }
 }
 
 function removeStep(stepElement, isLastStep) {
   subanswers = getSubanswers();
   stepElement.remove();
-  reassignCloseButton();
+  reassignCloseAndStepButton();
   if (isLastStep) {
     stepBtn.style.display = '';
     buzzBtn.style.display = 'none';
@@ -418,7 +431,7 @@ function populateInstructions(inputInstructions, stepNum, isLastStep, addCloseBt
 }
 
 function updateTools(use_calc, use_doc, use_web) {
-    
+
     toolContainer.style.display = (use_calc || use_doc || use_web) ? '' : 'none';
     
     calculatorTool.style.display = use_calc ? '' : 'none';
@@ -437,10 +450,6 @@ function updateTools(use_calc, use_doc, use_web) {
     calculatorResultBtn.style.display = use_calc ? '' : 'none';
     calculatorResult.style.display = use_calc ? '' : 'none';
     copyMathBtn.style.display = use_calc ? '' : 'none';
-
-    calculatorTool.style.display = use_calc ? '' : 'none';
-    googleTool.style.display = use_web ? '' : 'none';
-    contentSelectorTool.style.display = use_doc ? '' : 'none';
 }
 
 function clear_math() {
@@ -557,6 +566,7 @@ function updateDoc(use_doc, doc_content) {
 }
 
 function loadingDoc() {
+  updateTools(false, false, true);
   const content =  `
   <!DOCTYPE html>
   <html lang="en">
@@ -778,6 +788,7 @@ function clearToolHistory() {
     if (!query) {
       return;
     }
+
     loadingDoc();
     
 
@@ -804,16 +815,20 @@ function clearToolHistory() {
 
 function toggleRogueCheckbox(checkbox) {
 
+  const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
+  const skipPlanButton = iframeDoc.getElementById('skip-plan-button');
+
   if (checkbox.checked) {
     buzzBtn.style.display = '';
     swapBtn.style.display = 'none';
     stepBtn.style.display = 'none';
+    skipPlanButton.style.visibility = '';
   } else {
+    skipPlanButton.style.visibility = 'hidden';
     showButtonsForState(gameState, allowSwapsGlobal);
   }
 
   // swap plan for notes
-  const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
   const instructions = iframeDoc.getElementById('instructions-container');
   instructions.style.display = checkbox.checked ? 'none' : '';
 

@@ -178,13 +178,11 @@ def evaluation_game_room(request, label):
 
 
 def instructions(request):
-
     if 'user_id' not in request.session:
         return redirect('home')
     user = User.objects.filter(user_id=request.session['user_id']).first()
     if not user:
         return redirect('home')
-
     return render(request, "base_instructions.html", {'is_pairwise': user.experiment_group == User.ExperimentGroup.PAIRWISE})
 
 def incentives(request):
@@ -205,7 +203,11 @@ def compute_leaderboard(question_type: Question.Category):
 
     # ignore tutorial + sanity check questions
     valid_logs = LeaderboardLog.objects.filter(question_id__in=Question.objects.filter(
-        generation_method__in=[Question.GenerationMethod.LLAMA, Question.GenerationMethod.QWEN]
+        generation_method__in=[Question.GenerationMethod.LLAMA, 
+                               Question.GenerationMethod.QWEN, 
+                               Question.GenerationMethod.CLAUDE,
+                               Question.GenerationMethod.GPT, 
+                               Question.GenerationMethod.COMMANDR]
     ).values_list('question_id', flat=True))
 
     # Calculate the average correctness score and seconds taken per user based on the question type

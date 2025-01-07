@@ -55,9 +55,10 @@
             },
             "instructions_b": {
                 "steps": [
-                    "Find the city that contains the tallest mountain in the United States",
-                    "Find the state that contains this city",
-                    "Find the capital of this state"
+                    "Find a list of all of the mountains in the United States sorted by height",
+                    "Find the first mountain on this list",
+                    "Look up the state where this mountain is located",
+                    "Locate this state's capital"
                 ]
             },
             "uses_calculator": false,
@@ -82,7 +83,7 @@
             "generation_method": "attention_p",
             "instructions_a": {
                 "steps": [
-                    "Find out what was the library fonunded by Ben Franking in 1731",
+                    "Find out what was the library founded by Ben Franking in 1731",
                     "Find the city where this library was located",
                     "Find the local transportation agency in this city"
                 ],
@@ -94,7 +95,7 @@
             },
             "instructions_b": {
                 "steps": [
-                    "Find out what was the library fonunded by Thomas Edison in 1941",
+                    "Find out what was the library founded by Thomas Edison in 1941",
                     "Find the country where this labratory was located",
                     "Find the local utilities agency in this country"
                 ]
