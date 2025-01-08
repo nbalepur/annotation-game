@@ -20,7 +20,7 @@
     <body>
       <div style="display: flex; justify-content: space-between; margin: 10px; visibility: hidden" id="follow-plan-div">
         <button class="btn btn-info btn-sm" style="align-self: flex-start; visibility: hidden;" class="btn btn-primary" id="skip-plan-button" onclick="window.parent.skip_plan()">
-          Skip (and receive no credit)
+          Skip Question (and get no credit)
         </button>
       
         <div class="form-check" id="edit-instructions-container">
@@ -31,8 +31,13 @@
         </div>
       </div>
 
-      <div class="form-group m-2" style="display: none;" id="rogue-notes">
-        <textarea id="rogue-notes-area" class="form-control" placeholder="Enter any notes here..." rows=10></textarea>
+      <div style="display: none;" id="rogue-notes">
+        <div class="form-group  m-2">
+          <textarea id="rogue-notes-area" class="form-control" placeholder="Enter your notes here..." rows=10></textarea>
+        </div>
+        <div id="rogue-notes-status" style="visibility: hidden;" class="m-2">
+          <p>Status update!</p>
+        </div>
       </div>
 
       <div id="instructions-container" style="margin: 10px;">

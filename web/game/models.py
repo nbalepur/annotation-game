@@ -131,6 +131,7 @@ class Room(models.Model):
     state = models.CharField(max_length=9, choices=GameState.choices, default=GameState.IDLE)
 
     curr_query = models.CharField(max_length=100, null=True)
+    curr_query_raw = models.CharField(max_length=100, null=True)
     
     show_comparisons_before = models.BooleanField(null=True)
 
@@ -155,6 +156,9 @@ class Room(models.Model):
     steps_seen_b = models.IntegerField(default=0, blank=True)
 
     last_guess = models.TextField(max_length=128, null=True)
+
+    history_idx = models.IntegerField(default=-1, blank=True)
+    search_history = models.JSONField(null=True, blank=True)
 
     buzz_player = models.OneToOneField(
         'Player',
@@ -320,6 +324,10 @@ class User(models.Model):
         default=Question.Category.EVERYTHING
     )
 
+    wiki_token_num = models.IntegerField(default=1)
+
+    auto_scroll = models.BooleanField(default=True)
+
     reset_token = models.CharField(max_length=255, null=True, blank=True)
 
     def set_password(self, raw_password):
@@ -328,7 +336,10 @@ class User(models.Model):
 
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
-    
+
+class EmergencyWarning(models.Model):
+    note = models.TextField(max_length=1000)
+
 class ReportIssue(models.Model):
 
     report_id = models.AutoField(primary_key=True)

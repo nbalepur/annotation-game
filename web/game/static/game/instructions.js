@@ -39,6 +39,9 @@ const searchClearBtn = document.getElementById('search-clear-btn');
 const copySearchBtn = document.getElementById('copy-search-btn');
 const copyMathBtn = document.getElementById('calculator-tool-result');
 
+const bwdSearch = document.getElementById('content-bwd-btn');
+const fwdSearch = document.getElementById('content-fwd-btn');
+
 function toggleFollowCheckbox(isVisible) {
   const iframe = instructionsFrame;
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -104,7 +107,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
 
   inputInstructions['steps'].forEach((instruction, index) => {
     const stepDiv = iframeDoc.createElement('div');
-    stepDiv.className = 'p-4 mb-2 border bg-light position-relative step-div';
+    stepDiv.className = 'pt-4 px-4 pb-2 mb-2 border bg-light position-relative step-div';
     stepDiv.id = `step-div-${index + 1}`;
     stepDiv.setAttribute('is-custom', false);
 
@@ -124,7 +127,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
         <textarea id="answer-step-${index + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${buttonHTML}
       </div>
-      <div id="step-warning-${lastIndex + 1}" style="display: none;">
+      <div id="step-warning-${index + 1}" style="visibility: hidden;">
         <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
       </div>
     `;
@@ -150,11 +153,17 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     }
 
     const textarea = stepDiv.querySelector('textarea');
+
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    });
+
     textarea.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
         if (isLastStep && index === inputInstructions['steps'].length - 1) {
-          answer(textarea.value);
+          answerWrapper(textarea.value);
         } else {
           next_step();
           textarea.blur();
@@ -166,7 +175,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
       const stepBuzzButton = stepDiv.querySelector('.buzz-btn');
       if (stepBuzzButton) {
         stepBuzzButton.addEventListener('click', () => {
-          answer(textarea.value);
+          answerWrapper(textarea.value);
         });
       }
       buzzBtn.style.display = '';
@@ -218,7 +227,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
   const lastInstruction = inputInstructions['steps'][inputInstructions['steps'].length - 1];
 
   const stepDiv = iframeDoc.createElement('div');
-  stepDiv.className = 'p-4 mb-2 border bg-light position-relative step-div';
+  stepDiv.className = 'pt-4 px-4 pb-2 mb-2 border bg-light position-relative step-div';
   stepDiv.id = `step-div-${lastIndex + 1}`;
 
   if (isLastStep) {
@@ -246,7 +255,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
           </button>
         `}
       </div>
-      <div id="step-warning-${lastIndex + 1}" style="display: none;">
+      <div id="step-warning-${lastIndex + 1}" style="visibility: hidden;">
         <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
       </div>
     `;
@@ -270,7 +279,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
           </button>
         `}
       </div>
-      <div id="step-warning-${lastIndex + 1}" style="display: none;">
+      <div id="step-warning-${lastIndex + 1}" style="visibility: hidden;">
         <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
       </div>
     `;
@@ -286,11 +295,15 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
   }
 
   const textarea = stepDiv.querySelector('textarea');
+  textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  });
   textarea.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       if (isLastStep) {
-        answer(textarea.value);
+        answerWrapper(textarea.value);
       } else {
         next_step();
         textarea.blur();
@@ -326,7 +339,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     const stepBuzzButton = stepDiv.querySelector('.buzz-btn');
     if (stepBuzzButton) {
       stepBuzzButton.addEventListener('click', () => {
-        answer(textarea.value);
+        answerWrapper(textarea.value);
       });
     }
     buzzBtn.style.display = '';
@@ -588,6 +601,39 @@ function loadingDoc() {
   docContent.srcdoc = content;
 }
 
+function buzzStatsUpdate(isCorrect) {
+  subanswers = getSubanswers();
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+  const warningDiv = container.querySelector(`#step-warning-${subanswers.length}`);
+
+  const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+
+  if (!checkbox.checked) {
+    if (!isCorrect) {
+      warningDiv.style.visibility = '';
+      warningDiv.innerHTML = '<p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-x-circle-fill"></i> Your answer is <strong>incorrect</strong>, try again!</p>';
+      return;
+    } else {
+      warningDiv.style.visibility = '';
+      warningDiv.innerHTML = '<p class="text-success" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-check-circle-fill"></i> Your answer is <strong>correct</strong>!</p>';
+      return;
+    }
+  } else {
+    const rogueStatus = iframeDoc.getElementById('rogue-notes-status');
+    if (!isCorrect) {
+        rogueStatus.style.visibility = '';
+        rogueStatus.innerHTML = '<p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-x-circle-fill"></i> Your answer is <strong>incorrect</strong>, try again!</p>';
+        return;
+    } else {
+      rogueStatus.style.visibility = '';
+      rogueStatus.innerHTML = '<p class="text-success" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-check-circle-fill"></i> Your answer is <strong>correct</strong>!</p>';
+      return;      
+    }
+    } 
+  }
+
 function updateStatus(status, player, answer, allowSwaps) {
     gameState = status;
     if (status === "compare") {
@@ -615,19 +661,21 @@ function updateStatus(status, player, answer, allowSwaps) {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed</span>`;
     } else if (status === "buzz_correct") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-success>correctly</span> with <span class=text-success>"${answer}"</span></span>`;
-        statusText.classList.add('flash-highlight');
-        setTimeout(() => {
-          statusText.classList.remove('flash-highlight');
-        }, 1000);
+        buzzStatsUpdate(true);
+        // statusText.classList.add('flash-highlight');
+        // setTimeout(() => {
+        //   statusText.classList.remove('flash-highlight');
+        // }, 1000);
         sendSubanswers(true, true);
         gameState = 'idle';
 
       } else if (status === "buzz_incorrect") {
         statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>`;
-        statusText.classList.add('flash-highlight');
-        setTimeout(() => {
-          statusText.classList.remove('flash-highlight');
-        }, 1000);
+        buzzStatsUpdate(false);
+        // statusText.classList.add('flash-highlight');
+        // setTimeout(() => {
+        //   statusText.classList.remove('flash-highlight');
+        // }, 1000);
         gameState = 'playing';
         sendSubanswers(false, false);
         toggleCloseButtonVisibility(true);
@@ -702,6 +750,10 @@ function copyTextToClipboard(textToCopy) {
   tempInput.select();
   document.execCommand('copy');
   document.body.removeChild(tempInput);
+}
+
+function navigateHistory(increment) {
+  sendRequest('navigate_history', increment)
 }
 
 function copyDocText(elementText='') {
@@ -835,7 +887,7 @@ function toggleRogueCheckbox(checkbox) {
   const notes = iframeDoc.getElementById('rogue-notes');
   notes.style.display = checkbox.checked ? '' : 'none';
 
-  instructionHeader.innerHTML = checkbox.checked ? '<h6>Custom Plan</h6>' : '<h6>Plan (p)</h6>';
+  instructionHeader.innerHTML = checkbox.checked ? '<h6>Write your own Plan (p)</h6>' : '<h6>Plan (p)</h6>';
 
   // add/remove the close button
   toggleCloseButtonVisibility(!checkbox.checked);
@@ -855,6 +907,11 @@ function resetRogueCheckbox() {
   // reset the notes
   const notes = iframeDoc.getElementById('rogue-notes-area');
   notes.value = '';
+
+  // reset/hide the status
+  const rogueStatus = iframeDoc.getElementById('rogue-notes-status');
+  rogueStatus.style.visibility = 'hidden';
+  rogueStatus.innerHTML = '<p></p>';
 }
 
 docContent.addEventListener('load', function() {
@@ -879,6 +936,42 @@ docContent.addEventListener('load', function() {
     });
     
 });
+
+function navigateHyperlink(link) {
+  const url = new URL(link.href);
+  const decodedPath = decodeURIComponent(url.pathname)
+  if (!decodedPath.startsWith('/wiki/')) {
+    return;
+  }
+  if (decodedPath.includes(':')) {
+    return;
+  }
+  sendRequest("navigate_hyperlink", url.pathname);
+}
+
+
+ // Add hyperlink listener
+ const iframe = document.getElementById('view-page-collapse');
+ iframe.addEventListener('load', () => {
+     const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+     const links = iframeDocument.querySelectorAll('a');
+     links.forEach(link => {
+         const href = link.getAttribute('href');
+         if (href && href.startsWith('/wiki/') && !href.includes(':')) {
+             link.addEventListener('click', function (event) {
+                 navigateHyperlink(link);
+                 event.preventDefault();
+             });
+         } else if (!href || (!href.includes('planstudyumd') && !href.includes('nbalepur'))) {
+          link.removeAttribute('href');
+          link.style.pointerEvents = 'none';
+          link.style.color = 'black';
+          link.style.textDecoration = 'none';
+          link.style.cursor = 'default';
+         }
+     });
+ });
+ 
 
 // instructionsFrame.addEventListener('load', function() {
 //   const iframeDocument = this.contentDocument || this.contentWindow.document;

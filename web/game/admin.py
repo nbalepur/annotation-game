@@ -101,3 +101,9 @@ class AnswerData(ImportExportModelAdmin, ExportActionMixin):
     list_display = ['user', 'question_id', 'final_instructions_letter', 'instructions_a', 'instructions_b', 'subanswers_a', 'subanswers_b', 'steps_seen_a', 'steps_seen_b', 'did_comparison', 'is_correct', 'is_final', 'is_report', 'followed_plan', 'guessed_answer', 'true_answer', 'notes']
     actions = ['export_as_csv']
     resource_class = MessageResource
+
+# @admin.register(EmergencyWarning)
+# class EmergencyWarning(ImportExportModelAdmin, ExportActionMixin):
+#     list_display = ['id']
+#     actions = ['export_as_csv']
+#     resource_class = MessageResource

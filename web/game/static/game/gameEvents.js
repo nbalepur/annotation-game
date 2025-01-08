@@ -18,6 +18,10 @@ const scoreboard = document.getElementById("scoreboard-body");
 const messageSpace = document.getElementById("message-space");
 const categoryHeader = document.getElementById("category-header");
 const categorySelect = document.getElementById("category-select");
+
+const autoScrollCheckbox = document.getElementById("auto-scroll-checkbox");
+const autoScrollContainer = document.getElementById("auto-scroll-container");
+
 const difficultySelect = document.getElementById("difficulty-select");
 //const speedSlider = document.getElementById('speed-slider');
 const skipBtn = document.getElementById('skip-btn');
@@ -207,7 +211,14 @@ function handleKeyPress(e) {
         e.preventDefault();
       }
     } else if (e.key === "p") {
-      focusLastInstruction();
+      const instructionFrame = document.getElementById('instruction-frame')
+      const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
+      const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+      if (checkbox.checked) {
+        focusTextInputInstructions('rogue-notes-area');
+      } else {
+        focusLastInstruction();
+      }
       e.preventDefault();
     }
     // else if (e.key == "s") {
@@ -367,4 +378,8 @@ swapBtn.addEventListener("click", swap_plan)
 
 categorySelect.addEventListener('change', function(event) {
   sendRequest("change_category", event.target.value);
+});
+
+autoScrollCheckbox.addEventListener('change', function(event) {
+  sendRequest("change_auto_scroll", event.target.checked);
 });

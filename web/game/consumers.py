@@ -58,11 +58,25 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             self.close()  # Close WebSocket connection for unauthenticated users
             return
 
+        # Debugging logs
+        print(f"Room name: {self.room_name}")
+        print(f"Room group name: {self.room_group_name}")
+        print(f"Channel name: {self.channel_name}")
+        print(f"Channel layer: {self.channel_layer}")
+
         # Join room group
-        async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name, self.channel_name
-        )
+        try:
+            async_to_sync(self.channel_layer.group_add)(
+                self.room_group_name, self.channel_name
+            )
+            print("Successfully joined the room group")
+        except Exception as e:
+            print(f"Error joining the room group: {e}")
+            self.close()
+            return
+
         self.accept()
+        print("WebSocket connection accepted")
 
     def disconnect(self, close_code):
         """Websocket disconnect"""
@@ -72,6 +86,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     def receive(self, text_data):
         """Websocket receive"""
+
+        print('receiving anything')
 
         data = json.loads(text_data)
         if "content" not in data or data["content"] == None:
@@ -172,15 +188,21 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             elif data["request_type"] == "calculate":
                 self.calculate(room, p, data["content"])
             elif data["request_type"] == "web_search":
-                self.web_search(room, p, data["content"])
+                self.web_search(room, p, data["content"], False)
             elif data["request_type"] == "content_select":
                 self.select_content_wrapper(room, p, data["content"])
+            elif data["request_type"] == "navigate_history":
+                self.navigate_history(room, p, data['content'])
             elif data["request_type"] == "log_comparison":
                 self.log_comparison(room, p, data["content"])
             elif data["request_type"] == "decrease_steps":
                 self.decrease_steps(room, p, data['content'])
             elif data["request_type"] == "change_category":
                 self.change_category(room, p, data['content'])
+            elif data["request_type"] == "change_auto_scroll":
+                self.change_auto_scroll(room, p, data['content'])
+            elif data["request_type"] == "navigate_hyperlink":
+                self.navigate_hyperlink(room, p, data['content'])
             else:
                 pass
 
@@ -204,6 +226,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 "locked_out": p.locked_out,
             }
         )
+
+    def change_auto_scroll(self, room: Room, player: Player, auto_scroll: bool):
+        user = player.user
+        user.auto_scroll = auto_scroll
+        user.save()
 
     def change_category(self, room: Room, player: Player, category: str):
         category_map = {
@@ -236,7 +263,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             print("No experiment group found!")
             return
         
-        # pass the experiment group to the front-end
+        # pass the experiment group settings to the front-end
         self.update_experiment_type(user)
         
         room.steps_seen_a = 1
@@ -294,6 +321,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             },
         )
 
+    def decide_wiki_token_num(self, user: User):
+        if user is not None:
+            return user.wiki_token_num
+        return random.choice([1, 2])
+
     def decide_expt_group(self, user: User):
 
         if user.experiment_group is not None:
@@ -337,7 +369,9 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Create new user and player in room"""
         user = User.objects.filter(user_id=self.user_id).first()
         expt_group = self.decide_expt_group(user)
+        wiki_token_num = self.decide_wiki_token_num(user)
         user.experiment_group = expt_group
+        user.wiki_token_num = wiki_token_num
         user.save()
         self.send_json(
             {
@@ -614,7 +648,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Next question"""
         # transition so the user has time to read the instructions
         if room.state == Room.GameState.IDLE:
-
+            
+            
             question_type = room.category
             q = self.decide_next_question(
                 room=room, player=player, 
@@ -633,6 +668,8 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             room.curr_subanswers_a = None
             room.curr_subanswers_b = None
             room.last_guess = None
+            room.search_history = []
+            room.history_idx = -1
             self.load_instructions(room=room, player=player)
 
             # get this logging party started
@@ -1043,6 +1080,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     "response_type": "set_experiment_type",
                     "experiment_type": user.experiment_group,
                     "category_preference": user.category_preference,
+                    "prefers_auto_scroll": user.auto_scroll,
                 },
             }
         )
@@ -1735,20 +1773,52 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         """Handle errors during web search"""
 
         room.curr_query = None
+        room.curr_query_raw = None
         room.save()
+
+        openbracket, closebracket = "{", "}"
+        wikipedia_css = """
+        <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=mediawiki.legacy.shared|mediawiki.skinning.content|mediawiki.skinning.interface&only=styles&skin=vector">
+        <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=site.styles&only=styles&skin=vector">
+        """
+
+        fixed_html_content = f"""
+<p>No results found: {error}</p><br /><p>Please try another search query. If the issue persists, please contact <a href='mailto:planstudyumd@gmail.com'>planstudyumd@gmail.com</a> ASAP!</p>
+"""
+
+        final_html = f"""
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{query}</title>
+            {wikipedia_css}
+            <style>
+                .highlight {openbracket}
+                    background-color: yellow; /* Color for the highlight */
+                    transition: background-color 1s ease; /* Smooth transition */
+                {closebracket}
+                body {openbracket}
+                font-size: 1.2em; /* Scale up text size by 20% */
+                {closebracket}
+            </style>
+        </head>
+        <body>
+            <div class="mw-body-content">
+                <div class="page-header">
+                    <h1>Error Encountered</h1>
+                </div>
+                {fixed_html_content}
+            </div>
+        </body>
+        </html>
+        """
 
         self.send(text_data=json.dumps({
             'response_type': 'web_search_result',
-            'result': f"<p>No results found: {error}\n\nTry another search query. If the issue persists, please contact <a href='mailto:planstudyumd@gmail.com'>planstudyumd@gmail.com</a>.</p>"
+            'result': final_html,
+            'doc_search_query': '',
         }))
-        self.send(
-            text_data=json.dumps(
-                {
-                    "response_type": "web_search_result",
-                    "result": f"<p>No results found: {error}\n\nTry another search query. If the issue persists, please contact <a href='mailto:planstudyumd@gmail.com'>planstudyumd@gmail.com</a>.</p>"
-                }
-            )
-        )
 
         # log tool use
         self.log_tool_use(room, p, query, {"error": error}, "web_search", "failure")
@@ -1838,16 +1908,41 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         for elem in elements:
             sentences.append(elem.text.strip())
         return sentences
+    
+    def navigate_history(self, room: Room, p: Player, inc: int):
+
+        print('history time:', room.search_history, room.history_idx)
+        room.history_idx += inc
+        room.save()
+        wiki_query, select_idxs, typed_query_web, typed_query_search = room.search_history[room.history_idx]
+        cached_page_res = self.retrieve_from_document_cache(
+            "wiki_page_query:" + wiki_query
+        )
+        self.send(
+            text_data=json.dumps(
+                {"response_type": "navigate_web_search_result",
+                 "html": cached_page_res,
+                 "typed_query_web": typed_query_web,
+                 'typed_query_search': typed_query_search,
+                 "select_idxs": select_idxs,
+                 "allow_forwards": room.history_idx != len(room.search_history) - 1,
+                 "allow_backwards": room.history_idx > 0,
+                 }
+            )
+        )
+
 
     def send_web_search_success(
         self,
         room: Room,
         p: Player,
+        uncleaned_query: str,
         query: str,
         title: str,
         final_html: str,
         cache_title: bool,
         cache_html: bool,
+        is_wiki: bool
     ):
         """Successful web search"""
 
@@ -1856,10 +1951,16 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         if cache_html:
             self.add_to_document_cache("wiki_page_query:" + title, final_html)
 
-        self.log_tool_use(room, p, query, title, "web_search", "success")
+        self.log_tool_use(room, p, query, title, "web_search_hyperlink" if is_wiki else "web_search", "success")
+
         self.send(
             text_data=json.dumps(
-                {"response_type": "web_search_result", "result": final_html}
+                {"response_type": "web_search_result",
+                 'doc_search_query': uncleaned_query if p.user.auto_scroll else '',
+                 "result": final_html,
+                 "allow_forwards": False,
+                 "allow_backwards": room.history_idx >= 0,
+                 }
             )
         )
         # self.update_tools(
@@ -1870,24 +1971,87 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         #     True,
         # )
 
-        # auto-search for the relevant paragraph
-        self.select_content(room, p, query, final_html)
+        # auto-scroll to the relevant sentence
+        if not is_wiki and p.user.auto_scroll:
+            idxs = self.select_content(room, p, query, final_html)
+            room.search_history = room.search_history[:room.history_idx+1] + [(room.curr_query, idxs, uncleaned_query, uncleaned_query)]
+        else:
+            room.search_history = room.search_history[:room.history_idx+1] + [(room.curr_query, [], uncleaned_query, '')]
+        room.history_idx += 1
+        room.save()
+        
 
-    def web_search(self, room: Room, p: Player, query):
+    def get_html_sentences(self, p_tag_input):
 
-        wiki_pages, status = self.get_wiki_pages(room, p, query)
-        if status == "error":
-            self.send_web_search_error(room, p, query, wiki_pages[0])
-            return
+        children = []
+        for c in p_tag_input.children:
+            if c.name == 'sup':
+                continue
+            elif c.name in ['i', 'b']:
+                children.append(c)
+            elif c.name == 'a' and c.get('href') and c.get('href')[:len('/wiki/')] == '/wiki/' and ':' not in c.get('href'):
+                children.append(c)
+            else:
+                children.append(c.text)
 
-        session = self.scope["session"]
-        wikimedia_token = session.get("oauth_token")
-        oauth_session = OAuth2Session(
-            os.getenv("WIKIMEDIA_CLIENT_ID"), token=wikimedia_token
-        )
+        merged_children = []
+        for idx, child in enumerate(children):
+            if type(child) == str:
+                if len(merged_children) == 0 or type(merged_children[-1]) != str:
+                    merged_children.append(child)
+                else:
+                    merged_children[-1] = merged_children[-1] + child
+            else:
+                merged_children.append(child)
 
+        merged_children = [(str(c), c if type(c) == str else c.text) for c in merged_children]
+
+        sentences = [s + ' ' for s in nltk.sent_tokenize(''.join([c[1] for c in merged_children]))]
+
+        child_ptr = 0
+        sentence_ptr = 0
+        curr_len = 0
+
+        sent_builder = ['']
+
+        while child_ptr < len(merged_children) and sentence_ptr < len(sentences):
+            child, child_text = merged_children[child_ptr]
+            sentence = sentences[sentence_ptr]
+
+            if curr_len + len(child_text) < len(sentence):
+                curr_len += len(child_text)
+                sent_builder[-1] += child
+                child_ptr += 1
+
+            else:
+                prefix, suffix = child_text[:len(sentence) - curr_len], child_text[len(sentence) - curr_len:]
+
+                sent_builder[-1] += prefix 
+                sent_builder.append("")
+                curr_len = 0
+                merged_children[child_ptr] = (child.replace(child_text, suffix), suffix)
+                sentence_ptr += 1
+
+        return sentences, sent_builder
+    
+    def navigate_hyperlink(self, room: Room, p: Player, wiki_url: str):
+        wiki_url = wiki_url.replace('/wiki/', '').strip()
+        self.web_search(room, p, wiki_url, True)
+
+    def web_search(self, room: Room, p: Player, query, is_wiki):
+
+        if is_wiki:
+            wiki_pages = [query]
+            status = "from_hyperlink"
+            self.log_tool_use(room, p, query, dict(), "web_search_hyperlink", "start")
+        else:
+            wiki_pages, status = self.get_wiki_pages(room, p, query)
+            if status == "error":
+                self.send_web_search_error(room, p, query, wiki_pages[0])
+                return
+            
         for page_title in wiki_pages:
-            page_title_clean = self.clean_query(page_title)
+            page_title_clean = page_title
 
             cached_page_res = self.retrieve_from_document_cache(
                 "wiki_page_query:" + page_title_clean
@@ -1895,20 +2059,23 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             if cached_page_res != None:
                 room.curr_query = page_title_clean
+                room.curr_query_raw = query
                 room.save()
 
                 # print("page found in cache!")
                 self.send_web_search_success(
                     room=room,
                     p=p,
+                    uncleaned_query=query,
                     query=self.clean_query(query),
                     title=page_title_clean,
                     final_html=cached_page_res,
                     cache_title=(status == "new_search"),
                     cache_html=False,
+                    is_wiki=is_wiki
                 )
                 return
-
+            
             params = {
                 "action": "parse",
                 "page": page_title,
@@ -1919,38 +2086,44 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
             try:
                 api_url = "https://en.wikipedia.org/w/api.php"
-                response = oauth_session.get(api_url, params=params)
-            except TokenExpiredError:
-                self.send(
-                    text_data=json.dumps(
-                        {
-                            "response_type": "reauthenticate",
-                        }
-                    )
-                )
-                self.close()
-                return
+                # headers = {
+                #     "Authorization": f"Bearer {os.getenv('WIKIMEDIA_API_KEY' + str(p.user.wiki_token_num), '')}"
+                # }
+                response = requests.get(api_url, headers={}, params=params)
             except Exception as e:
                 continue
+
+            if response.status_code == 403 or response.headers.get('mediawiki-api-error', "") == 'mwoauth-invalid-authorization-invalid-user':
+               # log an emergency so it's easier for me to see lol
+               EmergencyWarning.objects.create(
+                   note=f"Wikimedia key throwing error.\nKey: {str(p.user.wiki_token_num)}"
+               )
 
             if response.status_code == 200:
 
                 room.curr_query = page_title_clean
+                room.curr_query_raw = query
                 room.save()
 
                 data = response.json()
+
+                print(page_title_clean, data.keys())
+                
+                if "error" in data:
+                    self.send_web_search_error(room, p, query, data["error"]["info"])
+                    return
+                
                 html_content = data["parse"]["text"]["*"]
                 title = data["parse"]["title"]
                 soup = BeautifulSoup(html_content, "html.parser")
 
                 # TODO: fix the web scraping
-
+                curr_html = ""
                 element_counter = 0
                 for p_tag in soup.find_all("p"):
-                    text = p_tag.get_text()
-                    sentences = nltk.sent_tokenize(text)
-                    curr_html = ""
-                    for sent in sentences:
+                    sentences, html_sentences = self.get_html_sentences(p_tag)  
+                    curr_html = ""    
+                    for sent in html_sentences:
                         if sent:
                             curr_html += (
                                 f'<span id="element-{element_counter}">{sent}</span> '
@@ -1960,12 +2133,17 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     p_tag.append(BeautifulSoup(curr_html, "html.parser"))
 
                 # for li_tag in soup.find_all('li'):
-                #     if not (li_tag.a and len(li_tag.contents) == 1):
-                #         text = li_tag.get_text()
-                #         if text:
-                #             content_list.append(text)
-                #             li_tag['id'] = f"element-{element_counter}"
+                #     if li_tag.id
+                #     sentences, html_sentences = self.get_html_sentences(li_tag)  
+                #     curr_html = ""    
+                #     for sent in html_sentences:
+                #         if sent:
+                #             curr_html += (
+                #                 f'<span id="element-{element_counter}">{sent}</span> '
+                #             )
                 #             element_counter += 1
+                #     p_tag.clear()
+                #     p_tag.append(BeautifulSoup(curr_html, "html.parser"))
 
                 fixed_html_content = str(soup)
                 openbracket, closebracket = "{", "}"
@@ -1973,20 +2151,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=mediawiki.legacy.shared|mediawiki.skinning.content|mediawiki.skinning.interface&only=styles&skin=vector">
                 <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=site.styles&only=styles&skin=vector">
                 """
-                #         copy_script = '''<script>
-                #     document.addEventListener("keydown", function(e) {
-                #       if ((e.ctrlKey || e.metaKey) && e.key == "c") {
-                #         navigator.clipboard.readText()
-                #         .then(text => {
-                #           window.parent.sendToNotes(text);
-                #         })
-                #         .catch(err => {
-                #           console.error("Error reading clipboard contents:", err);
-                #         });
-                #       }
-                #     });
-                #   </script>'''
-                copy_script = ""
+
                 final_html = f"""
                 <html>
                 <head>
@@ -1995,9 +2160,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     <title>{title}</title>
                     {wikipedia_css}
                     <style>
-                        a {openbracket}
-                            pointer-events: none;
-                        {closebracket}
                         .highlight {openbracket}
                             background-color: yellow; /* Color for the highlight */
                             transition: background-color 1s ease; /* Smooth transition */
@@ -2014,7 +2176,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                         </div>
                         {fixed_html_content}
                     </div>
-                    {copy_script}
                 </body>
                 </html>
                 """
@@ -2022,18 +2183,19 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                 self.send_web_search_success(
                     room=room,
                     p=p,
+                    uncleaned_query=query,
                     query=self.clean_query(query),
                     title=page_title_clean,
                     final_html=final_html,
                     cache_title=(status == "new_search"),
                     cache_html=True,
+                    is_wiki=is_wiki,
                 )
-
                 return
             else:
                 continue
 
-        self.send_web_search_error(room, p, query, "no_page_content")
+        self.send_web_search_error(room, p, query, "The specified page does not exist")
 
     def log_comparison(self, room: Room, p: Player, chosen: str):
         """Log pairwise comparison of instructions"""
@@ -2075,7 +2237,11 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         
         search_query = 'long_context:' + room.current_question.document_context if (room.current_question.category == Question.Category.LONGCONTEXT) else 'wiki_page_query:' + room.curr_query
         html = self.retrieve_from_document_cache(search_query)
-        self.select_content(room, p, query, html)
+
+        idxs = self.select_content(room, p, query, html)
+        room.search_history = room.search_history[:room.history_idx+1] + [(room.curr_query, idxs, query, room.curr_query_raw)]
+        room.history_idx += 1
+        room.save()
 
     def select_content(self, room: Room, p: Player, query: str, html: str):
         """Executes the content selection tool"""
@@ -2099,6 +2265,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     {
                         "response_type": "content_selection_result",
                         "result": [],
+                        "num_docs": 0,
                     }
                 )
             )
@@ -2128,9 +2295,13 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
                     "response_type": "content_selection_result",
                     "result": doc_idxs,
                     "num_docs": len(docs),
+                    "allow_forwards": False,
+                    "allow_backwards": len(room.search_history) > 0
                 }
             )
         )
+
+        return doc_idxs
 
     def calculate(self, room: Room, p: Player, equation):
         """Executes the calculator tool using SymPy with implicit multiplication handling"""

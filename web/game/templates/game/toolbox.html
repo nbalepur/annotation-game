@@ -9,7 +9,7 @@
     <button type="button" class="btn btn-primary" id="calc-expression-btn2" onclick="calculate()">
       Calculate (m)
     </button>
-    <button type="button" class="btn btn-secondary" id="calc-clear-btn" onclick="clear_math()">
+    <button type="button" class="btn btn-secondary opacity-75" id="calc-clear-btn" onclick="clear_math()">
       <i class="fa-solid fa-delete-left"></i>
     </button>
   </div>
@@ -31,19 +31,24 @@
     </button>
     <input type="text" id="calc-result" class="form-control" placeholder="Results will come here!" readonly>
   </div>
+
+
   <!-- Google Tool -->
-  <div class="input-group mb-3" id="google-tool">
-    <button type="button" id="google-query-btn" class="btn btn-primary" onclick="webSearch()">
-      <i class="fas fa-globe"></i>
-    </button>
-    <input type="text" id="google-query" class="form-control" placeholder="Enter a web search query" />
-    <button type="button" class="btn btn-primary" id="google-query-btn2" onclick="webSearch()">
-      Web Search (w)
-    </button>
-    <button type="button" class="btn btn-secondary" id="search-clear-btn" onclick="clear_search()">
-      <i class="fa-solid fa-delete-left"></i>
-    </button>
+  <div id="google-tool" class="mb-3">
+    <div class="input-group">
+      <button type="button" id="google-query-btn" class="btn btn-primary" onclick="webSearch()">
+        <i class="fas fa-globe"></i>
+      </button>
+      <input type="text" id="google-query" class="form-control" placeholder="Enter a web search query" />
+      <button type="button" class="btn btn-primary" id="google-query-btn2" onclick="webSearch()">
+        Web Search (w)
+      </button>
+      <button type="button" class="btn btn-secondary opacity-75" id="search-clear-btn" onclick="clear_search()">
+        <i class="fa-solid fa-delete-left"></i>
+      </button>
+    </div>
   </div>
+  
 
   <!-- Document Viewer -->
   <div id="doc-viewer">
@@ -53,25 +58,36 @@
     </div>
 
     <div id="doc-viewer-content" class="d-flex flex-column flex-grow-1">
-      <div class="input-group mt-2" id="content-selector-tool" style="display: none;">
-        <button type="button" class="btn btn-warning" id="copy-search-btn" onclick="copyDocText()">
-          Copy Text (c)
-        </button>
 
+      <div class="input-group mt-2" id="content-selector-tool" style="display: 'none';">
 
-        <button type="button" class="btn btn-primary ms-5" id="content-search-btn" onclick="selectContent()">
+        <div class="btn-group" role="group" aria-label="Navigation">
+          <button type="button" class="btn btn-outline-info me-2" disabled id="content-bwd-btn" onclick="navigateHistory(-1)">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          <button type="button" class="btn btn-outline-info me-4" disabled id="content-fwd-btn" onclick="navigateHistory(1)">
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <div>
+          <button type="button" class="btn btn-warning" id="copy-search-btn" onclick="copyDocText()">
+            Copy Text (c)
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-info ms-5" id="content-search-btn" style="border-radius: 0.5rem 0 0 0.5rem;" onclick="selectContent()">
           <i class="fas fa-search"></i>
         </button>
         <input type="text" id="content-search" class="input-sm form-control " placeholder="Enter a page search query" />
-        <button type="button" class="btn btn-primary" id="content-search-btn2" onclick="selectContent()">
+        <button type="button" class="btn btn-info" id="content-search-btn2" onclick="selectContent()">
           Find (f)
         </button>
-        <button type="button" class="btn btn-secondary" id="find-clear-btn" onclick="clear_find()">
+        <button type="button" class="btn btn-secondary opacity-75" id="find-clear-btn" onclick="clear_find()">
           <i class="fa-solid fa-delete-left"></i>
         </button>
-
-
       </div>
+
       <hr style="margin-top: 10px; margin-bottom: 10px; margin-right: 0px; margin-left: 0px"></hr>
 
       <iframe class="mb-2 flex-grow-1" id="view-page-collapse" srcdoc='
