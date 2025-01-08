@@ -234,7 +234,7 @@ class TestConsumers:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[1],
             category=Question.Category.MATH,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -254,7 +254,7 @@ class TestConsumers:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[2],
             category=Question.Category.MATH,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -304,7 +304,7 @@ class TestConsumers:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[1],
             category=Question.Category.MATH,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -324,7 +324,7 @@ class TestConsumers:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[2],
             category=Question.Category.MATH,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -351,7 +351,7 @@ class TestConsumers:
         self.user.experiment_group = User.ExperimentGroup.PAIRWISE
         self.user.save()
 
-        """Test that we ignore reported questions"""
+        """Test that we don't ignore rogue users"""
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
             user=self.all_users[0],
@@ -374,7 +374,7 @@ class TestConsumers:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[1],
             category=Question.Category.MATH,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -394,7 +394,7 @@ class TestConsumers:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[2],
             category=Question.Category.MATH,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -413,7 +413,7 @@ class TestConsumers:
         )
 
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "B"
+            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
 
 @pytest.mark.django_db
 class TestExperimentGroup:
@@ -449,7 +449,47 @@ class TestExperimentGroup:
         user.save()
         assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
 
-    def test_rogue_report_unfinal_dont_count(self):
+    def test_rogue_counts(self):
+
+        user = User.objects.create(name="testuser", email="testuser", user_id=1000)
+
+        user_swap1 = User.objects.create(name="testuser1", email="testuser1", user_id=1001)
+        user_swap1.experiment_group = User.ExperimentGroup.SWAP
+        user_swap1.save()
+
+        user_swap2 = User.objects.create(name="testuser2", email="testuser2", user_id=1002)
+        user_swap2.experiment_group = User.ExperimentGroup.SWAP
+        user_swap2.save()
+
+        for idx in range(6):
+            curr_user = User.objects.create(name=str(idx), email=str(idx), user_id=idx)
+            curr_user.experiment_group = User.ExperimentGroup.PAIRWISE
+            curr_user.save()
+
+        for _ in range(5):
+            assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
+        
+    def test_rogue_counts_flipped(self):
+
+        user = User.objects.create(name="testuser", email="testuser", user_id=1000)
+
+        user_swap1 = User.objects.create(name="testuser1", email="testuser1", user_id=1001)
+        user_swap1.experiment_group = User.ExperimentGroup.PAIRWISE
+        user_swap1.save()
+
+        user_swap2 = User.objects.create(name="testuser2", email="testuser2", user_id=1002)
+        user_swap2.experiment_group = User.ExperimentGroup.PAIRWISE
+        user_swap2.save()
+
+        for idx in range(6):
+            curr_user = User.objects.create(name=str(idx), email=str(idx), user_id=idx)
+            curr_user.experiment_group = User.ExperimentGroup.SWAP
+            curr_user.save()
+
+        for _ in range(5):
+            assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.PAIRWISE
+
+    def test_report_unfinal_dont_count(self):
 
         user = User.objects.create(name="testuser", email="testuser", user_id=1000)
 
@@ -521,29 +561,11 @@ class TestExperimentGroup:
                         final_instructions_letter="A",
                     )
                 else:
-                    AnswerData.objects.create(
-                        question_id=self.math_questions[1].question_id,
-                        user=swap_user,
-                        category=Question.Category.MULTIHOP,
-                        instructions_a={"step1": "Do this"},
-                        instructions_b={"step1": "Do that"},
-                        subanswers_a={"sub1": "Answer A1"},
-                        subanswers_b={"sub1": "Answer B1"},
-                        steps_seen_a=3,
-                        steps_seen_b=2,
-                        did_comparison=False,
-                        followed_plan=False,
-                        is_correct=True,
-                        is_final=True,
-                        is_report=False,
-                        guessed_answer={"guess": "Guessed answer"},
-                        true_answer={"true": "True answer"},
-                        final_instructions_letter="A",
-                    )
+                    continue
 
         assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
 
-    def test_rogue_report_final_dont_count_flipped(self):
+    def test_report_final_dont_count_flipped(self):
 
         user = User.objects.create(name="testuser", user_id=1000)
 
@@ -615,25 +637,7 @@ class TestExperimentGroup:
                         final_instructions_letter="A",
                     )
                 else:
-                    AnswerData.objects.create(
-                        question_id=self.math_questions[1].question_id,
-                        user=pairwise_user,
-                        category=Question.Category.MULTIHOP,
-                        instructions_a={"step1": "Do this"},
-                        instructions_b={"step1": "Do that"},
-                        subanswers_a={"sub1": "Answer A1"},
-                        subanswers_b={"sub1": "Answer B1"},
-                        steps_seen_a=3,
-                        steps_seen_b=2,
-                        did_comparison=False,
-                        followed_plan=False,
-                        is_correct=True,
-                        is_final=True,
-                        is_report=False,
-                        guessed_answer={"guess": "Guessed answer"},
-                        true_answer={"true": "True answer"},
-                        final_instructions_letter="A",
-                    )
+                    continue
 
         assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.PAIRWISE
         
@@ -1537,7 +1541,7 @@ class TestConsumersTrivia:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[1],
             category=Question.Category.MULTIHOP,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -1557,7 +1561,7 @@ class TestConsumersTrivia:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[2],
             category=Question.Category.MULTIHOP,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -1584,7 +1588,7 @@ class TestConsumersTrivia:
         self.user.experiment_group = User.ExperimentGroup.PAIRWISE
         self.user.save()
 
-        """Test that we ignore reported questions"""
+        """Test that we don't ignore rogue users"""
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
             user=self.all_users[0],
@@ -1607,7 +1611,7 @@ class TestConsumersTrivia:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[1],
             category=Question.Category.MULTIHOP,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -1627,7 +1631,7 @@ class TestConsumersTrivia:
 
         AnswerData.objects.create(
             question_id=self.room.current_question.question_id,
-            user=self.all_users[0],
+            user=self.all_users[2],
             category=Question.Category.MULTIHOP,
             instructions_a={"step1": "Do this"},
             instructions_b={"step1": "Do that"},
@@ -1646,7 +1650,7 @@ class TestConsumersTrivia:
         )
 
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "B"
+            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
 
 @pytest.mark.django_db
 class TestDecideNextQuestion:

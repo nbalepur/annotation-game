@@ -58,13 +58,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             self.close()  # Close WebSocket connection for unauthenticated users
             return
 
-        # Debugging logs
-        print(f"Room name: {self.room_name}")
-        print(f"Room group name: {self.room_group_name}")
-        print(f"Channel name: {self.channel_name}")
-        print(f"Channel layer: {self.channel_layer}")
-
-        # Join room group
         try:
             async_to_sync(self.channel_layer.group_add)(
                 self.room_group_name, self.channel_name
@@ -76,7 +69,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
             return
 
         self.accept()
-        print("WebSocket connection accepted")
 
     def disconnect(self, close_code):
         """Websocket disconnect"""
@@ -86,8 +78,6 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
     def receive(self, text_data):
         """Websocket receive"""
-
-        print('receiving anything')
 
         data = json.loads(text_data)
         if "content" not in data or data["content"] == None:
@@ -333,7 +323,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
         
         # (question_id, did_comparison) -> number of users who have done it
         question_user_count = (
-            AnswerData.objects.filter(followed_plan=True, is_final=True, is_report=False)
+            AnswerData.objects.filter(is_final=True, is_report=False)
             .values("question_id", "did_comparison")
             .annotate(user_count=Count("user__user_id", distinct=True))
         )
@@ -1114,7 +1104,7 @@ class QuizbowlConsumer(JsonWebsocketConsumer):
 
         # otherwise, quantify which one has been seen less and show that one to balance out the labels
         instruction_obj = AnswerData.objects.filter(
-            question_id=room.current_question.question_id, did_comparison=True, is_final=True, is_report=False, followed_plan=True
+            question_id=room.current_question.question_id, did_comparison=True, is_final=True, is_report=False
         )
         seen_instr_A, seen_instr_B = (
             instruction_obj.filter(final_instructions_letter="A").values("user_id").distinct(),
