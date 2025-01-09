@@ -2,6 +2,7 @@ from datetime import timedelta
 from typing import List
 from django.db import models
 from django.db.models import Q, Max
+from asgiref.sync import async_to_sync, sync_to_async
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -188,14 +189,12 @@ class Room(models.Model):
     def __str__(self):
         return self.label
 
-    def get_valid_players(self):
-        return self.players.filter(
+    @sync_to_async
+    def get_players_by_score(self):
+        valid_players = self.players.filter(
                     Q(last_seen__gte=timezone.now().timestamp() - 3600) &
                     Q(banned=False)
                 )
-
-    def get_players_by_score(self):
-        valid_players = self.get_valid_players()
 
         player_list = [{
             'user_name': player.user.name,
@@ -210,11 +209,15 @@ class Room(models.Model):
         player_list.sort(key=lambda player: player['score'])
         return player_list
     
+    @sync_to_async
     def get_buzz_badges(self) -> List[BuzzBadge]:
         """
         Method to get the question feedbacks from players in the room.
         """
-        players_in_room = self.get_valid_players()
+        players_in_room = self.players.filter(
+                    Q(last_seen__gte=timezone.now().timestamp() - 3600) &
+                    Q(banned=False)
+                )
 
         # Initialize an empty list to store question feedbacks
         buzz_badges: List[BuzzBadge] = []
@@ -249,6 +252,7 @@ class Room(models.Model):
 
         return sorted(buzz_badges, key=lambda b: -b.index)
     
+    @sync_to_async
     def compute_words_to_show(self) -> int:
         """Computes the number of words to show based on the elapsed time in the game."""
         current_time = timezone.now().timestamp()
@@ -264,11 +268,13 @@ class Room(models.Model):
         words_to_show = ceil(time_elapsed / time_per_chunk)
         return min(words_to_show, len(self.current_question.content.split()))
     
+    @sync_to_async
     def get_shown_question(self):
         if self.current_question and self.current_question.content:
             return self.current_question.content
         return ""
     
+    @sync_to_async
     def get_shown_question_incremental(self):
         """Computes the correct amount of the question to show, depending on the state of the game.
             Note, this value is not persisted because, updating is too expensive."""
@@ -288,6 +294,7 @@ class Room(models.Model):
 
         return " ".join(word_list)
 
+    @sync_to_async
     def get_messages(self):
 
         valid_messages = self.messages.filter(visible=True)
@@ -339,6 +346,7 @@ class User(models.Model):
 
 class EmergencyWarning(models.Model):
     note = models.TextField(max_length=1000)
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
 
 class ReportIssue(models.Model):
 
@@ -381,6 +389,8 @@ class AnswerData(models.Model):
 
     guessed_answer = models.JSONField(null=True)
     true_answer = models.JSONField(null=True)
+
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
 
 class LeaderboardLog(models.Model):
 
@@ -466,6 +476,8 @@ class ComparisonFeedback(models.Model):
     chosen_adjusted = models.CharField(default="", max_length=30) # what the user picked when adjusted for random swapping/positional bias
     chosen_instruction = models.JSONField(null=True, blank=True) # text of the instruction that was chosen (backup)
     shown_first = models.BooleanField()
+
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
 
 class QuestionFeedback(models.Model):
     """Feedback for quizbowl questions"""

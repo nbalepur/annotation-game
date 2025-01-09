@@ -102,8 +102,8 @@ class AnswerData(ImportExportModelAdmin, ExportActionMixin):
     actions = ['export_as_csv']
     resource_class = MessageResource
 
-# @admin.register(EmergencyWarning)
-# class EmergencyWarning(ImportExportModelAdmin, ExportActionMixin):
-#     list_display = ['id']
-#     actions = ['export_as_csv']
-#     resource_class = MessageResource
+@admin.register(EmergencyWarning)
+class EmergencyWarning(ImportExportModelAdmin, ExportActionMixin):
+    list_display = ['id']
+    actions = ['export_as_csv']
+    resource_class = MessageResource

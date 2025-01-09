@@ -30,7 +30,7 @@ let readingTime = 30;
 // let readingTime = 3; // seconds to read the question
 let readingPassedTime = 0;
 
-let questionTime = 10000000;
+let questionTime = 180;
 // let questionTime = 3; // secconds to answer the question
 let questionPassedTime = 0;
 
@@ -253,7 +253,7 @@ gamesock.onmessage = message => {
   } else if (data['response_type'] === "get_shown_question") {
     setQuestion(data['shown_question'], data['state']);
     isTutorial = data['is_tutorial'];
-    resetRogueCheckbox();
+    resetRogueCheckbox(data['is_pairwise']);
     clearReportData();
   } else if (data['response_type'] === 'clear_instructions') {
     clearInstructions();
@@ -265,20 +265,22 @@ gamesock.onmessage = message => {
       clearInstructions();
     }
     populateInstructions(data['instructions'], data['step_num'], data['is_last_step'], false);
-    if (data['is_last_step']) {
-      stepBtn.style.display = 'none';
-    }
+    // if (data['is_last_step']) {
+    //   stepBtn.style.display = 'none';
+    // }
   } else if (data['response_type'] === 'update_swapped_instructions') {
     clearInstructions();
     populateInstructions(data['instructions'], -1, data['is_last_step'], true);
+    const planLetter = data['plan_label'];
     if (data['subanswers']) {
       populateSubanswers(data['subanswers']);
     }
-    if (data['is_last_step']) {
-      stepBtn.style.display = 'none';
-    } else {
-      stepBtn.style.display = '';
-    }
+    // if (data['is_last_step']) {
+    //   stepBtn.style.display = 'none';
+    // } else {
+    //   stepBtn.style.display = '';
+    // }
+    instructionHeader.innerHTML = `<h6>Plan ${planLetter} (p)</h6>`;
   } else if (data['response_type'] === "populate_comparison") {
     populateComparisonPane(data['question'], data['instructions_a'], data['instructions_b']);
   } else if (data['response_type'] === 'update_tools') {
@@ -350,8 +352,10 @@ gamesock.onmessage = message => {
   else if (data['response_type'] === 'web_search_result') {
     search_result = data['result'];
     updateTools(false, true, true);
-    setWebSearch(search_result, data['allow_forwards'], data['allow_backwards']);
+    setWebSearch(search_result, data['allow_forwards'], data['allow_backwards'], data['will_retrieve']);
     docSearchInput.value = data['doc_search_query'];
+    webSearchInput.value = data['web_search_query'];
+    disableNavigation(data['allow_forwards'], data['allow_backwards']);
   }
   else if (data['response_type'] === 'content_selection_result') {
     doc_idxs = data['result'];
@@ -439,9 +443,9 @@ function disableNavigation(allowFwd, allowBwd) {
   fwdSearch.disabled = !allowFwd;
 }
 
-function setWebSearch(res, allowFwd, allowBwd) {
+function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
+  copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
   document.getElementById('view-page-collapse').srcdoc = res;
-  disableNavigation(allowFwd, allowBwd);
 }
 
 function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, allowFwd, allowBwd) {
@@ -452,12 +456,14 @@ function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, al
     setContentSelectionResult(docIdxs, 1);
     iframe.onload = null;
   };
-  setWebSearch(html, allowFwd, allowBwd);
+  disableNavigation(allowFwd, allowBwd);
+  setWebSearch(html, allowFwd, allowBwd, docIdxs.length > 0);
 }
 
 function setContentSelectionResult(doc_idxs, num_docs) {
 
   if (doc_idxs.length === 1) {
+    copySearchBtn.style.visibility = '';
     const iframe = document.getElementById('view-page-collapse');
     const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
     
@@ -472,9 +478,10 @@ function setContentSelectionResult(doc_idxs, num_docs) {
     }
 
     const targetElement = iframeDocument.getElementById('element-' + doc_idxs[0]);
-    console.log(targetElement);
     if (targetElement) {
-      targetElement.scrollIntoView({ behavior: 'smooth', block: doc_idxs[0] > 3 ? 'center' : 'nearest'});
+      if (doc_idxs[0] > 3) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center'});
+      }
       targetElement.classList.add('highlight');
     }
   }
@@ -565,9 +572,12 @@ function showButtonsForState(currGameState, allowSwaps) {
       reportBtn.style.display = '';
       nextBtn.style.display = 'none';
       skipBtn.style.display = 'none';
-      stepBtn.style.display = shouldShowStep ? '' : 'none';
-      buzzBtn.style.display = shouldShowStep ? 'none' : '';
-      swapBtn.style.display = allowSwaps ? '' : 'none';
+      // stepBtn.style.display = shouldShowStep ? '' : 'none';
+      stepBtn.style.display = 'none';
+      //buzzBtn.style.display = shouldShowStep ? 'none' : '';
+      buzzBtn.style.display = 'none';
+      // swapBtn.style.display = allowSwaps ? '' : 'none';
+      swapBtn.style.display = 'none';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'hidden';
       toggleFollowCheckbox(true);
@@ -618,8 +628,10 @@ function showButtonsForState(currGameState, allowSwaps) {
       nextBtn.style.display = '';
       skipBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
-      stepBtn.style.display = '';
-      swapBtn.style.display = '';
+      // stepBtn.style.display = '';
+      // swapBtn.style.display = '';
+      stepBtn.style.display = 'none';
+      swapBtn.style.display = 'none';
       settingsBtn.style.display = '';
       settingsBtn.style.visibility = 'visible';
       reportBtn.style.display = '';
@@ -910,6 +922,7 @@ function focusTextInputInstructions(elem_id) {
   const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
   const focusInput = iframeDoc.getElementById(elem_id);
   if (focusInput) {
+    console.log(focusInput);
     focusInput.focus();
   } else {
     console.warn(`No element with ID ${elem_id} found.`);
@@ -933,16 +946,23 @@ function next_step() {
   const iframe = document.getElementById('instruction-frame');
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
   const container = iframeDoc.getElementById('instructions-container');
+
+  const buzzBtn = iframeDoc.getElementById('step-buzz-btn');
+  if (buzzBtn && buzzBtn.style.display === '') {
+    return;
+  }
+
   if (subanswers[subanswers.length - 1].trim() === '') {
     const warningDiv = container.querySelector(`#step-warning-${subanswers.length}`);
     if (warningDiv.style.visibility === 'hidden') {
       warningDiv.style.visibility = '';
-      return;
+      return false;
     }
     warningDiv.style.visibility = 'hidden';
   }
 
   sendRequest("show_next_step", subanswers);
+  return true;
 }
 
 

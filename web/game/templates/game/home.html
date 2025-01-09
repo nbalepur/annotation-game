@@ -8,27 +8,22 @@
 {% block content %}
 <div>
   <div>
-    <img src="{% static 'game/science-discovery.svg' %}" alt="Blueprint" class="img-fluid mx-auto d-block" style="padding-top: 10px; max-width: 10%; width: 10%;">
+    <img src="{% static 'game/science-discovery.svg' %}" alt="Blueprint" class="img-fluid mx-auto d-block" style="padding-top: 10px; max-width: 10%; width: 8%;">
     <h1 class="display-4 text-center">Planorama</h1>
 
     <p class="lead text-center">
       Help us uncover the best strategies for humans and AI to solve complex questions!
     </p>
 
-    {% if is_password_reset %}
-      {% include "reset_form.html" %}
-    {% elif not user_logged_in %}
-      {% include "login.html" %}
-    {% endif %}
 
     <div class="container">
       <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
-          <div class="border p-3 overflow-auto mb-3" style="height: 300px;">
-            {% include "irb_consent.html" %}
-          </div>
-        </div>
 
+        {% if is_password_reset %}
+            {% include "reset_form.html" %}
+        {% elif not user_logged_in %}
+            {% include "login.html" %}
+        {% else %}
         <!-- IRB Agreement Section -->
         <div class="row justify-content-center">
           <div class="col-md-10 text-center mb-3">
@@ -39,7 +34,7 @@
                   <h3>Welcome, <span class="text-primary">{{user_name}}</span>!</h3>
                 {% endif %}
 
-                <p>Please read and agree to the above IRB before joining or creating a room.</p>
+                <p>Please read and agree to the IRB below before joining or creating a room.</p>
                 <button id="logout-btn" type="button" class="btn btn-danger btn-lg me-4">Take me Back</button>
                 <button id="agree-btn" type="button" class="btn btn-primary btn-lg">I Agree</button>
               </div>
@@ -52,6 +47,14 @@
             </div>
           </div>
         </div>
+        {% endif %}
+
+        <div class="col-md-8 text-center">
+          <div class="border p-3 overflow-auto ms-2 me-2" style="height: 500px;">
+            {% include "irb_consent.html" %}
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

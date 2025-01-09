@@ -1,6 +1,7 @@
 import re
 import os
 from fuzzywuzzy import fuzz
+from asgiref.sync import async_to_sync, sync_to_async
 from qa_metrics.pedant import PEDANT
 
 from .models import Question 
@@ -8,6 +9,7 @@ from .models import Question
 major_matcher = re.compile(r'(?<={).*?(?=})')
 pedant = PEDANT()
 
+@sync_to_async
 def judge_answer(candidate_answer: str, question: Question):
     """Judge answer response as correct - follows QA Metrics answer verification pipeline"""
 

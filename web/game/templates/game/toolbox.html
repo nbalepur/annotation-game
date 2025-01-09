@@ -5,9 +5,9 @@
     <button type="button" class="btn btn-primary" id="calc-expression-btn" onclick="calculate()">
       <i class="fas fa-calculator"></i>
     </button>
-    <input type="text" id="calc-expression" class="form-control" placeholder="Enter a math equation" />
+    <input type="text" id="calc-expression" class="form-control" placeholder="Enter a math equation (m)" />
     <button type="button" class="btn btn-primary" id="calc-expression-btn2" onclick="calculate()">
-      Calculate (m)
+      Calculate
     </button>
     <button type="button" class="btn btn-secondary opacity-75" id="calc-clear-btn" onclick="clear_math()">
       <i class="fa-solid fa-delete-left"></i>
@@ -39,9 +39,9 @@
       <button type="button" id="google-query-btn" class="btn btn-primary" onclick="webSearch()">
         <i class="fas fa-globe"></i>
       </button>
-      <input type="text" id="google-query" class="form-control" placeholder="Enter a web search query" />
+      <input type="text" id="google-query" class="form-control" placeholder="Enter a web search query (w)" />
       <button type="button" class="btn btn-primary" id="google-query-btn2" onclick="webSearch()">
-        Web Search (w)
+        Web Search
       </button>
       <button type="button" class="btn btn-secondary opacity-75" id="search-clear-btn" onclick="clear_search()">
         <i class="fa-solid fa-delete-left"></i>
@@ -71,7 +71,7 @@
         </div>
 
         <div>
-          <button type="button" class="btn btn-warning" id="copy-search-btn" onclick="copyDocText()">
+          <button type="button" class="btn btn-warning" id="copy-search-btn" style="visibility: hidden;" onclick="copyDocText()">
             Copy Text (c)
           </button>
         </div>
@@ -79,9 +79,9 @@
         <button type="button" class="btn btn-info ms-5" id="content-search-btn" style="border-radius: 0.5rem 0 0 0.5rem;" onclick="selectContent()">
           <i class="fas fa-search"></i>
         </button>
-        <input type="text" id="content-search" class="input-sm form-control " placeholder="Enter a page search query" />
+        <input type="text" id="content-search" class="input-sm form-control " placeholder="Enter a page find query (f)" />
         <button type="button" class="btn btn-info" id="content-search-btn2" onclick="selectContent()">
-          Find (f)
+          Find
         </button>
         <button type="button" class="btn btn-secondary opacity-75" id="find-clear-btn" onclick="clear_find()">
           <i class="fa-solid fa-delete-left"></i>
@@ -102,7 +102,7 @@
         <body>
           <div style="margin-left:10px; margin-right:10px;">
             <p>Search to make a document appear!</p>
-          </div>
+        </div>
         </body>
         </html>'></iframe>
     </div>

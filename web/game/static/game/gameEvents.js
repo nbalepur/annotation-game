@@ -156,12 +156,18 @@ accountSave.addEventListener('click', clearUserData)
 //   setUserData();
 // });
 
+
 function handleKeyPress(e) {
   
   const modalElement = document.getElementById('welcomeModal');
   if (modalElement && modalElement.classList.contains('show')) {
     return;
   }
+
+  const instructionFrame = document.getElementById('instruction-frame')
+  const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
+  const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+  const swapPlanButton = iframeDoc.getElementById('swap-button-in-plan');
 
   if (feedbackRow && feedbackRow.style.display === "") {
     if (e.key === "[") {
@@ -176,9 +182,9 @@ function handleKeyPress(e) {
     e.target.tagName !== "TEXTAREA"
   ) {
     if (e.key == "n") {
-      if (nextBtn.style.display === '' && (nextBtn.style.visibility === '' || nextBtn.style.visibility === 'visible')) {
+      if (gameState === 'idle') {
         next();
-      } else if (stepBtn.style.display === '' && (stepBtn.style.visibility === '' || stepBtn.style.visibility === 'visible')) {
+      } else if (gameState === 'playing' && !checkbox.checked) {
         next_step();
       }
     } else if (e.key == " ") {
@@ -202,18 +208,14 @@ function handleKeyPress(e) {
         copyDocText();
       }
     } else if (e.key === "s") {
-      if (skipBtn.style.display === '') {
+      if (gameState === 'instruct') {
         skip();
         e.preventDefault();
-      }
-      if (swapBtn.style.display === '') {
+      } else if (gameState === "playing" && !checkbox.checked && swapPlanButton.style.display === '') {
         swap_plan();
         e.preventDefault();
       }
     } else if (e.key === "p") {
-      const instructionFrame = document.getElementById('instruction-frame')
-      const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
-      const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
       if (checkbox.checked) {
         focusTextInputInstructions('rogue-notes-area');
       } else {
@@ -236,20 +238,27 @@ function handleKeyDown(e) {
     return;
   }
 
+  const instructionFrame = document.getElementById('instruction-frame')
+  const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
+  const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+
   if ((e.ctrlKey || e.metaKey) && e.key === "f" && gameState === 'playing') {
     focusTextInput("content-search");
     e.preventDefault();
-  } else if ((e.key === "z" || (e.ctrlKey || e.metaKey) && e.key === "z") && gameState === 'playing') {
+  } else if ((e.key === "z" || (e.ctrlKey || e.metaKey) && e.key === "z") && gameState === 'playing' && !checkbox.checked) {
     closeLastButton();
     e.preventDefault();
-  } else if ((e.ctrlKey || e.metaKey) && e.key === "s" && gameState === 'playing') {
-    if (swapBtn.style.display === '' && swapBtn.style.visibility == 'visible') {
-      swap_plan();
-      e.preventDefault();
-    }
   } else if (e.key === "Tab" && gameState === 'idle') {
     settings();
     e.preventDefault();
+  } else if (e.key === "ArrowLeft" || e.key === "[") {
+    if (bwdSearch && bwdSearch.classList.contains('btn-info')) {
+      navigateHistory(-1);
+    }
+  } else if (e.key === "ArrowRight" || e.key === "]") {
+    if (fwdSearch && fwdSearch.classList.contains('btn-info')) {
+      navigateHistory(1);
+    }
   }
   e.stopPropagation();
 }

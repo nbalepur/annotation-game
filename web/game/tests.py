@@ -63,17 +63,18 @@ class TestConsumers:
                     is_final=True
                 )
 
+    
     def test_decide_instruction_to_show_attention_methods(self):
         """Test when generation method is ATTENTION_PAIRWISE or ATTENTION_SWAP."""
         consumer = QuizbowlConsumer()
 
         # ATTENTION_PAIRWISE
         self.room.current_question.generation_method = Question.GenerationMethod.ATTENTION_PAIRWISE
-        assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+        assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
         # ATTENTION_SWAP
         self.room.current_question.generation_method = Question.GenerationMethod.ATTENTION_SWAP
-        assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+        assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
 
     def test_decide_instruction_to_show_swap_distribution(self):
@@ -85,7 +86,7 @@ class TestConsumers:
         self.room.current_question.generation_method = Question.GenerationMethod.LLAMA
         out = []
         for _ in range(1000):
-            out.append(consumer.decide_instruction_to_show(self.room, self.player))
+            out.append(async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player))
         sum_a = sum([o == 'A' for o in out])
         assert 450 <= sum_a <= 550
 
@@ -155,7 +156,7 @@ class TestConsumers:
         )
         # Should return "A" because "A" has been seen less
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
         # Add another "A" to balance
         AnswerData.objects.create(
@@ -179,7 +180,7 @@ class TestConsumers:
 
         out = []
         for _ in range(1000):
-            out.append(consumer.decide_instruction_to_show(self.room, self.player))
+            out.append(async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player))
         sum_a = sum([o == 'A' for o in out])
         assert 450 <= sum_a <= 550
 
@@ -203,7 +204,7 @@ class TestConsumers:
             final_instructions_letter="A",
         )
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "B"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "B"
 
     def test_must_be_final(self):
 
@@ -273,7 +274,7 @@ class TestConsumers:
         )
 
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
     def test_report(self):
 
@@ -343,7 +344,7 @@ class TestConsumers:
         )
 
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
     def test_rogue_users(self):
 
@@ -413,7 +414,7 @@ class TestConsumers:
         )
 
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
 @pytest.mark.django_db
 class TestExperimentGroup:
@@ -443,11 +444,11 @@ class TestExperimentGroup:
 
     def test_user_exists(self):
         user = User.objects.create(name="testuser", email="testuser", user_id=1000, experiment_group=User.ExperimentGroup.PAIRWISE)
-        assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.PAIRWISE
+        assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
 
         user.experiment_group = User.ExperimentGroup.SWAP
         user.save()
-        assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
+        assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
 
     def test_rogue_counts(self):
 
@@ -467,7 +468,7 @@ class TestExperimentGroup:
             curr_user.save()
 
         for _ in range(5):
-            assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
+            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
         
     def test_rogue_counts_flipped(self):
 
@@ -487,7 +488,7 @@ class TestExperimentGroup:
             curr_user.save()
 
         for _ in range(5):
-            assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.PAIRWISE
+            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
 
     def test_report_unfinal_dont_count(self):
 
@@ -563,7 +564,7 @@ class TestExperimentGroup:
                 else:
                     continue
 
-        assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
+        assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
 
     def test_report_final_dont_count_flipped(self):
 
@@ -639,7 +640,7 @@ class TestExperimentGroup:
                 else:
                     continue
 
-        assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.PAIRWISE
+        assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
         
 
     def test_more_swap_questions_done(self):
@@ -699,7 +700,7 @@ class TestExperimentGroup:
                             final_instructions_letter="A",
                         )
 
-            assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.PAIRWISE
+            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
 
     def test_more_swap_questions_done(self):
 
@@ -758,7 +759,7 @@ class TestExperimentGroup:
                             final_instructions_letter="A",
                         )
 
-            assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
+            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
 
     def test_equal_questions_done_and_more_swap_users(self):
 
@@ -769,7 +770,7 @@ class TestExperimentGroup:
 
         for num_swap_done in range(5):
 
-            assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.PAIRWISE
+            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
 
             if True:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
@@ -832,7 +833,7 @@ class TestExperimentGroup:
 
         for num_swap_done in range(5):
 
-            assert self.consumer.decide_expt_group(user) == User.ExperimentGroup.SWAP
+            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
 
             if True:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
@@ -894,7 +895,7 @@ class TestExperimentGroup:
 
             out = []
             for _ in range(100):
-                out.append(self.consumer.decide_expt_group(user))
+                out.append(async_to_sync(self.consumer.decide_expt_group)(user))
             num_swap = [o == User.ExperimentGroup.SWAP for o in out]
             assert 35 <= sum(num_swap) <= 65
 
@@ -1050,7 +1051,7 @@ class TestExperimentGroup:
         
         out = []
         for _ in range(100):
-            out.append(self.consumer.decide_expt_group(user))
+            out.append(async_to_sync(self.consumer.decide_expt_group)(user))
         num_swap = [o == User.ExperimentGroup.SWAP for o in out]
         assert 35 <= sum(num_swap) <= 65
         
@@ -1376,11 +1377,11 @@ class TestConsumersTrivia:
 
         # ATTENTION_PAIRWISE
         self.room.current_question.generation_method = Question.GenerationMethod.ATTENTION_PAIRWISE
-        assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+        assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
         # ATTENTION_SWAP
         self.room.current_question.generation_method = Question.GenerationMethod.ATTENTION_SWAP
-        assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+        assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
     def test_decide_instruction_to_show_swap_distribution(self):
         """Test when SETTING_TYPE is 'swap'."""
@@ -1391,7 +1392,7 @@ class TestConsumersTrivia:
         self.room.current_question.generation_method = Question.GenerationMethod.LLAMA
         out = []
         for _ in range(1000):
-            out.append(consumer.decide_instruction_to_show(self.room, self.player))
+            out.append(async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player))
         sum_a = sum([o == 'A' for o in out])
         assert 450 <= sum_a <= 550
 
@@ -1462,7 +1463,7 @@ class TestConsumersTrivia:
         )
         # Should return "A" because "A" has been seen less
         for _ in range(1000):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
         # Add another "A" to balance
         AnswerData.objects.create(
@@ -1486,7 +1487,7 @@ class TestConsumersTrivia:
 
         out = []
         for _ in range(1000):
-            out.append(consumer.decide_instruction_to_show(self.room, self.player))
+            out.append(async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player))
         sum_a = sum([o == 'A' for o in out])
         assert 450 <= sum_a <= 550
 
@@ -1510,7 +1511,7 @@ class TestConsumersTrivia:
             final_instructions_letter="A",
         )
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "B"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "B"
 
     def test_report(self):
 
@@ -1580,7 +1581,7 @@ class TestConsumersTrivia:
         )
 
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "B"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "B"
 
     def test_rogue_users(self):
 
@@ -1650,7 +1651,7 @@ class TestConsumersTrivia:
         )
 
         for _ in range(50):
-            assert consumer.decide_instruction_to_show(self.room, self.player) == "A"
+            assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
 
 @pytest.mark.django_db
 class TestDecideNextQuestion:
@@ -1722,7 +1723,7 @@ class TestDecideNextQuestion:
         """If the user has seen 0 questions, return the tutorial question."""
         with patch.dict("os.environ", {"NUM_SEEN_FOR_TUTORIAL": "0"}):
             for flag in [True, False]:
-                next_question = self.consumer.decide_next_question(
+                next_question = async_to_sync(self.consumer.decide_next_question)(
                     self.room, self.player, Question.Category.MATH, flag
                 )
                 assert next_question == self.tutorial_question
@@ -1799,12 +1800,12 @@ class TestDecideNextQuestion:
             is_final=True
         )
 
-        # next_question = self.consumer.decide_next_question(
+        # next_question = async_to_sync(self.consumer.decide_next_question)(
         #     self.room, self.player, Question.Category.MATH, True
         # )
         # assert next_question == self.sanity_question
 
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MATH, False
         )
         assert next_question == self.sanity_question_swap
@@ -1830,12 +1831,12 @@ class TestDecideNextQuestion:
                     is_final=True
                 )
 
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MATH, True
         )
         assert next_question == self.regular_questions[-1]
 
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MATH, False
         )
         assert next_question == self.regular_questions[-1]
@@ -1864,7 +1865,7 @@ class TestDecideNextQuestion:
                 seen_ids.add(question.question_id)
 
             for _ in range(100):
-                next_question = self.consumer.decide_next_question(
+                next_question = async_to_sync(self.consumer.decide_next_question)(
                     self.room, self.player, Question.Category.MATH, flag
                 )
                 assert next_question.question_id not in seen_ids
@@ -1975,7 +1976,7 @@ class TestDecideNextQuestion:
                         is_final=True
                     )
         
-                next_question = self.consumer.decide_next_question(
+                next_question = async_to_sync(self.consumer.decide_next_question)(
                     self.room, self.player, Question.Category.MATH, True
                 )
                 assert next_question == return_question
@@ -1998,7 +1999,7 @@ class TestDecideNextQuestion:
                 is_correct=True,
                 is_final=True
             )
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MATH, True
         )
         assert next_question == return_question_less
@@ -2108,7 +2109,7 @@ class TestDecideNextQuestion:
                     is_final=True
                 )
     
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MATH, False
             )
             assert next_question == return_question
@@ -2131,7 +2132,7 @@ class TestDecideNextQuestion:
                 is_correct=True,
                 is_final=True
             )
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MATH, False
         )
         assert next_question == return_question_less
@@ -2176,7 +2177,7 @@ class TestDecideNextQuestion:
 
         all_questions = set()
         for _ in range(1000):
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MATH, False
             )
             all_questions.add(next_question.question_id)
@@ -2225,7 +2226,7 @@ class TestDecideNextQuestion:
 
         all_questions = set()
         for _ in range(1000):
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MATH, False
             )
             all_questions.add(next_question.question_id)
@@ -2358,7 +2359,7 @@ class TestDecideNextQuestion:
                 )
         
     
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MATH, False
             )
             assert next_question == return_question
@@ -2381,7 +2382,7 @@ class TestDecideNextQuestion:
                 is_correct=True,
                 is_final=True
             )
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MATH, False
         )
         assert next_question == reported_question
@@ -2512,7 +2513,7 @@ class TestDecideNextQuestion:
                 )
         
     
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MATH, False
             )
             assert next_question == return_question
@@ -2535,7 +2536,7 @@ class TestDecideNextQuestion:
                 is_correct=True,
                 is_final=True
             )
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MATH, False
         )
         assert next_question == reported_question
@@ -2582,7 +2583,7 @@ class TestDecideNextQuestion:
                 is_report=True
             )
 
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MATH, flag
             )
             assert next_question == unseen_question
@@ -2629,7 +2630,7 @@ class TestDecideNextQuestion:
                 is_report=False
             )
 
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MATH, flag
             )
             assert next_question == unseen_question
@@ -2705,7 +2706,7 @@ class TestDecideNextQuestionTrivia:
         """If the user has seen 0 questions, return the tutorial question."""
         with patch.dict("os.environ", {"NUM_SEEN_FOR_TUTORIAL": "0"}):
             for flag in [True, False]:
-                next_question = self.consumer.decide_next_question(
+                next_question = async_to_sync(self.consumer.decide_next_question)(
                     self.room, self.player, Question.Category.MULTIHOP, flag
                 )
                 assert next_question == self.tutorial_question
@@ -2782,12 +2783,12 @@ class TestDecideNextQuestionTrivia:
             is_final=True
         )
 
-        # next_question = self.consumer.decide_next_question(
+        # next_question = async_to_sync(self.consumer.decide_next_question)(
         #     self.room, self.player, Question.Category.MATH, True
         # )
         # assert next_question == self.sanity_question
 
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MULTIHOP, False
         )
         assert next_question == self.sanity_question_swap
@@ -2813,12 +2814,12 @@ class TestDecideNextQuestionTrivia:
                     is_final=True
                 )
 
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MULTIHOP, True
         )
         assert next_question == self.regular_questions[-1]
 
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MULTIHOP, False
         )
         assert next_question == self.regular_questions[-1]
@@ -2847,7 +2848,7 @@ class TestDecideNextQuestionTrivia:
                 seen_ids.add(question.question_id)
 
             for _ in range(100):
-                next_question = self.consumer.decide_next_question(
+                next_question = async_to_sync(self.consumer.decide_next_question)(
                     self.room, self.player, Question.Category.MULTIHOP, flag
                 )
                 assert next_question.question_id not in seen_ids
@@ -2958,7 +2959,7 @@ class TestDecideNextQuestionTrivia:
                         is_final=True
                     )
         
-                next_question = self.consumer.decide_next_question(
+                next_question = async_to_sync(self.consumer.decide_next_question)(
                     self.room, self.player, Question.Category.MULTIHOP, True
                 )
                 assert next_question == return_question
@@ -2981,7 +2982,7 @@ class TestDecideNextQuestionTrivia:
                 is_correct=True,
                 is_final=True
             )
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MULTIHOP, True
         )
         assert next_question == return_question_less
@@ -3091,7 +3092,7 @@ class TestDecideNextQuestionTrivia:
                     is_final=True
                 )
     
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MULTIHOP, False
             )
             assert next_question == return_question
@@ -3114,7 +3115,7 @@ class TestDecideNextQuestionTrivia:
                 is_correct=True,
                 is_final=True
             )
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MULTIHOP, False
         )
         assert next_question == return_question_less
@@ -3159,7 +3160,7 @@ class TestDecideNextQuestionTrivia:
 
         all_questions = set()
         for _ in range(1000):
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MULTIHOP, False
             )
             all_questions.add(next_question.question_id)
@@ -3208,7 +3209,7 @@ class TestDecideNextQuestionTrivia:
 
         all_questions = set()
         for _ in range(1000):
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MULTIHOP, False
             )
             all_questions.add(next_question.question_id)
@@ -3341,7 +3342,7 @@ class TestDecideNextQuestionTrivia:
                 )
         
     
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MULTIHOP, False
             )
             assert next_question == return_question
@@ -3364,7 +3365,7 @@ class TestDecideNextQuestionTrivia:
                 is_correct=True,
                 is_final=True
             )
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MULTIHOP, False
         )
         assert next_question == reported_question
@@ -3495,7 +3496,7 @@ class TestDecideNextQuestionTrivia:
                 )
         
     
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MULTIHOP, False
             )
             assert next_question == return_question
@@ -3518,7 +3519,7 @@ class TestDecideNextQuestionTrivia:
                 is_correct=True,
                 is_final=True
             )
-        next_question = self.consumer.decide_next_question(
+        next_question = async_to_sync(self.consumer.decide_next_question)(
             self.room, self.player, Question.Category.MULTIHOP, False
         )
         assert next_question == reported_question
@@ -3565,7 +3566,7 @@ class TestDecideNextQuestionTrivia:
                 is_report=True
             )
 
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MULTIHOP, flag
             )
             assert next_question == unseen_question
@@ -3612,7 +3613,7 @@ class TestDecideNextQuestionTrivia:
                 is_report=False
             )
 
-            next_question = self.consumer.decide_next_question(
+            next_question = async_to_sync(self.consumer.decide_next_question)(
                 self.room, self.player, Question.Category.MULTIHOP, flag
             )
             assert next_question == unseen_question

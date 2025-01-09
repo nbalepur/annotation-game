@@ -1,10 +1,14 @@
 <div class="card bg-faded h-100">
   <div class="card-header bg-warning" data-bs-toggle="" id="instruction-header" data-bs-target="#instruction-collapse" aria-expanded="false" aria-controls="instruction-collapse">
-    <h6>Plan (p)</h6>
+    
+    {% if is_pairwise %}
+      <h6>Plan (p)</h6>
+    {% else %}
+      <h6>Plan A (p)</h6>
+    {% endif %}
   </div>
 
   <iframe id="instruction-frame" srcdoc='
-
   <!DOCTYPE html>
   <html lang=&quot;en&quot;>
 
@@ -19,14 +23,28 @@
 
     <body>
       <div style="display: flex; justify-content: space-between; margin: 10px; visibility: hidden" id="follow-plan-div">
-        <button class="btn btn-info btn-sm" style="align-self: flex-start; visibility: hidden;" class="btn btn-primary" id="skip-plan-button" onclick="window.parent.skip_plan()">
-          Skip Question (and get no credit)
-        </button>
+
+        <div style="display: flex; justify-content: left; gap: 10px;">
+          <button class="btn btn-dark" 
+          style="align-self: flex-start; height: 36px; align-items: center; justify-content: center;" 
+          id="swap-button-in-plan" 
+          onclick="window.parent.swap_plan()">Swap Plan (s)</button>
+
+          <button class="btn btn-danger" 
+          style="align-self: flex-start; height: 36px; display: none; align-items: center; justify-content: center;" 
+          id="buzz-button-in-plan" 
+          onclick="window.parent.buzz()">Buzz (space)</button>
+
+          <button class="btn btn-info" 
+          style="align-self: flex-start; height: 36px; visibility: hidden; align-items: center; justify-content: center;" 
+          id="skip-button-in-plan" 
+          onclick="window.parent.skip_plan()">Skip (no credit)</button>
+        </div>
       
         <div class="form-check" id="edit-instructions-container">
           <input class="form-check-input" type="checkbox" value="" id="edit-instructions-checkbox">
-          <label class="form-check-label" for="edit-instructions-checkbox">
-            I have faced challenges with the given plan(s)
+          <label class="form-check-label" for="edit-instructions-checkbox" id="edit-instructions-checkbox-label">
+            I can&apos;t answer the question with the given plan
           </label>
         </div>
       </div>

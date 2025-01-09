@@ -110,6 +110,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     stepDiv.className = 'pt-4 px-4 pb-2 mb-2 border bg-light position-relative step-div';
     stepDiv.id = `step-div-${index + 1}`;
     stepDiv.setAttribute('is-custom', false);
+    container.prepend(stepDiv);
 
     const buttonHTML = !addCloseBtn ? '' : (isLastStep && index === inputInstructions['steps'].length - 1
       ? `<button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">Buzz</button>`
@@ -153,7 +154,8 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     }
 
     const textarea = stepDiv.querySelector('textarea');
-
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`
     textarea.addEventListener('input', () => {
       textarea.style.height = 'auto';
       textarea.style.height = `${textarea.scrollHeight}px`;
@@ -165,8 +167,10 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
         if (isLastStep && index === inputInstructions['steps'].length - 1) {
           answerWrapper(textarea.value);
         } else {
-          next_step();
-          textarea.blur();
+          const shouldExit = next_step();
+          if (shouldExit) {
+            textarea.blur();
+          }
         }
       }
     });
@@ -178,8 +182,8 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
           answerWrapper(textarea.value);
         });
       }
-      buzzBtn.style.display = '';
-      stepBtn.style.display = 'none';
+      // buzzBtn.style.display = '';
+      // stepBtn.style.display = 'none';
     } else if (addCloseBtn) {
       const copyButton = stepDiv.querySelector('.copy-btn');
       if (copyButton) {
@@ -203,11 +207,9 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
         }
       }
 
-      buzzBtn.style.display = 'none';
-      stepBtn.style.display = '';
+      // buzzBtn.style.display = 'none';
+      // stepBtn.style.display = '';
     }
-
-    container.prepend(stepDiv);
   });
 }
 
@@ -295,6 +297,8 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
   }
 
   const textarea = stepDiv.querySelector('textarea');
+  textarea.style.height = 'auto';
+  textarea.style.height = `${textarea.scrollHeight}px`
   textarea.addEventListener('input', () => {
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
@@ -305,8 +309,10 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
       if (isLastStep) {
         answerWrapper(textarea.value);
       } else {
-        next_step();
-        textarea.blur();
+        const shouldExit = next_step();
+        if (shouldExit) {
+          textarea.blur();
+        }
       }
     }
   });
@@ -326,6 +332,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     stepButtons.forEach((button, index) => {
       if (index === 0) {
         button.addEventListener('click', function (e) {
+          console.log(e);
           next_step();
         });
       } else {
@@ -333,8 +340,8 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
       }
     });
 
-    buzzBtn.style.display = 'none';
-    stepBtn.style.display = '';
+    // buzzBtn.style.display = 'none';
+    // stepBtn.style.display = '';
   } else {
     const stepBuzzButton = stepDiv.querySelector('.buzz-btn');
     if (stepBuzzButton) {
@@ -342,8 +349,8 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         answerWrapper(textarea.value);
       });
     }
-    buzzBtn.style.display = '';
-    stepBtn.style.display = 'none';
+    // buzzBtn.style.display = '';
+    // stepBtn.style.display = 'none';
   }
 }
 
@@ -416,10 +423,10 @@ function removeStep(stepElement, isLastStep) {
   subanswers = getSubanswers();
   stepElement.remove();
   reassignCloseAndStepButton();
-  if (isLastStep) {
-    stepBtn.style.display = '';
-    buzzBtn.style.display = 'none';
-  }
+  // if (isLastStep) {
+  //   stepBtn.style.display = '';
+  //   buzzBtn.style.display = 'none';
+  // }
   sendRequest("decrease_steps", subanswers);
 }
 
@@ -570,7 +577,9 @@ function updateDoc(use_doc, doc_content) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   </head>
   <body>
-    Search to make a document appear!
+<div style="margin-left:10px; margin-right:10px;">
+    <p class="text-secondary">Search to make a document appear!</p>
+</div>
   </body>
   </html>
 ` : doc_content;
@@ -866,17 +875,22 @@ function clearToolHistory() {
   }
 
 function toggleRogueCheckbox(checkbox) {
-
   const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
-  const skipPlanButton = iframeDoc.getElementById('skip-plan-button');
+  const skipPlanButton = iframeDoc.getElementById('skip-button-in-plan');
+  const buzzPlanButton = iframeDoc.getElementById('buzz-button-in-plan');
+  const swapPlanButton = iframeDoc.getElementById('swap-button-in-plan');
 
   if (checkbox.checked) {
-    buzzBtn.style.display = '';
-    swapBtn.style.display = 'none';
-    stepBtn.style.display = 'none';
+    // buzzBtn.style.display = '';
+    // swapBtn.style.display = 'none';
+    // stepBtn.style.display = 'none';
     skipPlanButton.style.visibility = '';
+    swapPlanButton.style.display = 'none';
+    buzzPlanButton.style.display = '';
   } else {
     skipPlanButton.style.visibility = 'hidden';
+    swapPlanButton.style.display = '';
+    buzzPlanButton.style.display = 'none';
     showButtonsForState(gameState, allowSwapsGlobal);
   }
 
@@ -893,10 +907,12 @@ function toggleRogueCheckbox(checkbox) {
   toggleCloseButtonVisibility(!checkbox.checked);
 }
 
-function resetRogueCheckbox() {
+function resetRogueCheckbox(isPairwise) {
   const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
   const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
   if (!checkbox.checked) {
+    const checkboxLabel = iframeDoc.getElementById('edit-instructions-checkbox-label');
+    checkboxLabel.innerText = isPairwise ? "I can't answer with the given plan" : "I can't answer with the given plans";
     return;
   }
   
@@ -939,14 +955,14 @@ docContent.addEventListener('load', function() {
 
 function navigateHyperlink(link) {
   const url = new URL(link.href);
-  const decodedPath = decodeURIComponent(url.pathname)
+  const decodedPath = decodeURIComponent(url.pathname);
   if (!decodedPath.startsWith('/wiki/')) {
     return;
   }
   if (decodedPath.includes(':')) {
     return;
   }
-  sendRequest("navigate_hyperlink", url.pathname);
+  sendRequest("navigate_hyperlink", decodedPath);
 }
 
 
