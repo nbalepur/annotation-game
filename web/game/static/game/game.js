@@ -384,6 +384,7 @@ function handleServerResponse(data) {
     search_result = data['result'];
     updateTools(false, true, true);
     setWebSearch(search_result, data['allow_forwards'], data['allow_backwards'], data['will_retrieve']);
+    addIframeCommands();
     docSearchInput.value = data['doc_search_query'];
     webSearchInput.value = data['web_search_query'];
     disableNavigation(data['allow_forwards'], data['allow_backwards']);
@@ -504,13 +505,8 @@ function disableNavigation(allowFwd, allowBwd) {
   fwdSearch.disabled = !allowFwd;
 }
 
-function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
-  copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
+function addIframeCommands() {
   const iframe = document.getElementById('view-page-collapse');
-  iframe.srcdoc = res;
-
-  iframe.onkeypress = null;
-  iframe.onkeydown = null;
 
   iframe.onload = () => {
     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -529,13 +525,35 @@ function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
   };
 }
 
+function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
+  copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
+  const iframe = document.getElementById('view-page-collapse');
+  iframe.srcdoc = res;
+}
+
 
 function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, allowFwd, allowBwd) {
   const iframe = document.getElementById('view-page-collapse');
   iframe.onload = () => {
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
     webSearchInput.value = typedQueryWeb;
     docSearchInput.value = typedQuerySearch;
     setContentSelectionResult(docIdxs, 1);
+
+    iframeDoc.addEventListener("keypress", function (event) {
+      if (window.parent && typeof window.parent.handleKeyPress === "function") {
+        window.parent.handleKeyPress(event);
+      }
+    });
+
+    iframeDoc.addEventListener("keydown", function (event) {
+      if (window.parent && typeof window.parent.handleKeyDown === "function") {
+        window.parent.handleKeyDown(event);
+      }
+    });
+
     iframe.onload = null;
   };
   disableNavigation(allowFwd, allowBwd);
