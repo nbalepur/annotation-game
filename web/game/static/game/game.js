@@ -506,8 +506,29 @@ function disableNavigation(allowFwd, allowBwd) {
 
 function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
   copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
-  document.getElementById('view-page-collapse').srcdoc = res;
+  const iframe = document.getElementById('view-page-collapse');
+  iframe.srcdoc = res;
+
+  iframe.onkeypress = null;
+  iframe.onkeydown = null;
+
+  iframe.onload = () => {
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+    iframeDoc.addEventListener("keypress", function (event) {
+      if (window.parent && typeof window.parent.handleKeyPress === "function") {
+        window.parent.handleKeyPress(event);
+      }
+    });
+
+    iframeDoc.addEventListener("keydown", function (event) {
+      if (window.parent && typeof window.parent.handleKeyDown === "function") {
+        window.parent.handleKeyDown(event);
+      }
+    });
+  };
 }
+
 
 function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, allowFwd, allowBwd) {
   const iframe = document.getElementById('view-page-collapse');

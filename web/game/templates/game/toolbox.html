@@ -111,7 +111,7 @@
       <hr class="my-3" />
 
       <!-- Document Viewer Iframe -->
-      <iframe class="mb-2 flex-grow-1 w-100" id="view-page-collapse" srcdoc='
+      <iframe class="mb-2 flex-grow-1 w-100" id="view-page-collapse" sandbox="allow-scripts allow-same-origin" srcdoc='
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -129,6 +129,11 @@
           document.addEventListener("keypress", function (event) {
             if (window.parent && typeof window.parent.handleKeyPress === "function") {
               window.parent.handleKeyPress(event);
+            }
+          });
+          document.addEventListener("keydown", function (event) {
+            if (window.parent && typeof window.parent.handleKeyDown === "function") {
+              window.parent.handleKeyDown(event);
             }
           });
         </script>

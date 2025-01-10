@@ -1650,6 +1650,19 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         fixed_html_content = f"""
 <p>No results found: {error}</p><br /><p>Please try another search query. If the issue persists, please contact <a href='mailto:planstudyumd@gmail.com'>planstudyumd@gmail.com</a> ASAP!</p>
 """
+        
+        script = """<script>
+          document.addEventListener("keypress", function (event) {
+            if (window.parent && typeof window.parent.handleKeyPress === "function") {
+              window.parent.handleKeyPress(event);
+            }
+          });
+          document.addEventListener("keydown", function (event) {
+            if (window.parent && typeof window.parent.handleKeyDown === "function") {
+              window.parent.handleKeyDown(event);
+            }
+          });
+        </script>"""
 
         final_html = f"""
         <html>
@@ -1989,6 +2002,19 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                             <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=site.styles&only=styles&skin=vector">
                             """
 
+                            script = """<script>
+                            document.addEventListener("keypress", function (event) {
+                                if (window.parent && typeof window.parent.handleKeyPress === "function") {
+                                window.parent.handleKeyPress(event);
+                                }
+                            });
+                            document.addEventListener("keydown", function (event) {
+                                if (window.parent && typeof window.parent.handleKeyDown === "function") {
+                                window.parent.handleKeyDown(event);
+                                }
+                            });
+                            </script>"""
+
                             final_html = f"""
                             <html>
                             <head>
@@ -2014,6 +2040,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                                     {fixed_html_content}
                                 </div>
                             </body>
+                            {script}
                             </html>
                             """
                             await self.send_web_search_success(

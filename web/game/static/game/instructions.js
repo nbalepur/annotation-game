@@ -443,6 +443,7 @@ function populateSubanswers(subanswers) {
     const textArea = iframeDoc.getElementById(`answer-step-${index + 1}`);
     if (textArea) {
       textArea.value = answer;
+      textArea.style.height = `${textArea.scrollHeight}px`;
     }
   });
 }
@@ -525,6 +526,11 @@ function clearFields(should_clear_document) {
             </div>
             </body>
             <script>
+          document.addEventListener("keydown", function (event) {
+              if (window.parent && typeof window.parent.handleKeyDown === "function") {
+                window.parent.handleKeyDown(event);
+              }
+          });
             document.addEventListener("keypress", function (event) {
               if (window.parent && typeof window.parent.handleKeyPress === "function") {
                 window.parent.handleKeyPress(event);
@@ -593,6 +599,18 @@ function updateDoc(use_doc, doc_content) {
     <p class="text-secondary">Search to make a document appear!</p>
 </div>
   </body>
+              <script>
+          document.addEventListener("keydown", function (event) {
+              if (window.parent && typeof window.parent.handleKeyDown === "function") {
+                window.parent.handleKeyDown(event);
+              }
+          });
+            document.addEventListener("keypress", function (event) {
+              if (window.parent && typeof window.parent.handleKeyPress === "function") {
+                window.parent.handleKeyPress(event);
+              }
+          });
+            </script>
   </html>
 ` : doc_content;
         docContent.srcdoc = doc_content;
@@ -617,6 +635,18 @@ function loadingDoc() {
       <span class="ms-3">Loading...</span>
   </div>
   </body>
+              <script>
+          document.addEventListener("keydown", function (event) {
+              if (window.parent && typeof window.parent.handleKeyDown === "function") {
+                window.parent.handleKeyDown(event);
+              }
+          });
+            document.addEventListener("keypress", function (event) {
+              if (window.parent && typeof window.parent.handleKeyPress === "function") {
+                window.parent.handleKeyPress(event);
+              }
+          });
+            </script>
   </html>
 `
   docContent.srcdoc = content;
@@ -968,13 +998,13 @@ docContent.addEventListener('load', function() {
         }
     });
 
-    iframeDocument.addEventListener("keypress", (e) => {
-      handleKeyPress(e);
-    });
+    // iframeDocument.addEventListener("keypress", (e) => {
+    //   handleKeyPress(e);
+    // });
     
-    iframeDocument.addEventListener("keydown", function (e) {
-      handleKeyDown(e);
-    });
+    // iframeDocument.addEventListener("keydown", function (e) {
+    //   handleKeyDown(e);
+    // });
     
 });
 
