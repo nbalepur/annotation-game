@@ -1,6 +1,6 @@
 import pytest
 from .models import *
-from .consumers import QuizbowlConsumer 
+from .consumers import QuizbowlConsumer, get_or_create_expt_group 
 
 from unittest.mock import patch
 from game.models import Room, Question, AnswerData, Player, User
@@ -444,11 +444,11 @@ class TestExperimentGroup:
 
     def test_user_exists(self):
         user = User.objects.create(name="testuser", email="testuser", user_id=1000, experiment_group=User.ExperimentGroup.PAIRWISE)
-        assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
+        assert get_or_create_expt_group(user) == (User.ExperimentGroup.PAIRWISE, False)
 
         user.experiment_group = User.ExperimentGroup.SWAP
         user.save()
-        assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
+        assert get_or_create_expt_group(user) == (User.ExperimentGroup.SWAP, False)
 
     def test_rogue_counts(self):
 
@@ -468,7 +468,7 @@ class TestExperimentGroup:
             curr_user.save()
 
         for _ in range(5):
-            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
+            assert get_or_create_expt_group(user) == (User.ExperimentGroup.SWAP, True)
         
     def test_rogue_counts_flipped(self):
 
@@ -488,7 +488,7 @@ class TestExperimentGroup:
             curr_user.save()
 
         for _ in range(5):
-            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
+            assert get_or_create_expt_group(user) == (User.ExperimentGroup.PAIRWISE, True)
 
     def test_report_unfinal_dont_count(self):
 
@@ -564,7 +564,7 @@ class TestExperimentGroup:
                 else:
                     continue
 
-        assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
+        assert get_or_create_expt_group(user) == (User.ExperimentGroup.SWAP, True)
 
     def test_report_final_dont_count_flipped(self):
 
@@ -640,7 +640,7 @@ class TestExperimentGroup:
                 else:
                     continue
 
-        assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
+        assert get_or_create_expt_group(user) == (User.ExperimentGroup.PAIRWISE, True)
         
 
     def test_more_swap_questions_done(self):
@@ -700,7 +700,7 @@ class TestExperimentGroup:
                             final_instructions_letter="A",
                         )
 
-            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
+            assert get_or_create_expt_group(user) == (User.ExperimentGroup.PAIRWISE, True)
 
     def test_more_swap_questions_done(self):
 
@@ -759,7 +759,7 @@ class TestExperimentGroup:
                             final_instructions_letter="A",
                         )
 
-            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
+            assert get_or_create_expt_group(user) == (User.ExperimentGroup.SWAP, True)
 
     def test_equal_questions_done_and_more_swap_users(self):
 
@@ -770,7 +770,7 @@ class TestExperimentGroup:
 
         for num_swap_done in range(5):
 
-            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.PAIRWISE
+            assert get_or_create_expt_group(user) == (User.ExperimentGroup.PAIRWISE, True)
 
             if True:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
@@ -833,7 +833,7 @@ class TestExperimentGroup:
 
         for num_swap_done in range(5):
 
-            assert async_to_sync(self.consumer.decide_expt_group)(user) == User.ExperimentGroup.SWAP
+            assert get_or_create_expt_group(user) == (User.ExperimentGroup.SWAP, True)
 
             if True:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
@@ -895,8 +895,8 @@ class TestExperimentGroup:
 
             out = []
             for _ in range(100):
-                out.append(async_to_sync(self.consumer.decide_expt_group)(user))
-            num_swap = [o == User.ExperimentGroup.SWAP for o in out]
+                out.append(get_or_create_expt_group(user))
+            num_swap = [o == (User.ExperimentGroup.SWAP, True) for o in out]
             assert 35 <= sum(num_swap) <= 65
 
             if True:
@@ -1051,8 +1051,8 @@ class TestExperimentGroup:
         
         out = []
         for _ in range(100):
-            out.append(async_to_sync(self.consumer.decide_expt_group)(user))
-        num_swap = [o == User.ExperimentGroup.SWAP for o in out]
+            out.append(get_or_create_expt_group(user))
+        num_swap = [o == (User.ExperimentGroup.SWAP, True) for o in out]
         assert 35 <= sum(num_swap) <= 65
         
 

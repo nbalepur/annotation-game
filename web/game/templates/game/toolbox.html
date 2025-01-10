@@ -1,96 +1,117 @@
 <div class="flex-container">
   <!-- Calculator Tool -->
   <div id="toolbox-container" class="flex-grow-1 d-flex flex-column">
-  <div class="input-group mb-2" id="calculator-tool">
-    <button type="button" class="btn btn-primary" id="calc-expression-btn" onclick="calculate()">
+
+  <div class="input-group mb-2" id="calculator-tool" style="display: {% if show_web_first %}none{% else %}{% endif %};">
+    <button type="button" class="btn btn-primary" disabled id="calc-expression-btn" onclick="calculate()">
       <i class="fas fa-calculator"></i>
     </button>
-    <input type="text" id="calc-expression" class="form-control" placeholder="Enter a math equation (m)" />
-    <button type="button" class="btn btn-primary" id="calc-expression-btn2" onclick="calculate()">
+    <input type="text" id="calc-expression" class="form-control" disabled placeholder="Enter a math equation (m)" />
+    <button type="button" class="btn btn-primary" disabled id="calc-expression-btn2" onclick="calculate()">
       Calculate
     </button>
-    <button type="button" class="btn btn-secondary opacity-75" id="calc-clear-btn" onclick="clear_math()">
+    <button type="button" class="btn btn-secondary" disabled id="calc-clear-btn" onclick="clear_math()">
       <i class="fa-solid fa-delete-left"></i>
     </button>
   </div>
   
-  <div id="calculator-operators" class="btn-group mb-3" role="group">
-    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('+')">+</button>
-    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('-')">-</button>
-    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('*')">×</button>
-    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('/')">÷</button>
-    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator('(')">(</button>
-    <button type="button" style="background-color: #c9c9c9; border: 1px solid black;" class="btn" onclick="insertOperator(')')">)</button>
-    <button type="button" style="border: 1px solid black;" class="btn btn-primary" onclick="calculate()">=</button>
+  <div id="calculator-operators" class="btn-group mb-3" role="group" style="display: {% if show_web_first %}none{% else %}{% endif %};">
+    <button type="button" style="background-color: #e8e6e6; border: 1px solid black; color: black;" class="btn btn-op" disabled onclick="insertOperator('+')">+</button>
+    <button type="button" style="background-color: #e8e6e6; border: 1px solid black;" class="btn btn-op" disabled onclick="insertOperator('-')">-</button>
+    <button type="button" style="background-color: #e8e6e6; border: 1px solid black;" class="btn btn-op" disabled onclick="insertOperator('*')">×</button>
+    <button type="button" style="background-color: #e8e6e6; border: 1px solid black;" class="btn btn-op" disabled onclick="insertOperator('/')">÷</button>
+    <button type="button" style="background-color: #e8e6e6; border: 1px solid black;" class="btn btn-op" disabled onclick="insertOperator('(')">(</button>
+    <button type="button" style="background-color: #e8e6e6; border: 1px solid black;" class="btn btn-op" disabled onclick="insertOperator(')')">)</button>
+    <button type="button" style="background-color: #4A90E2; border: 1px solid black;" disabled class="btn btn-primary" id="calculate-btn-equals" onclick="calculate()">=</button>
   </div>
 
 
-  <div class="input-group mb-3" id="calculator-tool-result">
-    <button type="button" class="btn btn-warning" id="calc-copy-btn" onclick="copyMathResult()">
-      Copy Result (c):
+  <div class="input-group mb-3" id="calculator-tool-result" style="display: {% if show_web_first %}none{% else %}{% endif %};">
+    <button type="button" class="btn btn-secondary" disabled id="calc-copy-btn" onclick="copyMathResult()">
+      Copy To Plan (c):
     </button>
-    <input type="text" id="calc-result" class="form-control" placeholder="Results will come here!" readonly>
+    <input type="text" id="calc-result" class="form-control" disabled placeholder="Results will come here!" readonly>
   </div>
 
 
   <!-- Google Tool -->
-  <div id="google-tool" class="mb-3">
+  <div id="google-tool" class="mb-3" style="display: {% if show_web_first %}{% else %}none{% endif %};">
     <div class="input-group">
-      <button type="button" id="google-query-btn" class="btn btn-primary" onclick="webSearch()">
+      <button type="button" id="google-query-btn" class="btn btn-primary" disabled onclick="webSearch()">
         <i class="fas fa-globe"></i>
       </button>
-      <input type="text" id="google-query" class="form-control" placeholder="Enter a web search query (w)" />
-      <button type="button" class="btn btn-primary" id="google-query-btn2" onclick="webSearch()">
+      <input type="text" id="google-query" class="form-control" disabled placeholder="Enter a web search query (w)" />
+      <button type="button" class="btn btn-primary" id="google-query-btn2" disabled onclick="webSearch()">
         Web Search
       </button>
-      <button type="button" class="btn btn-secondary opacity-75" id="search-clear-btn" onclick="clear_search()">
+      <button type="button" class="btn btn-secondary" disabled id="search-clear-btn" onclick="clear_search()">
         <i class="fa-solid fa-delete-left"></i>
       </button>
     </div>
   </div>
   
 
-  <!-- Document Viewer -->
-  <div id="doc-viewer">
+<!-- Document Viewer -->
+<div id="doc-viewer" style="display: {% if show_web_first %}{% else %}none{% endif %};">
   <div class="card flex-grow-1 d-flex flex-column">
-    <div class="card-header bg-primary bg-opacity-50 view-page-header" id="view-page-header">
-      <h6>Document</h6>
+    <div class="card-header view-page-header" id="view-page-header">
+      <h6>Web Page Viewer</h6>
     </div>
 
-    <div id="doc-viewer-content" class="d-flex flex-column flex-grow-1">
+    <div id="doc-viewer-content" class="d-flex flex-column flex-grow-1 p-2">
+      <!-- Content Selector Tool -->
+      <div class="row align-items-center g-3" id="content-selector-tool" style="display: none;">
+        <!-- Navigation Buttons -->
+        <div class="col-sm-12 col-xl-5 d-flex justify-content-start">
 
-      <div class="input-group mt-2" id="content-selector-tool" style="display: 'none';">
+          <div class="btn-group" role="group" aria-label="Navigation">
+            <button type="button" class="btn btn-primary me-2" 
+                    style="color: #4A90E2; border-color: #4A90E2; background-color: transparent; transition: background-color 0.3s ease;" 
+                    disabled id="content-bwd-btn" onclick="navigateHistory(-1)">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <button type="button" class="btn btn-primary btn-outline me-3" 
+                    style="color: #4A90E2; border-color: #4A90E2; background-color: transparent; transition: background-color 0.3s ease; border-radius: 0rem 0.5rem 0.5rem 0rem;" 
+                    disabled id="content-fwd-btn" onclick="navigateHistory(1)">
+              <i class="fas fa-arrow-right"></i>
+            </button>
 
-        <div class="btn-group" role="group" aria-label="Navigation">
-          <button type="button" class="btn btn-outline-info me-2" disabled id="content-bwd-btn" onclick="navigateHistory(-1)">
-            <i class="fas fa-arrow-left"></i>
-          </button>
-          <button type="button" class="btn btn-outline-info me-4" disabled id="content-fwd-btn" onclick="navigateHistory(1)">
-            <i class="fas fa-arrow-right"></i>
-          </button>
+            <button type="button" class="btn btn-secondary" id="copy-search-btn" style="border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;"  
+            style="visibility: hidden;" disabled onclick="copyDocText()">
+              Copy to Plan
+            </button>
+          </div>
+
         </div>
 
-        <div>
-          <button type="button" class="btn btn-warning" id="copy-search-btn" style="visibility: hidden;" onclick="copyDocText()">
-            Copy Text (c)
+        <!-- Search Input Group -->
+        <div class="col-sm-12 col-xl-7 d-flex align-items-center">
+          <button type="button" class="btn btn-primary" id="content-search-btn" 
+                  disabled style="border-radius: 0.5rem 0 0 0.5rem; background-color: #4A90E2; border-color: #4A90E2; color: #FFFFFF;" 
+                  onclick="selectContent()">
+            <i style="color: white;" class="fas fa-search"></i>
+          </button>
+          <input type="text" id="content-search" class="form-control" style="border-radius: 0rem 0 0 0rem;"
+                 disabled placeholder="Enter a page find query (f)" />
+          <button type="button" class="btn btn-primary" id="content-search-btn2" style="border-radius: 0rem 0 0 0rem; background-color: #4A90E2; border-color: #4A90E2; color: #FFFFFF;"
+                  disabled
+                  onclick="selectContent()">
+            Find
+          </button>
+          <button type="button" class="btn btn-secondary" style="border-radius: 0rem 0.5rem 0.5rem 0rem;" 
+                  disabled id="find-clear-btn" onclick="clear_find()">
+            <i class="fa-solid fa-delete-left"></i>
           </button>
         </div>
+        
 
-        <button type="button" class="btn btn-info ms-5" id="content-search-btn" style="border-radius: 0.5rem 0 0 0.5rem;" onclick="selectContent()">
-          <i class="fas fa-search"></i>
-        </button>
-        <input type="text" id="content-search" class="input-sm form-control " placeholder="Enter a page find query (f)" />
-        <button type="button" class="btn btn-info" id="content-search-btn2" onclick="selectContent()">
-          Find
-        </button>
-        <button type="button" class="btn btn-secondary opacity-75" id="find-clear-btn" onclick="clear_find()">
-          <i class="fa-solid fa-delete-left"></i>
-        </button>
       </div>
 
-      <hr style="margin-top: 10px; margin-bottom: 10px; margin-right: 0px; margin-left: 0px"></hr>
+      <!-- Divider -->
+      <hr class="my-3" />
 
-      <iframe class="mb-2 flex-grow-1" id="view-page-collapse" srcdoc='
+      <!-- Document Viewer Iframe -->
+      <iframe class="mb-2 flex-grow-1 w-100" id="view-page-collapse" srcdoc='
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -102,12 +123,19 @@
         <body>
           <div style="margin-left:10px; margin-right:10px;">
             <p>Search to make a document appear!</p>
-        </div>
+          </div>
         </body>
+        <script>
+          document.addEventListener("keypress", function (event) {
+            if (window.parent && typeof window.parent.handleKeyPress === "function") {
+              window.parent.handleKeyPress(event);
+            }
+          });
+        </script>
         </html>'></iframe>
     </div>
   </div>
-  </div>
+</div>
 
     <!-- Tool History -->
     <!-- <div id="tool-history" class="card" style="max-height: 30%; overflow-y: auto;">
@@ -162,4 +190,5 @@
     width: 100%;
     border: none;
   }
+
 </style>

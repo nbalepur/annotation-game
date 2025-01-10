@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 import uuid
 from django.http import HttpResponse
 from django.conf import settings
+from .consumers import get_or_create_expt_group
 import os
 from django.views.decorators.csrf import csrf_exempt
 from scipy.stats import rankdata
@@ -125,6 +126,8 @@ def register(request):
 
     user = User.objects.create(email=email, name=username, user_id=generate_id())
     user.set_password(password)
+    expt_group, _ = get_or_create_expt_group(user)
+    user.experiment_group = expt_group
     user.save()
 
     request.session['user_id'] = user.user_id
@@ -168,7 +171,8 @@ def evaluation_game_room(request, label):
     return render(request, "game/game.html", {
         "room": room,
         "user": user,
-        "is_pairwise": user.experiment_group == User.ExperimentGroup.PAIRWISE
+        "is_pairwise": user.experiment_group == User.ExperimentGroup.PAIRWISE,
+        "show_web_first": user.category_preference in {Question.Category.MULTIHOP, Question.Category.EVERYTHING}
     })
 
 

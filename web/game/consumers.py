@@ -152,22 +152,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 await self.buzz_answer(room, p, data["content"])
             elif data["request_type"] == "no_buzz":
                 await self.handle_no_buzz(room, p, False)
-            elif data["request_type"] == "submit_initial_feedback":
-                await self.submit_initial_feedback(room, p, data["content"])
-            elif data["request_type"] == "submit_additional_feedback":
-                await self.submit_additional_feedback(room, p, data["content"])
-            elif data["request_type"] == "set_category":
-                await self.set_category(room, p, data["content"])
-            elif data["request_type"] == "set_difficulty":
-                await self.set_difficulty(room, p, data["content"])
-            elif data["request_type"] == "set_speed":
-                await self.set_speed(room, p, data["content"])
-            elif data["request_type"] == "reset_score":
-                await self.reset_score(room, p)
             elif data["request_type"] == "chat":
                 await self.chat(room, p, data["content"])
-            elif data["request_type"] == "report_message":
-                await self.report_message(room, p, data["content"])
             elif data["request_type"] == "report_issue":
                 await self.report_issue(room, p, data["content"])
             elif data["request_type"] == "skip_plan":
@@ -231,6 +217,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         room.category = category_map[category]
         await room.asave()
 
+        await self.show_and_disable_tools(room=room, player=player, update_tools=True, disable_tools=True, disable_plan=True)
+
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -291,9 +279,12 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
-            await room.arefresh_from_db()
-            await self.update_status(room, room.state, p)
-            await self.show_and_disable_tools(room=room, player=p)
+            # await self.update_status(room, room.state, p)
+            # await self.show_and_disable_tools(room=room, player=p, update_tools=True)
+
+            # await self.update_ui(room=room, player=p,
+            #                          disable_inputs={'update_tools': True, 'disable_plan': False},
+            #                          )
 
             p.last_room = self.room_name
 
@@ -309,58 +300,20 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             },
         )
 
-    @sync_to_async
-    def decide_wiki_token_num(self, user: User):
-        if user is not None:
-            return user.wiki_token_num
-        return random.choice([1, 2, 3])
+    # @sync_to_async
+    # def decide_wiki_token_num(self, user: User):
+    #     if user is not None:
+    #         return user.wiki_token_num
+    #     return random.choice([1, 2, 3])
 
-    async def decide_expt_group(self, user: User):
-        if user.experiment_group is not None:
-            return user.experiment_group
-        
-        # (question_id, did_comparison) -> number of users who have done it
-        question_to_user_count = dict()
-        async for entry in AnswerData.objects.filter(is_final=True, is_report=False
-                                                             ).values("question_id", "did_comparison"
-                                                             ).annotate(user_count=Count("user__user_id", distinct=True)):
-            question_to_user_count[(entry["question_id"], entry["did_comparison"])] = entry["user_count"]
-
-        num_swap_questions_done = 0
-        num_pairwise_questions_done = 0
-        for k, v in question_to_user_count.items():
-            if k[1]:
-                num_pairwise_questions_done += int(v >= 6)
-            else:
-                num_swap_questions_done += int(v >= 3)
-        
-        num_swap_users = await User.objects.filter(experiment_group=User.ExperimentGroup.SWAP).acount()
-        num_pairwise_users = await User.objects.filter(experiment_group=User.ExperimentGroup.PAIRWISE).acount()
-
-        if num_swap_questions_done == num_pairwise_questions_done:
-            if num_swap_users < num_pairwise_users:
-                return User.ExperimentGroup.SWAP
-            elif num_pairwise_users < num_swap_users:
-                return User.ExperimentGroup.PAIRWISE
-            else:
-                return (
-                    User.ExperimentGroup.PAIRWISE
-                    if random.uniform(0, 1) > 0.5
-                    else User.ExperimentGroup.SWAP
-                )
-        elif num_swap_questions_done > num_pairwise_questions_done:
-            return User.ExperimentGroup.PAIRWISE
-        else:
-            return User.ExperimentGroup.SWAP
-
+    # backup to make sure that the user has an experiment group
     async def new_user(self):
         """Create new user and player in room"""
         user = await User.objects.filter(user_id=self.user_id).afirst()
-        expt_group = await self.decide_expt_group(user)
-        wiki_token_num = await self.decide_wiki_token_num(user)
-        user.experiment_group = expt_group
-        user.wiki_token_num = wiki_token_num
-        user.asave()
+        expt_group, is_new = await sync_to_async(get_or_create_expt_group)(user)
+        if (is_new):
+            user.experiment_group = expt_group
+            await user.asave()
         await self.send_json(
             {
                 "response_type": "new_user",
@@ -452,7 +405,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.start_time + INSTRUCTION_READING_TIME
         )
         await room.asave()
-        await self.update_status(room, room.state, player)
+
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -462,62 +415,81 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             },
         )
 
-        await self.get_init_model_instructions(
-            room=room, player=player, should_clear=True, num_steps=-1
-        )
-        await self.show_and_disable_tools(room=room, player=player)
-        await self.disable_plan()
+        user = await user_from_player(player)
+        await self.update_ui(room=room, player=player,
+                           show_question_inputs={'user': user},
+                           status_inputs={'status': room.state},
+                           instr_inputs={'should_clear': True, 'num_steps': -1},
+                           disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True},
+                           )
+        # await self.update_status(room, room.state, player)
+        # await self.get_shown_question(room=room, user=user)
+        # await self.get_init_model_instructions(
+        #     room=room, player=player, should_clear=True, num_steps=-1
+        # )
+        # await self.show_and_disable_tools(room=room, player=player, update_tools=True)
 
         await self.log_tool_use(
             room, player, "", dict(), "read_instructions", "start"
         )
 
-
-    async def populate_comparison_pane(self, room: Room):
-        """Populate visible information in the comparison pane"""
-        q = room.current_question
-
-        q_text = q.content
-        instr_a = q.instructions_a
-        instr_b = q.instructions_b
-        swapped = False
-        if random.uniform(0, 1) > 0.5:  # account for position biases
-            instr_a, instr_b = instr_b, instr_a
-            swapped = True
-
-        instruction_map = {"A": instr_a, "B": instr_b, "swapped": swapped}
-        room.instruction_map = instruction_map
-        await room.asave()
-        await room.arefresh_from_db()
-
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "update_room",
-                "data": {
-                    "response_type": "populate_comparison",
-                    "question": q_text,
-                    "instructions_a": instr_a,
-                    "instructions_b": instr_b,
-                },
-            },
-        )
-
-    async def toggle_comparison_visibility(self, room: Room, show_comparison: bool):
+    async def toggle_comparison_visibility_dict(self, room: Room, show_comparison: bool):
         """Toggle the visibility of the comparison pane"""
+        
+        populate_dict = dict()
         if show_comparison:
-            await self.populate_comparison_pane(room)
+            """Populate visible information in the comparison pane"""
+            q = room.current_question
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+            q_text = q.content
+            instr_a = q.instructions_a
+            instr_b = q.instructions_b
+            swapped = False
+            if random.uniform(0, 1) > 0.5:  # account for position biases
+                instr_a, instr_b = instr_b, instr_a
+                swapped = True
+
+            instruction_map = {"A": instr_a, "B": instr_b, "swapped": swapped}
+            room.instruction_map = instruction_map
+            await room.asave()
+
+            populate_dict = {"populate_comparison_data": {
+                    "type": "update_room",
+                    "data": {
+                        "response_type": "populate_comparison",
+                        "question": q_text,
+                        "instructions_a": instr_a,
+                        "instructions_b": instr_b,
+                    },
+                }}
+
+        return populate_dict | {"toggle_comparison_data": {
                 "type": "update_room",
                 "data": {
                     "response_type": "toggle_comparison",
                     "show_comparison": show_comparison,
                 },
-            },
-        )
+            }}
+
+    async def toggle_comparison_visibility(self, room: Room, show_comparison: bool):
+        """Toggle the visibility of the comparison pane"""
+
+        full_data = await self.toggle_comparison_visibility_dict(room, show_comparison)
+
+        if "populate_comparison_data" in full_data:
+            """Populate visible information in the comparison pane"""
+            print(1)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                full_data["populate_comparison_data"]
+            )
+
+        if "toggle_comparison_data" in full_data:
+            print(2)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                full_data["toggle_comparison_data"]
+            )
 
     def decide_question_category(self, player: Player):
         """Decide the question category for the player"""
@@ -672,8 +644,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             if q is None:  # no questions available D:
                 return
             room.current_question = q
-            # display the question now that we have one
-            await self.get_shown_question(room=room, user=user)
+
 
             room.steps_seen_a = 1
             room.steps_seen_b = 1
@@ -698,8 +669,18 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             if show_comparisons_before:
                 room.state = Room.GameState.PAIRWISE_COMPARISON
                 await room.asave()
-                await self.update_status(room, room.state, player)
-                await self.toggle_comparison_visibility(room=room, show_comparison=True)
+
+                #await self.get_shown_question(room=room, user=user)
+                #await self.update_status(room, room.state, player)
+                #await self.toggle_comparison_visibility(room=room, show_comparison=True)
+
+                await self.update_ui(room=room, player=player,
+                                         show_question_inputs={'user': user},
+                                         status_inputs={'status': room.state},
+                                         comparison_inputs={'show_comparison': True},
+                                         disable_inputs={'update_tools': False, 'disable_tools': False, 'disable_plan': False},
+                                         )
+
                 await self.log_tool_use(
                     room, player, "", dict(), "pairwise_comparison", "start"
                 )
@@ -710,33 +691,33 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.state = Room.GameState.PLAYING
             room.start_time = timezone.now().timestamp()
             room.end_time = room.start_time + QUESTION_TIME
+            await room.asave()
+
             steps_seen = (
                 room.steps_seen_a
                 if room.curr_instructions_letter == "A"
                 else room.steps_seen_b
             )
-            await self.get_init_model_instructions(
-                room=room,
-                player=player,
-                num_steps=steps_seen,
-                should_clear=(steps_seen == 1),
-            )
-            await room.asave()
 
-            # update status text
-            await self.update_status(room, room.state, player)
+            await self.update_ui(room=room, player=player,
+                               instr_inputs={'num_steps': steps_seen, 'should_clear': steps_seen == 1},
+                               status_inputs={'status': room.state},
+                               disable_inputs={'update_tools': False, 'disable_tools': False, 'disable_plan': False},
+                               )
 
-            # # Unlock all players
-            # async for p in room.players.all():
-            #     p.locked_out = False
-            #     await p.asave()
-
-            await self.disable_tool_btns(
-                room=room,
-                player=player,
-                should_disable=False,
-                should_clear_document=False,
-            )
+            # await self.get_init_model_instructions(
+            #     room=room,
+            #     player=player,
+            #     num_steps=steps_seen,
+            #     should_clear=(steps_seen == 1),
+            # )
+            
+            # await self.update_status(room, room.state, player)
+            # await self.show_and_disable_tools(
+            #     room=room,
+            #     player=player,
+            #     update_tools=False
+            # )
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -848,14 +829,19 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             )
 
             room.state = Room.GameState.IDLE
-            await self.update_status(
-                room, "buzz_correct", player, cleaned_content
-            )
-
             await room.asave()
             await self.log_leaderboard(room, player)
-            await self.show_and_disable_tools(room=room, player=player)
-            await self.disable_plan()
+
+            # await self.update_status(
+            #     room, "buzz_correct", player, cleaned_content
+            # )
+            # 
+            # await self.show_and_disable_tools(room=room, player=player, update_tools=True)
+
+            await self.update_ui(room=room, player=player,
+                                     status_inputs={'status': "buzz_correct", 'answer': cleaned_content},
+                                     disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True}
+                                     )
         else:
             # Keep playing if it's wrong
             room.state = Room.GameState.PLAYING
@@ -912,12 +898,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-
-    async def get_shown_question(self, room: Room, user: User):
+    async def get_shown_question_dict(self, room: Room, user: User):
         """Computes the correct amount of the question to show, depending on the state of the game."""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        return {"get_shown_question_data": {
                 "type": "update_room",
                 "data": {
                     "response_type": "get_shown_question",
@@ -926,7 +909,13 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     "is_pairwise": user.experiment_group == User.ExperimentGroup.PAIRWISE,
                     "state": room.state,
                 },
-            },
+            }}
+
+    async def get_shown_question(self, room: Room, user: User):
+        """Computes the correct amount of the question to show, depending on the state of the game."""
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            (await self.get_shown_question_dict(room, user))["get_shown_question_data"]
         )
 
     @sync_to_async
@@ -1041,7 +1030,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         room.curr_instructions_letter = swapped_letter
         await room.asave()
-        await room.arefresh_from_db()
+
 
         await self.updated_swapped_instructions(
             room=room, player=player, num_steps=new_steps, subanswers=new_subanswers
@@ -1060,7 +1049,6 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         instruction_label = await self.decide_instruction_to_show(room=room, player=player)
         room.curr_instructions_letter = instruction_label
         await room.asave()
-        await room.arefresh_from_db()
 
     async def show_next_step(self, room: Room, player: Player, subanswers):
         """Show the next step to the user"""
@@ -1116,8 +1104,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         )
 
         # Send instructions only to the player's WebSocket
-        await self.channel_layer.send(
-            player.channel_name,
+        await self.channel_layer.group_send(
+            self.room_group_name,
             {
                 "type": "update_room",
                 "data": {
@@ -1131,8 +1119,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def clear_instructions(self, room: Room, player: Player):
-        await self.channel_layer.send(
-            player.channel_name,
+        await self.channel_layer.group_send(
+            self.room_group_name,
             {
                 "type": "update_room",
                 "data": {
@@ -1140,6 +1128,93 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 },
             },
         )
+
+    async def update_ui(self, room: Room, player: Player, 
+                            show_question_inputs: dict = dict(),
+                            status_inputs: dict = dict(), 
+                            comparison_inputs: dict = dict(),
+                            instr_inputs: dict = dict(),
+                            disable_inputs: dict = dict(),
+                            ):
+
+        show_question_outputs = {'should_run_shown_question': False}
+        if show_question_inputs:
+            show_question_outputs = show_question_outputs | (await self.get_shown_question_dict(room, show_question_inputs['user']))
+            #await self.get_shown_question(room, show_question_inputs['user'])
+            show_question_outputs["should_run_shown_question"] = True
+
+        status_outputs = {'should_run_status': False}
+        if status_inputs:
+            status_outputs = status_outputs | (await self.update_status_dict(room, status_inputs['status'], player, status_inputs.get('answer', '')))
+            #await self.update_status(room, status_inputs['status'], player, status_inputs.get('answer', ''))
+            status_outputs["should_run_status"] = True
+
+        comparison_outputs = {'should_run_comparison': False}
+        if comparison_inputs:
+            comparison_outputs = comparison_outputs | (await self.toggle_comparison_visibility_dict(room, comparison_inputs['show_comparison']))
+            #await self.toggle_comparison_visibility(room, comparison_inputs['show_comparison'])
+            comparison_outputs["should_run_comparison"] = True
+
+        instr_outputs = {'should_run_instr': False}
+        if instr_inputs:
+            instr_outputs = instr_outputs | (await self.get_init_model_instructions_dict(room, player, instr_inputs['num_steps'], instr_inputs['should_clear']))
+            #await self.get_init_model_instructions(room, player, instr_inputs['num_steps'], instr_inputs['should_clear'])
+            instr_outputs["should_run_instr"] = True
+        
+        disable_outputs = {'should_run_disable': False}
+        if disable_inputs:
+            disable_outputs = disable_outputs | (await self.show_and_disable_tools_dict(room, player, disable_inputs['update_tools'], disable_inputs['disable_tools'], disable_inputs['disable_plan']))
+            #await self.show_and_disable_tools(room, player, disable_inputs['update_tools'])
+            disable_outputs["should_run_disable"] = True
+
+        merged_dict = show_question_outputs | status_outputs | comparison_outputs | instr_outputs | disable_outputs
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "update_room",
+                "data": {
+                    "response_type": "update_ui",
+                    "full_data": merged_dict,
+                }
+            },
+        )
+
+
+    async def get_init_model_instructions_dict(
+        self, room: Room, player: Player, num_steps: int, should_clear: bool
+    ) -> None:
+        """After the players are ready for the next question, show them the right instructions"""
+
+        curr_q = (await question_from_room(room))
+        instructions = (
+            curr_q.instructions_a
+            if room.curr_instructions_letter == "A"
+            else curr_q.instructions_b
+        )
+
+        curr_steps = (
+            instructions["steps"]
+            if curr_q.generation_method != Question.GenerationMethod.ATTENTION_PAIRWISE
+            else instructions["steps_leaked"]
+        )
+
+        # Send instructions only to the player's WebSocket
+        return {"update_instructions_data": {
+                "type": "update_room",
+                "data": {
+                    "response_type": "update_instructions",
+                    "instructions": {
+                        "steps": (
+                            curr_steps
+                            if num_steps == -1
+                            else curr_steps[:num_steps]
+                        )
+                    },
+                    "step_num": num_steps,
+                    "is_last_step": num_steps == len(curr_steps),
+                    "should_clear": should_clear,
+                },
+            }}
 
     async def get_init_model_instructions(
         self, room: Room, player: Player, num_steps: int, should_clear: bool
@@ -1160,47 +1235,41 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         )
 
         # Send instructions only to the player's WebSocket
-        await self.channel_layer.send(
-            player.channel_name,
-            {
-                "type": "update_room",
-                "data": {
-                    "response_type": "update_instructions",
-                    "instructions": {
-                        "steps": (
-                            curr_steps
-                            if num_steps == -1
-                            else curr_steps[:num_steps]
-                        )
-                    },
-                    "step_num": num_steps,
-                    "is_last_step": num_steps == len(curr_steps),
-                    "should_clear": should_clear,
-                },
-            },
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            (await self.get_init_model_instructions_dict(room, player, num_steps, should_clear))["update_instructions_data"]
         )
-
 
     async def update_tools_and_doc_for_question_and_player(self, room: Room, player: Player):
         """Update the visible tools and document based on the current question for just one player"""
-        question = room.current_question
+        question = await question_from_room(room)
 
-        await self.update_tools(
-            self.channel_layer.group_send,
+
+        """Update the tool"""
+        await self.channel_layer.group_send(
             self.room_group_name,
-            (question is None and room.category in {Question.Category.MATH, Question.Category.EVERYTHING}) or 
-            (question is not None and question.category == Question.Category.MATH),
-            False,
-            (question is None and room.category in {Question.Category.MULTIHOP}) or 
-            (question is not None and question.category == Question.Category.MULTIHOP),
+            {
+                "type": "update_room",
+                "data": {
+                    "response_type": "update_tools", "use_calculator": (question is None and room.category in {Question.Category.MATH, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MATH), 
+                    "use_doc": False,
+                    "use_web": (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
+                }
+            },
         )
+
+        """Update the document"""
         curr_doc = ""
-        await self.update_doc(
-            self.channel_layer.group_send,
+        await self.channel_layer.group_send(
             self.room_group_name,
-            (question is None and room.category in {Question.Category.MULTIHOP}) or 
-            (question is not None and question.category == Question.Category.MULTIHOP),
-            curr_doc,
+            {
+                "type": "update_room",
+                "data": {
+                    "response_type": "update_doc",
+                    "use_doc": (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
+                    "doc_content": curr_doc,
+                },
+            },
         )
 
     async def disable_plan(self):
@@ -1215,28 +1284,93 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             },
         )
 
+    async def show_and_disable_tools_dict(self, room: Room, player: Player, update_tools: bool, disable_tools: bool, disable_plan: bool):
 
-    async def show_and_disable_tools(self, room: Room, player: Player):
+        question = (await question_from_room(room))
+
+        update_tools_dict = dict()
+        update_doc_dict = dict()
+        disable_plan_dict = dict()
+        disable_tools_dict = dict()
+
+        if (update_tools):
+            update_tools_dict = {"update_tools_data": {
+                "type": "update_room",
+                "data": {
+                    "response_type": "update_tools",
+                    "use_calculator": (question is None and room.category in {Question.Category.MATH}) or (question is not None and question.category == Question.Category.MATH), 
+                    "use_doc": False,
+                    "use_web": (question is None and room.category in {Question.Category.MULTIHOP, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MULTIHOP),
+                }
+            }}
+
+            curr_doc = ""
+            update_doc_dict = {"update_doc_data": {
+                    "type": "update_room",
+                    "data": {
+                        "response_type": "update_doc",
+                        "use_doc": (question is None and room.category in {Question.Category.MULTIHOP, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MULTIHOP),
+                        "doc_content": curr_doc,
+                    },
+                }}
+
+        disable_tools_dict = {"disable_tools_data": {
+            "type": "update_room",
+            "data": {
+                "response_type": "disable_tools",
+                "should_disable": disable_tools,
+                "should_clear_document": False if not update_tools else (
+            (question is None and room.category in {Question.Category.MULTIHOP})
+            or (question is not None and question.category == Question.Category.MULTIHOP)),
+            },
+        }}
+
+        if disable_plan:
+            disable_plan_dict = {"disable_plan_data": {
+                    "type": "update_room",
+                    "data": {
+                        "response_type": "disable_plan",
+                    },
+                }}
+
+        return update_tools_dict | update_doc_dict | disable_tools_dict | disable_plan_dict
+
+
+    async def show_and_disable_tools(self, room: Room, player: Player, update_tools: bool, disable_tools: bool, disable_plan: bool):
         """Update the visible tools and document based on the current question"""
-        curr_q = (await question_from_room(room))
-        await self.update_tools_and_doc_for_question_and_player(room=room, player=player)
-        await self.disable_tool_btns(
-            room=room,
-            player=player,
-            should_disable=True,
-            should_clear_document=(
-                (curr_q is None and room.category in {Question.Category.MULTIHOP})
-                or (curr_q is not None and curr_q.category == Question.Category.MULTIHOP)
-            ),
+        
+        full_data = await self.show_and_disable_tools_dict(room, player, update_tools, disable_tools, disable_plan)
+
+        if full_data.get("update_tools_data", dict()):
+            """Update the tool"""
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                full_data["update_tools_data"]
+            )
+
+            """Update the document"""
+        if full_data.get("update_doc_data", dict()):
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                full_data["update_doc_data"]
+            )
+
+        """Helper function to enable/disable the tool buttons"""
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            full_data["disable_tools_data"]
         )
 
-    async def update_status(self, room: Room, status: str, player: Player, answer=""):
+        if full_data.get("disable_plan_data", dict()):
+            """Helper function to disable the plan"""
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                full_data["disable_plan_data"]
+            )
+
+    async def update_status_dict(self, room: Room, status: str, player: Player, answer=""):
         """Helper function to update the status text"""
-        if player.channel_name == "":
-            return
-        await self.channel_layer.send(
-            player.channel_name,
-            {
+        return {"update_status_data": {
                 "type": "update_room",
                 "data": {
                     "response_type": "update_status",
@@ -1245,7 +1379,13 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     "answer": answer,
                     "allow_swaps": not room.show_comparisons_before,
                 },
-            },
+            }}
+
+    async def update_status(self, room: Room, status: str, player: Player, answer=""):
+        """Helper function to update the status text"""
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            (await self.update_status_dict(room, status, player, answer))["update_status_data"]
         )
 
     async def disable_tool_btns(
@@ -1687,13 +1827,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             new_history_elem = (room.curr_query, [], room.curr_query_raw, '')
 
         # handle the edge case where we just came from an error
-        print(room.history_idx, room.search_history)
         if room.history_idx != -1 and room.search_history[room.history_idx] == None:
             room.search_history[room.history_idx] = new_history_elem
         else:
             room.search_history = room.search_history[:room.history_idx+1] + [new_history_elem]
             room.history_idx += 1
-        print(room.history_idx, room.search_history)
         await room.asave()
             
 
@@ -1795,9 +1933,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
             try:
                 api_url = "https://en.wikipedia.org/w/api.php"
-                user = await user_from_player(p)
-                wiki_token = os.getenv(f'WIKIMEDIA_API_KEY{user.wiki_token_num}')
-                user_agent = os.getenv(f'USER_AGENT{user.wiki_token_num}')
+                rand_idx = random.choice(list(range(1, 4)))
+                WIKI_TOKENS = [os.getenv(f'WIKIMEDIA_API_KEY{token_num}') for token_num in range(1, 4)]
+                USER_AGENTS = [os.getenv(f'USER_AGENT{token_num}')  for token_num in range(1, 4)]
+                wiki_token, user_agent = WIKI_TOKENS[rand_idx], USER_AGENTS[rand_idx]
                 headers = {
                     "Authorization": f"Bearer {wiki_token}",
                     "User-Agent": user_agent,
@@ -1810,18 +1949,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                             "mediawiki-api-error", ""
                         ) == "mwoauth-invalid-authorization-invalid-user":
                             await EmergencyWarning.objects.acreate(
-                                note=f"Wikimedia key throwing error.\nKey: {str(user.wiki_token_num)}"
+                                note=f"Wikimedia key throwing error.\nKey: {rand_idx}\nAgent: {rand_idx}"
                             )
-                        print('\n\n')
-                        print(params)
-                        print(response.url)
                         if response.status == 200:
                             data = await response.json()
 
                             if "error" in data:
                                 if use_headers and "invalid" in data["error"]["info"] or "forbidden" in data["error"]["info"]:
                                     await EmergencyWarning.objects.acreate(
-                                        note=f"Wikimedia key throwing error.\nKey: {str(user.wiki_token_num)}"
+                                        note=f"Wikimedia key throwing error.\nKey: {str(rand_idx)}"
                                     )
                                     await self.web_search(room, p, query, is_wiki, False)
                                 else:
@@ -1918,11 +2054,26 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         )
 
         room.state = Room.GameState.INSTRUCTION_READING
+        room.state = Room.GameState.PLAYING
+        room.start_time = timezone.now().timestamp()
+        room.end_time = room.start_time + QUESTION_TIME
         await room.asave()
-        await self.toggle_comparison_visibility(room=room, show_comparison=False)
 
-        await self.show_and_disable_tools(room=room, player=p)
-        await self.next(room, p)
+        #await self.toggle_comparison_visibility(room=room, show_comparison=False)
+        #await self.show_and_disable_tools(room=room, player=p, update_tools=True)
+
+        steps_seen = (
+            room.steps_seen_a
+            if room.curr_instructions_letter == "A"
+            else room.steps_seen_b
+        )
+
+        await self.update_ui(room=room, player=p,
+                            instr_inputs={'num_steps': steps_seen, 'should_clear': steps_seen == 1},
+                            status_inputs={'status': room.state},
+                            disable_inputs={'update_tools': True, 'disable_tools': False, 'disable_plan': False},
+                            comparison_inputs={'show_comparison': False}
+                            )
 
     @sync_to_async
     def clean_query(self, query):
@@ -2075,15 +2226,20 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 await self.log_leaderboard(room, player)
 
             room.state = Room.GameState.IDLE
-            curr_answer = curr_q.answer_accept[0]
-            await self.update_status(room, room.state, player, curr_answer)
             await room.asave()
 
-            await self.get_init_model_instructions(
-                room=room, player=player, num_steps=-1, should_clear=True
-            )
-            await self.show_and_disable_tools(room=room, player=player)
-            await self.disable_plan()
+            curr_answer = curr_q.answer_accept[0]
+            await self.update_ui(room=room, player=player,
+                               status_inputs={'status': room.state, 'answer': curr_answer},
+                               instr_inputs={'num_steps': -1, 'should_clear': True},
+                               disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True}
+                               )
+
+            # await self.update_status(room, room.state, player, curr_answer)
+            # await self.get_init_model_instructions(
+            #     room=room, player=player, num_steps=-1, should_clear=True
+            # )
+            # await self.show_and_disable_tools(room=room, player=player, update_tools=True)
 
 @sync_to_async
 def user_from_player(player):
@@ -2166,3 +2322,42 @@ def count_inversions(arr):
         return inv_count
 
     return merge_sort(arr, 0, len(arr) - 1)
+
+
+def get_or_create_expt_group(user: User):
+    if user.experiment_group is not None:
+        return (user.experiment_group, False)
+    
+    # (question_id, did_comparison) -> number of users who have done it
+    question_to_user_count = dict()
+    for entry in AnswerData.objects.filter(is_final=True, is_report=False
+                                                            ).values("question_id", "did_comparison"
+                                                            ).annotate(user_count=Count("user__user_id", distinct=True)).all():
+        question_to_user_count[(entry["question_id"], entry["did_comparison"])] = entry["user_count"]
+
+    num_swap_questions_done = 0
+    num_pairwise_questions_done = 0
+    for k, v in question_to_user_count.items():
+        if k[1]:
+            num_pairwise_questions_done += int(v >= 6)
+        else:
+            num_swap_questions_done += int(v >= 3)
+    
+    num_swap_users = User.objects.filter(experiment_group=User.ExperimentGroup.SWAP).count()
+    num_pairwise_users = User.objects.filter(experiment_group=User.ExperimentGroup.PAIRWISE).count()
+
+    if num_swap_questions_done == num_pairwise_questions_done:
+        if num_swap_users < num_pairwise_users:
+            return (User.ExperimentGroup.SWAP, True)
+        elif num_pairwise_users < num_swap_users:
+            return (User.ExperimentGroup.PAIRWISE, True)
+        else:
+            return (
+                (User.ExperimentGroup.PAIRWISE, True)
+                if random.uniform(0, 1) > 0.5
+                else (User.ExperimentGroup.SWAP, True)
+            )
+    elif num_swap_questions_done > num_pairwise_questions_done:
+        return (User.ExperimentGroup.PAIRWISE, True)
+    else:
+        return (User.ExperimentGroup.SWAP, True)

@@ -15,7 +15,7 @@ let userEmail;
 let lockedOut;
 
 let allowSwapsGlobal = null; // true/false
-let gameState = 'idle'; // idle, playing, contest
+ // idle, playing, contest
 let currentAction = 'idle'; // idle, buzz, chat, 
 
 let currentTime;
@@ -127,9 +127,13 @@ function update() {
       // Update if game is going
       questionPassedTime = 0;
 
+      width = Math.min(100, (100 * ((1.01 * readingPassedTime) / readingTime)));
       if (!isTutorial) {
-        width = Math.min(100, (100 * ((1.01 * readingPassedTime) / readingTime)));
         instructionProgress.style.width = width + '%';
+      }
+
+      if (width > 3) {
+        skipBtn.style.display = '';
       }
 
       currentTime += 0.1;
@@ -195,12 +199,7 @@ function update() {
 
 }
 
-// Handle server response
-gamesock.onmessage = message => {
-
-  const data = JSON.parse(message.data);
-  //console.log(data['response_type'], data);
-
+function handleServerResponse(data) {
   if (data['response_type'] === "update") {
 
     // sync client with server
@@ -246,7 +245,39 @@ gamesock.onmessage = message => {
     emailInput.value = userEmail ? userEmail : "";
     ping();
 
-  } else if (data['response_type'] === "set_experiment_type") {
+  } else if (data['response_type'] === "update_ui") {
+    const currData = data['full_data'];
+    if (currData['should_run_shown_question']) {
+      handleServerResponse(currData['get_shown_question_data']['data']);
+    }
+    if (currData['should_run_status']) {
+      handleServerResponse(currData['update_status_data']['data']);
+    }
+    if (currData['should_run_comparison']) {
+      if ('populate_comparison_data' in currData) {
+        handleServerResponse(currData['populate_comparison_data']['data'])
+      }
+      handleServerResponse(currData['toggle_comparison_data']['data']);
+    }
+    if (currData['should_run_instr']) {
+      handleServerResponse(currData['update_instructions_data']['data']);
+    }
+    if (currData['should_run_disable']) {
+      if ('update_tools_data' in currData) {
+        handleServerResponse(currData['update_tools_data']['data']);
+      }   
+      if ('update_doc_data' in currData) {
+        handleServerResponse(currData['update_doc_data']['data']);
+      }
+      if ('disable_tools_data' in currData) {
+        handleServerResponse(currData['disable_tools_data']['data']);
+      }
+      if ('disable_plan_data' in currData) {
+        handleServerResponse(currData['disable_plan_data']['data']);
+      }
+    }
+  }
+  else if (data['response_type'] === "set_experiment_type") {
     setExperimentInstructions(data['experiment_type'], data['category_preference'], data['prefers_auto_scroll']);
   } else if (data['response_type'] === "send_answer") {
     setAnswer(data['answer']);
@@ -280,7 +311,7 @@ gamesock.onmessage = message => {
     // } else {
     //   stepBtn.style.display = '';
     // }
-    instructionHeader.innerHTML = `<h6>Plan ${planLetter} (p)</h6>`;
+    instructionHeader.innerHTML = `<h5 style="font-size: large;">Plan ${planLetter} (p)</h5>`;
   } else if (data['response_type'] === "populate_comparison") {
     populateComparisonPane(data['question'], data['instructions_a'], data['instructions_b']);
   } else if (data['response_type'] === 'update_tools') {
@@ -365,6 +396,15 @@ gamesock.onmessage = message => {
   } else if (data['response_type'] === 'reauthenticate') {
     window.location.href = '/?reauthenticate=true';
   }
+
+}
+
+// Handle server response
+gamesock.onmessage = message => {
+
+  const data = JSON.parse(message.data);
+  //console.log(data['response_type'], data);
+  handleServerResponse(data);
 }
 
 /**
@@ -423,20 +463,41 @@ function setCalculation(res) {
 }
 
 function disableNavigation(allowFwd, allowBwd) {
+
   if (allowFwd) {
-    fwdSearch.classList.remove('btn-outline-info');
-    fwdSearch.classList.add('btn-info');
+    fwdSearch.style.backgroundColor = '#4A90E2';
+    fwdSearch.style.color = 'white';
+
+    fwdSearch.onmouseover = function () {
+      fwdSearch.style.backgroundColor = '#357ABD'; // Darker shade for hover
+    };
+    fwdSearch.onmouseout = function () {
+      fwdSearch.style.backgroundColor = '#4A90E2'; // Reset to original color
+    };
   } else {
-    fwdSearch.classList.remove('btn-info');
-    fwdSearch.classList.add('btn-outline-info');
+    fwdSearch.style.backgroundColor = 'transparent';
+    fwdSearch.style.color = '#4A90E2';
+
+    fwdSearch.onmouseover = null;
+    fwdSearch.onmouseout = null;
   }
 
   if (allowBwd) {
-    bwdSearch.classList.remove('btn-outline-info');
-    bwdSearch.classList.add('btn-info');
+    bwdSearch.style.backgroundColor = '#4A90E2';
+    bwdSearch.style.color = 'white';
+
+    bwdSearch.onmouseover = function () {
+      bwdSearch.style.backgroundColor = '#357ABD'; // Darker shade for hover
+    };
+    bwdSearch.onmouseout = function () {
+      bwdSearch.style.backgroundColor = '#4A90E2'; // Reset to original color
+    };
   } else {
-    bwdSearch.classList.remove('btn-info');
-    bwdSearch.classList.add('btn-outline-info');
+    bwdSearch.style.backgroundColor = 'transparent';
+    bwdSearch.style.color = '#4A90E2';
+
+    bwdSearch.onmouseover = null;
+    bwdSearch.onmouseout = null;
   }
 
   bwdSearch.disabled = !allowBwd;
@@ -566,9 +627,6 @@ function showButtonsForState(currGameState, allowSwaps) {
     case 'playing':
       // skipBtn.style.display = '';
 
-      // is it time for the next step or to buzz?
-      const shouldShowStep = shouldShowStepBtn();
-
       reportBtn.style.display = '';
       nextBtn.style.display = 'none';
       skipBtn.style.display = 'none';
@@ -613,7 +671,7 @@ function showButtonsForState(currGameState, allowSwaps) {
     case 'instruct':
       // skipBtn.style.display = 'none';
       nextBtn.style.display = 'none';
-      skipBtn.style.display = '';
+      skipBtn.style.display = 'none';
       buzzBtn.style.display = 'none';
       settingsBtn.style.display = '';
       reportBtn.style.display = 'none';
@@ -922,7 +980,6 @@ function focusTextInputInstructions(elem_id) {
   const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
   const focusInput = iframeDoc.getElementById(elem_id);
   if (focusInput) {
-    console.log(focusInput);
     focusInput.focus();
   } else {
     console.warn(`No element with ID ${elem_id} found.`);

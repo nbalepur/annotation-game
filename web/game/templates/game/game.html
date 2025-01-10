@@ -11,37 +11,42 @@
 
 {% block content %}
 <div id="game-container">
-  <div class="d-flex flex-column flex-grow-1">
+  <div class="d-flex flex-column">
     <!-- Row 0: Buttons + Timer -->
     <div class="row" id="buttons-row">
       <div class="col">
         <div class="row">
-          <div class="d-flex justify-content-between align-items-center w-100">
+          <div class="d-flex justify-content-between align-items-end w-100">
             <input type="text" id="request-content" style="display: none; width: 75%;" class="form-control me-4" maxlength="200">
             <div class="d-flex align-items-center" id="left-buttons">
-              <button id="next-btn" class="btn btn-info btn me-2" title="Shortcut: N">Next (n)</button>
+              <button id="next-btn" class="btn btn-primary btn me-2" title="Shortcut: N">Next (n)</button>
               <button id="skip-btn" class="btn btn-primary btn me-2" title="Shortcut: S" style="display: none;">Skip Reading (s)</button>
               <button id="swap-btn" class="btn btn-dark btn me-2" title="Shortcut: S" style="display: none;">Swap Plan (s)</button>
               <button id="step-btn" class="btn btn-warning btn me-2" title="Shortcut: N" style="display: none;">Next Step (n)</button>
               <button id="buzz-btn" class="btn btn-danger btn me-2" style="display: none;">Buzz (space)</button>
                 <button id="report-btn" class="btn btn-outline-danger btn me-2" data-bs-toggle="modal" data-bs-target="#reportModal" style="display: none;">Report</button>
-              <button id="settings-btn" class="btn btn-secondary opacity-75" data-bs-toggle="offcanvas"
+              <button id="settings-btn" class="btn btn-secondary" data-bs-toggle="offcanvas"
                 data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings"
                 title="Shortcut: Tab">Settings (Tab)</button>
             </div>
             <div class="d-flex justify-content-center align-items-center">
-              <h4 id="status-text" class="mb-0">Status: <span style="color:grey;">Hit <span class=text-primary>Next</span> to continue...</span></h4>
+              <h5 id="status-text" class="mb-0">Task: <span style="color:grey;">Hit <span class=text-primary>Next</span> to continue...</span></h5>
             </div>
           </div>
+        </div>           
+
         </div>
+        <div class="col-12">
         <div class="progress mt-2">
-          <div id="content-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"
+          <div id="content-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%"
             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
           <div id="buzz-progress" class="progress-bar bg-danger" role="progressbar" style="width: 0%"
             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
           <div id="instruction-progress" class="progress-bar bg-primary" role="progressbar" style="width: 0%"
             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
+
+      </div>
       </div>
     </div>
 
@@ -60,8 +65,8 @@
         <!-- Question -->
         <div class="mb-3">
           <div class="card">
-            <div class="card-header bg-danger bg-opacity-50">
-              <h6 id="category-header">Question</h6>
+            <div class="card-header">
+              <h5 id="category-header" style="font-size: large;">Question</h5>
             </div>
             <div class="card-body">
               <span id="question-space"></span>
@@ -88,11 +93,7 @@
 
       <!-- Right Column -->
       <div class="col-6 d-flex flex-column">
-
-        {% if room.uses_instructions %}
-          {% include "game/toolbox.html" %}
-        {% endif %}
-
+        {% include "game/toolbox.html" with show_web_first=show_web_first%}
       </div>
     </div>
   </div>
@@ -187,7 +188,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="reportModalLabel">Report an Issue</h5>
+          <h5 class="modal-title" id="reportModalLabel">Report Issue</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" id="report-issue-close" aria-label="Close"></button>
         </div>
         <div class="modal-body">

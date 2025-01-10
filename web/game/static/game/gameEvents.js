@@ -1,6 +1,8 @@
 // gameEvents.js
 // Listeners for events during game
 
+let gameState = 'idle';
+
 const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");
 const optOutInput = document.getElementById("optOutCheck");
@@ -57,6 +59,30 @@ $(document).ready(() => {
 
 document.addEventListener('DOMContentLoaded', function () {
 
+  const buttonsToChange = [contentSelectorToolBtn, contentSelectorToolBtn2, document.getElementById('calculate-btn-equals')];
+  for (const customButton of buttonsToChange) { 
+    if (customButton) {
+      customButton.addEventListener('mouseover', function () {
+        this.style.backgroundColor = '#357ABD';
+      });
+      customButton.addEventListener('mouseout', function () {
+        this.style.backgroundColor = '#4A90E2';
+      });
+    }
+  }
+
+  for (const customButton of calculatorOperators.querySelectorAll('.btn-op')) {
+    if (customButton) {
+      customButton.addEventListener('mouseover', function () {
+        this.style.backgroundColor = '#d1cfcf';
+      });
+      customButton.addEventListener('mouseout', function () {
+        this.style.backgroundColor = '#e8e6e6';
+      });
+    }
+  }     
+  
+
   const urlParams = new URLSearchParams(window.location.search);
   const isModal = urlParams.get('instructions');
 
@@ -77,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
   closeBtn2.addEventListener('click', function () {
     welcomeModal.hide();
   });
+
 
 });
 
@@ -167,7 +194,9 @@ function handleKeyPress(e) {
   const instructionFrame = document.getElementById('instruction-frame')
   const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
   const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+  
   const swapPlanButton = iframeDoc.getElementById('swap-button-in-plan');
+  const swapPlanButtonClick = iframeDoc.getElementById('swap-button-in-plan-btn');
 
   if (feedbackRow && feedbackRow.style.display === "") {
     if (e.key === "[") {
@@ -187,10 +216,19 @@ function handleKeyPress(e) {
       } else if (gameState === 'playing' && !checkbox.checked) {
         next_step();
       }
-    } else if (e.key == " ") {
+    } else if (e.key == " " && gameState === "playing") {
       if (buzzBtn.style.display === "") {
         buzz();
         e.preventDefault();
+      } else {
+        const iframe = document.getElementById('instruction-frame');
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        if (iframeDoc.getElementById('step-buzz-btn')) {
+          const container = iframeDoc.getElementById('instructions-container');
+          const currentLastStep = container.querySelector('.step-div:first-child');
+          const guess = currentLastStep.querySelector('textarea').value;
+          answerWrapper(guess);
+        }
       }
     } else if (e.key == "m") {
       focusTextInput("calc-expression");
@@ -212,7 +250,7 @@ function handleKeyPress(e) {
         skip();
         e.preventDefault();
       } else if (gameState === "playing" && !checkbox.checked && swapPlanButton.style.display === '') {
-        swap_plan();
+        swapPlanButtonClick.click();
         e.preventDefault();
       }
     } else if (e.key === "p") {
@@ -251,12 +289,12 @@ function handleKeyDown(e) {
   } else if (e.key === "Tab" && gameState === 'idle') {
     settings();
     e.preventDefault();
-  } else if (e.key === "ArrowLeft" || e.key === "[") {
-    if (bwdSearch && bwdSearch.classList.contains('btn-info')) {
+  } else if (gameState === 'playing' && (e.key === "ArrowLeft" || e.key === "[")) {
+    if (bwdSearch && bwdSearch.style.backgroundColor !== 'transparent') {
       navigateHistory(-1);
     }
-  } else if (e.key === "ArrowRight" || e.key === "]") {
-    if (fwdSearch && fwdSearch.classList.contains('btn-info')) {
+  } else if (gameState === 'playing' &&  (e.key === "ArrowRight" || e.key === "]")) {
+    if (fwdSearch && fwdSearch.style.backgroundColor !== 'transparent') {
       navigateHistory(1);
     }
   }
@@ -386,6 +424,12 @@ stepBtn.addEventListener("click", next_step);
 swapBtn.addEventListener("click", swap_plan)
 
 categorySelect.addEventListener('change', function(event) {
+  const categoryPreference = event.target.value;
+  if (categoryPreference === 'Trivia' || categoryPreference === 'Everything') {
+    autoScrollContainer.style.display = '';
+  } else {
+    autoScrollContainer.style.display = 'none';
+  }
   sendRequest("change_category", event.target.value);
 });
 

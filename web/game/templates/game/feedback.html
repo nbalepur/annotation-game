@@ -5,13 +5,13 @@
     transition: 0.3s;
   }
 </style>
-<div class="card bg-faded mb-3">
+<div class="card mb-3">
   <div
-    class="card-header bg-info"
-    style="padding-bottom: 5px; padding-top: 10px"
+    class="card-header"
+    style="padding-bottom: 5px; padding-top: 10px;"
     id="feedback-header"
   >
-    <h6>Pairwise Comparison</h6>
+    <h5 style="font-size: large;">Pairwise Comparison</h5>
   </div>
   <div class="card-body" id="feedback-body">
     <div class="row">
@@ -26,7 +26,7 @@
       <div class="col-6 mb-3">
         <div class="card" id="feedback-question">
           <div class="card-header">
-            <h6>Question</h6>
+            <h5 style="font-size: larger;">Question</h5>
           </div>
           <div class="card-body" id="feedback-question-body">
             Question
@@ -45,7 +45,7 @@
           onclick="selectPlan('A')"
         >
           <div class="card-header bg-primary bg-opacity-50" id="plan-a-header">
-            <h6>Instructions A are Better (&thinsp;[&thinsp;)</h6>
+            <h5 style="font-size: large;">Instructions A are Better (&thinsp;[&thinsp;)</h5>
           </div>
           <div class="card-body" id="plan-a-body">This is plan A</div>
         </div>
@@ -70,7 +70,7 @@
           onclick="selectPlan('B')"
         >
           <div class="card-header bg-primary bg-opacity-50" id="plan-b-header">
-            <h6>Instructions B are Better (&thinsp;]&thinsp;)</h6>
+            <h5 style="font-size: large;">Instructions B are Better (&thinsp;]&thinsp;)</h5>
           </div>
           <div class="card-body" id="plan-b-body">This is plan B</div>
         </div>

@@ -331,8 +331,6 @@ class User(models.Model):
         default=Question.Category.EVERYTHING
     )
 
-    wiki_token_num = models.IntegerField(default=1)
-
     auto_scroll = models.BooleanField(default=True)
 
     reset_token = models.CharField(max_length=255, null=True, blank=True)

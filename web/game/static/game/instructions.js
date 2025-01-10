@@ -110,14 +110,19 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     stepDiv.className = 'pt-4 px-4 pb-2 mb-2 border bg-light position-relative step-div';
     stepDiv.id = `step-div-${index + 1}`;
     stepDiv.setAttribute('is-custom', false);
-    container.prepend(stepDiv);
+
+    if (addCloseBtn) {
+      container.prepend(stepDiv);
+    } else {
+      container.append(stepDiv);
+    }
 
     const buttonHTML = !addCloseBtn ? '' : (isLastStep && index === inputInstructions['steps'].length - 1
-      ? `<button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">Buzz</button>`
-      : `<button type="button" style="border-radius: 0;" class="btn btn-sm btn-warning step-btn" data-copy-id="answer-step-${index + 1}">
+      ? `<button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">Buzz (space)</button>`
+      : `<button type="button" style="border-radius: 0;" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${index + 1}">
           Next Step (n)
         </button>
-        <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary copy-btn" data-copy-id="answer-step-${index + 1}">
+        <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${index + 1}">
            Copy to Tool
          </button>
          `);
@@ -245,14 +250,14 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
       <div class="input-group" style="margin-top: 5px;">
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
-          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">
-            Buzz
+          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">
+            Buzz (space)
           </button>
         ` : `
-          <button type="button" style="border-radius: 0;" class="btn btn-sm btn-warning step-btn" data-copy-id="answer-step-${lastIndex + 1}">
+          <button type="button" style="border-radius: 0;" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${lastIndex + 1}">
             Next Step (n)
           </button>
-          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
             Copy to Tool 
           </button>
         `}
@@ -269,14 +274,14 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
       <div class="input-group" style="margin-top: 5px;">
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
-          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">
-            Buzz
+          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">
+            Buzz (space)
           </button>
         ` : `
-          <button type="button" style="border-radius: 0;" class="btn btn-sm btn-warning step-btn" data-copy-id="answer-step-${lastIndex + 1}">
+          <button type="button" style="border-radius: 0;" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${lastIndex + 1}">
             Next Step (n)
           </button>
-          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
+          <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
             Copy to Tool
           </button>
         `}
@@ -519,6 +524,13 @@ function clearFields(should_clear_document) {
                 <p>Search to make a document appear!</p>
             </div>
             </body>
+            <script>
+            document.addEventListener("keypress", function (event) {
+              if (window.parent && typeof window.parent.handleKeyPress === "function") {
+                window.parent.handleKeyPress(event);
+              }
+          });
+            </script>
             </html>`
     }
 }
@@ -646,30 +658,30 @@ function buzzStatsUpdate(isCorrect) {
 function updateStatus(status, player, answer, allowSwaps) {
     gameState = status;
     if (status === "compare") {
-        statusText.innerHTML = `Status: <span class=text-secondary>Complete the <span class=text-primary>pairwise comparison</span> to continue...</span>`;
+        statusText.innerHTML = `Task: <span class=text-secondary>Complete the <span class=text-secondary>pairwise comparison</span> to continue</span>`;
         //statusText.scrollIntoView({ block: 'start' });        
     } else if (status === "compare_correct") {
-        statusText.innerHTML = `Status: <span class=text-secondary>Your answer was <span class=text-success>correct</span>. Complete the <span class=text-primary>pairwise comparison</span> to continue...</span>`;     
+        statusText.innerHTML = `Task: <span class=text-secondary>Your answer was <span class=text-success>correct</span>. Complete the <span class=text-secondary>pairwise comparison</span> to continue</span>`;     
     } else if (status === "compare_incorrect") {
-        statusText.innerHTML = `Status: <span class=text-secondary>You <span class=text-danger>ran out of time</span>. Complete the <span class=text-primary>pairwise comparison</span> to continue...</span>`;
+        statusText.innerHTML = `Task: <span class=text-secondary>You <span class=text-danger>ran out of time</span>. Complete the <span class=text-secondary>pairwise comparison</span> to continue</span>`;
     } else if (status === "idle") {
         if (answer !== "") {
-            statusText.innerHTML = `Status: <span class=text-secondary>The correct answer is: <span class=text-primary>${answer}</span>. Hit <span class=text-primary>Next</span> to continue... </span>`;
+            statusText.innerHTML = `Task: <span class=text-secondary>The correct answer is: <span class=text-primary>${answer}</span>. Hit <span class=text-primary>Next</span> to continue</span>`;
             reportBtn.style.display = '';
             sendSubanswers(false, true);
         } else {
-            statusText.innerHTML = `Status: <span class=text-secondary>Hit <span class=text-primary>Next</span> to continue...</span>`;
+            statusText.innerHTML = `Task: <span class=text-secondary>Hit <span class=text-primary>Next</span> to continue</span>`;
             reportBtn.style.display = 'none';
         }
     } else if (status === "instruct") {
-        statusText.innerHTML = 'Status: <span class=text-primary>Read the question and plan</span>';
+        statusText.innerHTML = 'Task: <span class=text-secondary>Read the question and plan</span>';
         //statusText.scrollIntoView({ block: 'start' });
     } else if (status === "playing") {
-        statusText.innerHTML = 'Status: <span class=text-secondary>Waiting for buzzes...</span>';
+        statusText.innerHTML = 'Task: <span class=text-secondary>Follow the plan to answer the question!</span>';
     } else if (status === "contest") {
-        statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed</span>`;
+        statusText.innerHTML = `Task: <span class=text-secondary>Type your answer</span></span>`;
     } else if (status === "buzz_correct") {
-        statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-success>correctly</span> with <span class=text-success>"${answer}"</span></span>`;
+        statusText.innerHTML = `<span class=text-secondary>You buzzed <span class=text-success>correctly!</span>. Hit <span class=text-primary>Next</span> to continue</span>`;
         buzzStatsUpdate(true);
         // statusText.classList.add('flash-highlight');
         // setTimeout(() => {
@@ -679,7 +691,7 @@ function updateStatus(status, player, answer, allowSwaps) {
         gameState = 'idle';
 
       } else if (status === "buzz_incorrect") {
-        statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed </span><span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>`;
+        statusText.innerHTML = `<span class=text-secondary>You buzzed <span class=text-danger>incorrectly</span> with <span class=text-danger>"${answer}"</span>. Try again!</span>`;
         buzzStatsUpdate(false);
         // statusText.classList.add('flash-highlight');
         // setTimeout(() => {
@@ -689,7 +701,7 @@ function updateStatus(status, player, answer, allowSwaps) {
         sendSubanswers(false, false);
         toggleCloseButtonVisibility(true);
     } else if (status === "buzz_abstain") {
-        statusText.innerHTML = `Status: <span class=text-secondary><span class=text-primary>${player}</span> buzzed and </span><span class=text-danger>did not answer</span>`;
+        statusText.innerHTML = `You buzzed and </span><span class=text-danger>did not answer</span>. Try again until time's up!`;
         statusText.classList.add('flash-highlight');
         setTimeout(() => {
           statusText.classList.remove('flash-highlight');
@@ -824,6 +836,10 @@ function clearToolHistory() {
     const expression = calculatorToolInput.value;
     if (!expression) {
         calculatorResult.value = "Please enter an equation.";
+        calculatorResult.classList.add('flash-highlight');
+        setTimeout(() => {
+          calculatorResult.classList.remove('flash-highlight');
+        }, 500);
       return;
     }
     calculatorToolInput.blur();
@@ -874,22 +890,28 @@ function clearToolHistory() {
     sendRequest("content_select", query);
   }
 
-function toggleRogueCheckbox(checkbox) {
+function toggleRogueCheckbox(checkbox, isPairwise) {
   const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
   const skipPlanButton = iframeDoc.getElementById('skip-button-in-plan');
   const buzzPlanButton = iframeDoc.getElementById('buzz-button-in-plan');
   const swapPlanButton = iframeDoc.getElementById('swap-button-in-plan');
+
+  console.log(isPairwise);
 
   if (checkbox.checked) {
     // buzzBtn.style.display = '';
     // swapBtn.style.display = 'none';
     // stepBtn.style.display = 'none';
     skipPlanButton.style.visibility = '';
-    swapPlanButton.style.display = 'none';
+    if (!isPairwise) {
+      swapPlanButton.style.display = 'none';
+    }
     buzzPlanButton.style.display = '';
   } else {
     skipPlanButton.style.visibility = 'hidden';
-    swapPlanButton.style.display = '';
+    if (!isPairwise) {
+      swapPlanButton.style.display = '';
+    }
     buzzPlanButton.style.display = 'none';
     showButtonsForState(gameState, allowSwapsGlobal);
   }
@@ -901,7 +923,7 @@ function toggleRogueCheckbox(checkbox) {
   const notes = iframeDoc.getElementById('rogue-notes');
   notes.style.display = checkbox.checked ? '' : 'none';
 
-  instructionHeader.innerHTML = checkbox.checked ? '<h6>Write your own Plan (p)</h6>' : '<h6>Plan (p)</h6>';
+  instructionHeader.innerHTML = checkbox.checked ? '<h5 style="font-size: large;">Write your own Plan (p)</h6>' : '<h5 style="font-size: large;">Plan (p)</h6>';
 
   // add/remove the close button
   toggleCloseButtonVisibility(!checkbox.checked);
@@ -910,15 +932,18 @@ function toggleRogueCheckbox(checkbox) {
 function resetRogueCheckbox(isPairwise) {
   const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
   const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
+  
   if (!checkbox.checked) {
     const checkboxLabel = iframeDoc.getElementById('edit-instructions-checkbox-label');
     checkboxLabel.innerText = isPairwise ? "I can't answer with the given plan" : "I can't answer with the given plans";
+    const swapPlanButton = iframeDoc.getElementById('swap-button-in-plan');
+    swapPlanButton.style.display = isPairwise ? 'none' : '';
     return;
   }
   
   // uncheck and reset the field
   checkbox.checked = false;
-  self.toggleRogueCheckbox(checkbox);
+  self.toggleRogueCheckbox(checkbox, isPairwise);
 
   // reset the notes
   const notes = iframeDoc.getElementById('rogue-notes-area');
@@ -956,6 +981,7 @@ docContent.addEventListener('load', function() {
 function navigateHyperlink(link) {
   const url = new URL(link.href);
   const decodedPath = decodeURIComponent(url.pathname);
+  console.log(decodedPath);
   if (!decodedPath.startsWith('/wiki/')) {
     return;
   }
