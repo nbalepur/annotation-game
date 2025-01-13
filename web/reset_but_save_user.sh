@@ -13,5 +13,4 @@ python manage.py loaddata fixtures/sanity_tutorial_questions.json
 python manage.py loaddata fixtures/game_user_data.json
 python manage.py loaddata fixtures/auth_user_data.json
 
-# Run the server with the --insecure flag
-python manage.py runserver --insecure
+gunicorn myproject.wsgi:application --bind 0.0.0.0:8000
