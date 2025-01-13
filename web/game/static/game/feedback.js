@@ -20,7 +20,7 @@ function populateComparisonPane(question, instr_a, instr_b) {
 }
 
 
-function toggleComparisonViewer(show_comparison) {
+function toggleComparisonViewer(show_comparison, gotWhatWanted) {
     //showButtons();
     
     instructionProgress.style.display = 'none'
@@ -30,4 +30,9 @@ function toggleComparisonViewer(show_comparison) {
 
     feedbackRow.style.display = show_comparison ? '' : 'none';
     questionRow.style.display = !show_comparison ? '' : 'none';
+
+    if (!show_comparison && !gotWhatWanted) {
+        currPlanHeader = `<h5 style="font-size: large;">Plan (p): Note this is <i><strong>not</strong></i> the plan you selected</h5>`
+        instructionHeader.innerHTML = currPlanHeader;
+    }
 }

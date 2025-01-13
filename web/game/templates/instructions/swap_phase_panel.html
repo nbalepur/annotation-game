@@ -22,14 +22,15 @@
       <h1 style="margin-bottom: 30px;">Instructions</h1>
     
       <p>
-        Thank you for participating in our user study! Below, we have instructions on how to participate and how you will be compensated. You can return to this page at any time by hitting the "Instructions" tab in the header of the website. We also have a tutorial video below which you can watch instead of reading all of the instructions. <b>Before starting the user study, please either read the instructions or watch the video, and then click the button at the bottom of the page.</b>
+        Thank you for participating in our user study! Below, we have instructions on how to participate and how you will be compensated. You can return to this page at any time by hitting the "Instructions" tab in the header of the website. <b>Before starting the user study, please watch the short tutorial video below, and then click the button at the bottom of the page.</b> If you have any questions after watching the video, you can refer to specific sections below. 
       </p>
 
       <div style="display: flex; justify-content: center; align-items: center; padding: 20px;">
         <div style="position: relative; width: 75%; aspect-ratio: 16 / 9;">
           <iframe 
             allowfullscreen 
-            src="https://www.youtube.com/embed/YOWfmTI4EW4?modestbranding=1&rel=0" 
+            src="https://www.youtube.com/embed/7btNUBjzaoo" 
+            class="youtube"
             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;">
           </iframe>
         </div>
@@ -37,7 +38,7 @@
     
       <h2 style="margin-bottom: 20px; margin-top: 20px;">Table of Contents</h2>
       <ul>
-        <li><a href="#setup">Setup</a></li>
+        <li><a href="#setup">Settings</a></li>
         <li><a href="#read">Step 1: Read the Question</a></li>
         <li><a href="#answering">Step 2: Answering Questions</a></li>
         <ul>
@@ -51,9 +52,9 @@
         <li><a href="#contact">Contact</a></li>
       </ul>
     
-      <h2 id="setup" style="margin-top: 40px; margin-bottom: 20px;">Setup</h2>
+      <h2 id="setup" style="margin-top: 40px; margin-bottom: 20px;">Settings</h2>
       <p>
-        The first thing you should do is hit the “Settings” button to adjust the type of questions you would like to see along with your account details. After adjusting these settings and once you are ready to participate in our user study, please hit the “Next” button. We show where both of these buttons are below:
+        Before starting the next trial, you can hit “Settings” button to adjust the type of questions you would like to see along with your account preferences. After adjusting these settings and once you are ready to participate in our user study, please hit the “Next” button. We show where both of these buttons are below:
       </p>
 
       <div style="text-align: center;">
@@ -62,7 +63,7 @@
 
       <p>After hitting the "Settings" button, you will see a modal divided into three sections:</p>
       <ol>
-        <li><strong>Question Settings (top):</strong> The Question Settings panel allows you to choose the questions you would like to answer in the study. You can choose from <code>Math</code> (algebraic word problems using a calculator), <code>Trivia</code> (multi-step trivia questions using a search engine), and <code>Everything</code> (both math and trivia). We encourage you to choose <code>Everything</code>, as we have extra rewards for the top-performing users in <i>each</i> category</li>
+        <li><strong>Question Settings (top):</strong> The Question Settings panel allows you to choose the questions you would like to answer in the study. You can choose from <code>Math</code> (algebraic word problems using a calculator), <code>Trivia</code> (multi-step trivia questions using a search engine), and <code>Everything</code> (both math and trivia). We encourage you to choose <code>Everything</code>, as we have extra rewards for the top-performing users in <i>each</i> category</li>. For trivia questions, you can also adjust if you would like the web page to auto-scroll to the sentence in the page most similar to your search query. 
         <li><strong>Account Settings (middle):</strong> The Account Settings panel allows you to alter your email or username. The email linked to your account is what we will use to distribute rewards, so make sure you put the right email. The username is just for visual purposes and will be displayed on the Leaderboard</li>
         <li><strong>Game Log (bottom):</strong> The Game Log shows your past interactions, like when you have joined the room, if you have answered questions correctly, etc.</li>
       </ol>
@@ -106,7 +107,7 @@
       </div>
     
       <p>
-        If you hit "Next Step" on accident and want to undo seeing the next step, you can use <code>ctrl/cmd+Z</code> or hit the "X" in the top-right corner of the step. If you do not want to follow the plan, you can hit "I will not follow any plan" and you will be asked to write your own plan to answer the question.
+        If you hit "Next Step" on accident and want to undo seeing the next step, you can use <code>ctrl/cmd+Z</code> or hit the "X" in the top-right corner of the step. If you do not want to follow the plans because you believe they are both too low-quality, you can hit "I can't answer with the given plan" and you can either write your own plan to answer the question, or skip the question (but skipping the question will give you no credit).
       </p>
     
       <p>
@@ -126,11 +127,11 @@
       </div>
     
       <p>
-        For the web search tool, there are two search fields. The top field allows you to find the most similar Wikipedia page based on a given query or keywords. Once you search here, you will see the Wikipedia page and a second search field you can use, which allows you to look for information inside the document (like ctrl/cmd+F). After entering a query, the page will scroll to the sentence that is most similar to the query and highlight the text. You can also scroll up and down the page to look for information. You can also click on hyperlinks on the Wikipedia page.
+        For the web search tool, there are two search fields. The top field allows you to find the most similar Wikipedia page based on a given query or keywords. Once you search here, you will see the Wikipedia page and a second search field you can use, which allows you to look for information inside the document (like ctrl/cmd+F). After entering a query, the page will scroll to the sentence that is most similar to the query and highlight the text. You can also scroll up and down the page to look for information. You can also click on hyperlinks on the Wikipedia page and navigate through your "search history" by pressing the left and right arrows.
       </p>
 
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/web.png' %}" alt="web search tool" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/web.png' %}" alt="web search tool" style="max-width: 50%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
@@ -143,21 +144,21 @@
     
       <h4 id="final" style="margin-top: 30px; margin-bottom: 20px;">c. Providing a Final Answer</h4>
       <p>
-        Once you reach the end of the plan, you will see buttons named "Buzz" that you can press to input your final answer to the question. The buttons are shown below:
+        Once you reach the end of the plan, you will see a button named "Answer" that will take the input you have typed in the last step of the plan, and take that as your final answer. The button is shown below:
       </p>
       <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/buzz2.png' %}" alt="buzzing" style="max-width: 100%; height: auto; border: 1px solid black;">
+        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/buzz.png' %}" alt="buzzing" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
-    
+
       <p>
-        Once you hit buzz, you will see an input field at the top of your screen where you can type in your answer to the question. You will have 5 seconds to answer the question and can hit "Enter" to submit your answer. By default, this input area will be filled with whatever is typed in the last step of the plan:
+        If you have chosen not to follow the plan, once you hit the "Answer" button, you will see an input field at the top of your screen where you can type in your answer to the question. You will have 8 seconds to answer the question and can hit "Enter" to submit your answer.
       </p>
       <div style="text-align: center;">
         <img class="mt-2 mb-2" src="{% static 'game/instruction_images/answer.png' %}" alt="providing a final answer" style="max-width: 100%; height: auto; border: 1px solid black;">
       </div>
     
       <p>
-        After buzzing, you will be told whether your answer is correct or incorrect. If the answer is correct, you can move on to the next question. If the answer is incorrect, you can keep trying to answer the question until you get it correct or time runs out. You will obtain lower "Question Accuracy" scores if you answer incorrectly (see Compensation section), so do not randomly guess. If you believe your answer is wrongly marked as correct/incorrect, or you want to give up on the question because it is too difficult, you can report the question (see section (e)).
+        After submitting your answer, you will be told whether your answer is correct or incorrect. If the answer is correct, you can move on to the next question. If the answer is incorrect, you can keep trying to answer the question until you get it correct or time runs out. If you believe your answer is wrongly marked as correct/incorrect, or you want to give up on the question because it is too difficult, you can report the question (see section (e)) by hitting the button in the top left.
       </p>
     
       <h4 id="shortcuts" style="margin-top: 30px; margin-bottom: 20px;">d. Keyboard Shortcuts</h4>
@@ -165,7 +166,7 @@
         We also provide keyboard shortcuts for every button in the app to help you answer questions quickly:
       </p>
       <ul>
-        <li><code>N</code>: Start the next question or move onto the next step (depending on which button appears).</li>
+        <li><code>N</code>: Start the next question.</li>
         <li><code>P</code>: Focus on the next step in the plan.</li>
         <li><code>S</code>: Swap plan, or skip the timer (depending on which button appears).</li>
         <li><code>ctrl/cmd + Z</code>: Undo the current step that was loaded.</li>
@@ -173,8 +174,9 @@
         <li><code>W</code>: Focus on the web search tool input.</li>
         <li><code>F</code>: Focus on the search (i.e. ctrl+F) tool input.</li>
         <li><code>C</code>: Copy the current result in the calculator or highlighted text on the wiki page into the plan.</li>
-        <li><code>Enter</code>: Run the tool (e.g., calculate your equation) when inside a tool text inputs or proceed to the next step/buzz with an answer when inside the step text inputs.</li>
-        <li><code>Space</code>: Buzz to give your answer.</li>
+        <li><code>Enter</code>: When pressed outside of a text field, moves onto the next step or submits an answer. When inside a text field, runs the action associated with that field (e.g. calculate the equation)</li>
+        <li><code>←</code>: Move backward in the search history.</li>
+        <li><code>→</code>: Move forward in the search history.</li>
         <li><code>Tab</code>: Open the settings pane.</li>
         <li><code>Escape</code>: Unfocus from your current text input.</li>
       </ul>
@@ -187,11 +189,8 @@
     
       <h4 id="reporting" style="margin-top: 30px; margin-bottom: 20px;">e. Reporting Questions</h4>
       <p>
-        If you believe there is an error or you want to move onto the next question, you can report the current question by hitting the "Report" button in the top left. This button will appear after 90 seconds to ensure that you gave a good-faith effort in answering the question:
+        If you believe there is an error or you want to move onto the next question, you can report the current question by hitting the "Report" button in the top left.
       </p>
-      <div style="text-align: center;">
-        <img class="mt-2 mb-2" src="{% static 'game/instruction_images/report_button.png' %}" alt="reporting a question (button)" style="max-width: 100%; height: auto; border: 1px solid black;">
-      </div>
     
       <p>
         After hitting this button, you will have to select one of the following reasons why you are reporting the question, or provide a textual description of your issue:

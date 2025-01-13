@@ -14,6 +14,8 @@ let userName;
 let userEmail;
 let lockedOut;
 
+let currPlanHeader;
+
 let allowSwapsGlobal = null; // true/false
  // idle, playing, contest
 let currentAction = 'idle'; // idle, buzz, chat, 
@@ -286,6 +288,7 @@ function handleServerResponse(data) {
     isTutorial = data['is_tutorial'];
     resetRogueCheckbox(data['is_pairwise']);
     clearReportData();
+    currPlanHeader = data['is_pairwise'] ? `<h5 style="font-size: large;">Plan (p)</h5>` : `<h5 style="font-size: large;">Plan A (p)</h5>`;
   } else if (data['response_type'] === 'clear_instructions') {
     clearInstructions();
   } else if (data['response_type'] === 'check_duplicate_user_data') {
@@ -306,12 +309,8 @@ function handleServerResponse(data) {
     if (data['subanswers']) {
       populateSubanswers(data['subanswers']);
     }
-    // if (data['is_last_step']) {
-    //   stepBtn.style.display = 'none';
-    // } else {
-    //   stepBtn.style.display = '';
-    // }
-    instructionHeader.innerHTML = `<h5 style="font-size: large;">Plan ${planLetter} (p)</h5>`;
+    currPlanHeader = `<h5 style="font-size: large;">Plan ${planLetter} (p)</h5>`;
+    instructionHeader.innerHTML = currPlanHeader;
   } else if (data['response_type'] === "populate_comparison") {
     populateComparisonPane(data['question'], data['instructions_a'], data['instructions_b']);
   } else if (data['response_type'] === 'update_tools') {
@@ -330,11 +329,8 @@ function handleServerResponse(data) {
   } else if (data['response_type'] === 'update_status') {
     updateStatus(data['status'], data['player'], data['answer'], data['allow_swaps']);
   } else if (data['response_type'] === 'toggle_comparison') {
-    toggleComparisonViewer(data['show_comparison']);
+    toggleComparisonViewer(data['show_comparison'], data['got_what_wanted']);
   } else if (data['response_type'] === "get_question_feedback") {
-
-    // console.log(data)
-    
     enableFeedbackCollapseToggle();
     expandFeedback();
     populateInitialQuestionFeedback(data['question_feedback']);
@@ -384,7 +380,6 @@ function handleServerResponse(data) {
     search_result = data['result'];
     updateTools(false, true, true);
     setWebSearch(search_result, data['allow_forwards'], data['allow_backwards'], data['will_retrieve']);
-    addIframeCommands();
     docSearchInput.value = data['doc_search_query'];
     webSearchInput.value = data['web_search_query'];
     disableNavigation(data['allow_forwards'], data['allow_backwards']);
@@ -525,67 +520,61 @@ function addIframeCommands() {
   };
 }
 
+function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, allowFwd, allowBwd) {
+  const iframe = document.getElementById('view-page-collapse');
+  webSearchInput.value = typedQueryWeb;
+  docSearchInput.value = typedQuerySearch;
+  disableNavigation(allowFwd, allowBwd);
+  setWebSearch(html, allowFwd, allowBwd, docIdxs.length > 0);
+
+  // Wait for iframe load before calling setContentSelectionResult
+  iframe.addEventListener('load', () => {
+    setContentSelectionResult(docIdxs, 1);
+  }, { once: true });  // Ensures this event listener is called only once
+}
+
 function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
   copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
   const iframe = document.getElementById('view-page-collapse');
   iframe.srcdoc = res;
 }
 
-
-function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, allowFwd, allowBwd) {
-  const iframe = document.getElementById('view-page-collapse');
-  iframe.onload = () => {
-
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-
-    webSearchInput.value = typedQueryWeb;
-    docSearchInput.value = typedQuerySearch;
-    setContentSelectionResult(docIdxs, 1);
-
-    iframeDoc.addEventListener("keypress", function (event) {
-      if (window.parent && typeof window.parent.handleKeyPress === "function") {
-        window.parent.handleKeyPress(event);
-      }
-    });
-
-    iframeDoc.addEventListener("keydown", function (event) {
-      if (window.parent && typeof window.parent.handleKeyDown === "function") {
-        window.parent.handleKeyDown(event);
-      }
-    });
-
-    iframe.onload = null;
-  };
-  disableNavigation(allowFwd, allowBwd);
-  setWebSearch(html, allowFwd, allowBwd, docIdxs.length > 0);
-}
-
 function setContentSelectionResult(doc_idxs, num_docs) {
-
   if (doc_idxs.length === 1) {
     copySearchBtn.style.visibility = '';
     const iframe = document.getElementById('view-page-collapse');
+
+    const handleScrollAndHighlight = () => {
+      const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+
+      // Clear previous highlights
+      for (let i = 0; i < num_docs; i++) {
+        const currElem = iframeDocument.getElementById('element-' + i);
+        if (currElem && currElem.classList.contains('highlight')) {
+          currElem.classList.remove('highlight');
+        }
+      }
+
+      // Highlight and scroll to the target element
+      const targetElement = iframeDocument.getElementById('element-' + doc_idxs[0]);
+      if (targetElement) {
+        if (doc_idxs[0] > 3) {
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        targetElement.classList.add('highlight');
+      }
+    };
+
+    // Check if the iframe content is ready
     const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-    
-    // console.log(num_docs);
-
-    for (let i = 0; i < num_docs; i++) {
-      const currElem = iframeDocument.getElementById('element-' + i);
-      if (currElem && currElem.classList.contains('highlight')) {
-        currElem.classList.remove('highlight');
-        // console.log('removed!');
-      }
-    }
-
-    const targetElement = iframeDocument.getElementById('element-' + doc_idxs[0]);
-    if (targetElement) {
-      if (doc_idxs[0] > 3) {
-        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center'});
-      }
-      targetElement.classList.add('highlight');
+    if (iframeDocument && iframeDocument.readyState === 'complete') {
+      handleScrollAndHighlight();
+    } else {
+      iframe.addEventListener('load', handleScrollAndHighlight, { once: true });
     }
   }
 }
+
 
 function sendToNotes(copied_text) {
   let content = scratchpadInput.innerHTML;

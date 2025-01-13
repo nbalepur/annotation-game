@@ -26,7 +26,7 @@
   </div>
 
 
-  <div class="input-group mb-3" id="calculator-tool-result" style="display: {% if show_web_first %}none{% else %}{% endif %};">
+  <div class="input-group mb-5" id="calculator-tool-result" style="display: {% if show_web_first %}none{% else %}{% endif %};">
     <button type="button" class="btn btn-secondary" disabled id="calc-copy-btn" onclick="copyMathResult()">
       Copy To Plan (c):
     </button>
@@ -62,23 +62,24 @@
       <!-- Content Selector Tool -->
       <div class="row align-items-center g-3" id="content-selector-tool" style="display: none;">
         <!-- Navigation Buttons -->
+
         <div class="col-sm-12 col-xl-5 d-flex justify-content-start">
 
           <div class="btn-group" role="group" aria-label="Navigation">
-            <button type="button" class="btn btn-primary me-2" 
+            <button type="button" class="btn btn-primary me-1" 
                     style="color: #4A90E2; border-color: #4A90E2; background-color: transparent; transition: background-color 0.3s ease;" 
                     disabled id="content-bwd-btn" onclick="navigateHistory(-1)">
               <i class="fas fa-arrow-left"></i>
             </button>
-            <button type="button" class="btn btn-primary btn-outline me-3" 
+            <button type="button" class="btn btn-primary btn-outline me-2" 
                     style="color: #4A90E2; border-color: #4A90E2; background-color: transparent; transition: background-color 0.3s ease; border-radius: 0rem 0.5rem 0.5rem 0rem;" 
                     disabled id="content-fwd-btn" onclick="navigateHistory(1)">
               <i class="fas fa-arrow-right"></i>
             </button>
 
-            <button type="button" class="btn btn-secondary" id="copy-search-btn" style="border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;"  
+            <button type="button" class="btn btn-secondary" id="copy-search-btn" style="border-radius: 0.5rem 0.5rem 0.5rem 0.5rem; min-width: 143px;"  
             style="visibility: hidden;" disabled onclick="copyDocText()">
-              Copy to Plan
+              Copy to Plan (c)
             </button>
           </div>
 

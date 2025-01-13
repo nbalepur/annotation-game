@@ -118,9 +118,9 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     }
 
     const buttonHTML = !addCloseBtn ? '' : (isLastStep && index === inputInstructions['steps'].length - 1
-      ? `<button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-danger buzz-btn" id="step-buzz-btn">Buzz (space)</button>`
-      : `<button type="button" style="border-radius: 0;" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${index + 1}">
-          Next Step (n)
+      ? `<button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">Buzz (Enter)</button>`
+      : `<button type="button" style="border-radius: 0;" id="step-next-btn" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${index + 1}">
+          Next Step (Enter)
         </button>
         <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${index + 1}">
            Copy to Tool
@@ -169,6 +169,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     textarea.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
+        event.stopImmediatePropagation();
         if (isLastStep && index === inputInstructions['steps'].length - 1) {
           answerWrapper(textarea.value);
         } else {
@@ -251,11 +252,11 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
           <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">
-            Buzz (space)
+            Buzz (Enter)
           </button>
         ` : `
-          <button type="button" style="border-radius: 0;" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${lastIndex + 1}">
-            Next Step (n)
+          <button type="button" style="border-radius: 0;" id="step-next-btn" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${lastIndex + 1}">
+            Next Step (Enter)
           </button>
           <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
             Copy to Tool 
@@ -275,11 +276,11 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
           <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">
-            Buzz (space)
+            Buzz (Enter)
           </button>
         ` : `
-          <button type="button" style="border-radius: 0;" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${lastIndex + 1}">
-            Next Step (n)
+          <button type="button" style="border-radius: 0;" id="step-next-btn" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${lastIndex + 1}">
+            Next Step (Enter)
           </button>
           <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
             Copy to Tool
@@ -311,6 +312,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
   textarea.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
+      event.stopImmediatePropagation();
       if (isLastStep) {
         answerWrapper(textarea.value);
       } else {
@@ -337,7 +339,6 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     stepButtons.forEach((button, index) => {
       if (index === 0) {
         button.addEventListener('click', function (e) {
-          console.log(e);
           next_step();
         });
       } else {
@@ -754,18 +755,31 @@ function copyMathResult() {
 
     const instructionIframe = document.getElementById('instruction-frame');
     const instructionDoc = instructionIframe.contentDocument || instructionIframe.contentWindow.document;
+    const checkbox = instructionDoc.getElementById('edit-instructions-checkbox');
     
-    const answerFields = instructionDoc.querySelectorAll('[id^="answer-step-"]');
-    if (answerFields.length > 0) {
-        const lastAnswerField = answerFields[0];
-        lastAnswerField.value = mathRes;
-        lastAnswerField.style.height = 'auto';
-        lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
+    if (checkbox.checked) {
+      const notes = instructionDoc.getElementById('rogue-notes-area');
+      const notesText = notes.value;
+      let newNotes = '';
+      if (notesText === '') {
+        newNotes = mathRes;
+      } else {
+        newNotes = notesText + '\n\n' + mathRes;
+      }
+      notes.value = newNotes;
+    } else {
+      const answerFields = instructionDoc.querySelectorAll('[id^="answer-step-"]');
+      if (answerFields.length > 0) {
+          const lastAnswerField = answerFields[0];
+          lastAnswerField.value = mathRes;
+          lastAnswerField.style.height = 'auto';
+          lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
 
-        lastAnswerField.classList.add('flash-highlight');
-        setTimeout(() => {
-          lastAnswerField.classList.remove('flash-highlight');
-        }, 500);
+          lastAnswerField.classList.add('flash-highlight');
+          setTimeout(() => {
+            lastAnswerField.classList.remove('flash-highlight');
+          }, 500);
+      }
     }
 
     //next_step();
@@ -809,16 +823,6 @@ function navigateHistory(increment) {
 
 function copyDocText(elementText='') {
 
-    // const web_query = googleToolInput.value;
-    // const find_query = contentSelectorToolInput.value;
-    // if (!web_query && !find_query) {
-    //     return;
-    // }
-
-    // const iframe = document.getElementById('tool-history-frame');
-    // const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    // const toolEntryContainer = iframeDoc.getElementById('tool-entry-container');
-
     if (elementText === '') {
 
         const docIframe = docContent;
@@ -836,18 +840,32 @@ function copyDocText(elementText='') {
 
     const instructionIframe = document.getElementById('instruction-frame');
     const instructionDoc = instructionIframe.contentDocument || instructionIframe.contentWindow.document;
-    
-    const answerFields = instructionDoc.querySelectorAll('[id^="answer-step-"]');
-    if (answerFields.length > 0) {
-        const lastAnswerField = answerFields[0];
-        lastAnswerField.value = elementText;
-        lastAnswerField.style.height = 'auto';
-        lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
+    const iframeDoc = instructionsFrame.contentDocument || instructionsFrame.contentWindow.document;
+    const checkbox = iframeDoc.getElementById('edit-instructions-checkbox');
 
-        lastAnswerField.classList.add('flash-highlight');
-        setTimeout(() => {
-          lastAnswerField.classList.remove('flash-highlight');
-        }, 500);
+    if (checkbox.checked) {
+      const notes = iframeDoc.getElementById('rogue-notes-area');
+      const notesText = notes.value;
+      let newNotes = '';
+      if (notesText === '') {
+        newNotes = elementText;
+      } else {
+        newNotes = notesText + '\n\n' + elementText;
+      }
+      notes.value = newNotes;
+    } else {
+      const answerFields = instructionDoc.querySelectorAll('[id^="answer-step-"]');
+      if (answerFields.length > 0) {
+          const lastAnswerField = answerFields[0];
+          lastAnswerField.value = elementText;
+          lastAnswerField.style.height = 'auto';
+          lastAnswerField.style.height = lastAnswerField.scrollHeight + 'px';
+
+          lastAnswerField.classList.add('flash-highlight');
+          setTimeout(() => {
+            lastAnswerField.classList.remove('flash-highlight');
+          }, 500);
+      }
     }
 
     //next_step();
@@ -926,19 +944,17 @@ function toggleRogueCheckbox(checkbox, isPairwise) {
   const buzzPlanButton = iframeDoc.getElementById('buzz-button-in-plan');
   const swapPlanButton = iframeDoc.getElementById('swap-button-in-plan');
 
-  console.log(isPairwise);
-
   if (checkbox.checked) {
     // buzzBtn.style.display = '';
     // swapBtn.style.display = 'none';
     // stepBtn.style.display = 'none';
-    skipPlanButton.style.visibility = '';
+    skipPlanButton.style.display = '';
     if (!isPairwise) {
       swapPlanButton.style.display = 'none';
     }
     buzzPlanButton.style.display = '';
   } else {
-    skipPlanButton.style.visibility = 'hidden';
+    skipPlanButton.style.display = 'none';
     if (!isPairwise) {
       swapPlanButton.style.display = '';
     }
@@ -953,7 +969,7 @@ function toggleRogueCheckbox(checkbox, isPairwise) {
   const notes = iframeDoc.getElementById('rogue-notes');
   notes.style.display = checkbox.checked ? '' : 'none';
 
-  instructionHeader.innerHTML = checkbox.checked ? '<h5 style="font-size: large;">Write your own Plan (p)</h6>' : '<h5 style="font-size: large;">Plan (p)</h6>';
+  instructionHeader.innerHTML = checkbox.checked ? '<h5 style="font-size: large;">Write your own Plan (p)</h6>' : currPlanHeader;
 
   // add/remove the close button
   toggleCloseButtonVisibility(!checkbox.checked);
@@ -1011,7 +1027,6 @@ docContent.addEventListener('load', function() {
 function navigateHyperlink(link) {
   const url = new URL(link.href);
   const decodedPath = decodeURIComponent(url.pathname);
-  console.log(decodedPath);
   if (!decodedPath.startsWith('/wiki/')) {
     return;
   }

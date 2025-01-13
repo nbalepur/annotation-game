@@ -23,7 +23,7 @@
               <button id="skip-btn" class="btn btn-primary btn me-2" title="Shortcut: S" style="display: none;">Skip Reading (s)</button>
               <button id="swap-btn" class="btn btn-dark btn me-2" title="Shortcut: S" style="display: none;">Swap Plan (s)</button>
               <button id="step-btn" class="btn btn-warning btn me-2" title="Shortcut: N" style="display: none;">Next Step (n)</button>
-              <button id="buzz-btn" class="btn btn-danger btn me-2" style="display: none;">Buzz (space)</button>
+              <button id="buzz-btn" class="btn btn-danger btn me-2" style="display: none;">Answer (Enter)</button>
                 <button id="report-btn" class="btn btn-outline-danger btn me-2" data-bs-toggle="modal" data-bs-target="#reportModal" style="display: none;">Report</button>
               <button id="settings-btn" class="btn btn-secondary" data-bs-toggle="offcanvas"
                 data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings"
@@ -235,8 +235,8 @@
     <div class="modal-dialog modal-fullscreen" style="padding: 20px;">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="welcomeModalLabel">Read all of the instructions or watch the video below before starting!</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-instruction-modal1"></button>
+          <h5 class="modal-title" id="welcomeModalLabel">Watch the video below before starting!</h5>
+          <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-instruction-modal1"></button> -->
         </div>
         <div class="modal-body">
          
@@ -319,4 +319,5 @@
     padding-top: 15px;
   }
 </style>
+
 {% endblock %}

@@ -91,19 +91,42 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   var welcomeModalElement = document.getElementById('welcomeModal');
-  var welcomeModal = new bootstrap.Modal(welcomeModalElement);
+  var welcomeModal = new bootstrap.Modal(welcomeModalElement, {
+    backdrop: 'static',
+    keyboard: false
+  });
   welcomeModal.show();
 
-  closeBtn1 = document.getElementById("close-instruction-modal1");
+  // closeBtn1 = document.getElementById("close-instruction-modal1");
   closeBtn2 = document.getElementById("close-instruction-modal2");
 
-  closeBtn1.addEventListener('click', function () {
-    welcomeModal.hide();
-  });
+  // closeBtn1.addEventListener('click', function () {
+  //   stopVideosInModal();
+  //   welcomeModal.hide();
+  // });
   closeBtn2.addEventListener('click', function () {
+    stopVideosInModal();
     welcomeModal.hide();
   });
 
+  // Function to stop videos in iframes
+function stopVideosInModal() {
+  const iframes = welcomeModalElement.querySelectorAll('iframe');
+  iframes.forEach((iframe) => {
+    const src = iframe.src;
+    iframe.src = '';
+    iframe.src = src;
+  });
+}
+
+// Add event listeners for closing the modal
+closeBtn1.addEventListener('click', function () {
+  welcomeModal.hide();
+});
+
+closeBtn2.addEventListener('click', function () {
+  welcomeModal.hide();
+});
 
 });
 
@@ -213,10 +236,8 @@ function handleKeyPress(e) {
     if (e.key == "n") {
       if (gameState === 'idle') {
         next();
-      } else if (gameState === 'playing' && !checkbox.checked) {
-        next_step();
       }
-    } else if (e.key == " " && gameState === "playing") {
+    } else if (e.key == "Enter" && gameState === "playing") {
       if (buzzBtn.style.display === "") {
         buzz();
         e.preventDefault();
@@ -228,7 +249,13 @@ function handleKeyPress(e) {
           const currentLastStep = container.querySelector('.step-div:first-child');
           const guess = currentLastStep.querySelector('textarea').value;
           answerWrapper(guess);
+          e.preventDefault();
         }
+        if (iframeDoc.getElementById('step-next-btn')) {
+          next_step();
+          e.preventDefault();
+        }
+        
       }
     } else if (e.key == "m") {
       focusTextInput("calc-expression");
@@ -349,24 +376,36 @@ function moveCursorToSecondBullet() {
 calcInput.addEventListener("keydown", (e) => {
   if (e.key == "Enter") {
     calculatorToolBtn.click();
+    e.preventDefault();
+    e.stopImmediatePropagation();
   } else if (e.key == "Escape") {
     calcInput.blur();
+    e.preventDefault();
+    e.stopImmediatePropagation();
   }
 });
 
 webSearchInput.addEventListener("keydown", (e) => {
   if (e.key == "Enter") {
     googleToolBtn.click();
+    e.preventDefault();
+    e.stopImmediatePropagation();
   } else if (e.key == "Escape") {
     webSearchInput.blur();
+    e.preventDefault();
+    e.stopImmediatePropagation();
   }
 });
 
 docSearchInput.addEventListener("keydown", (e) => {
   if (e.key == "Enter") {
     contentSelectorToolBtn.click();
+    e.preventDefault();
+    e.stopImmediatePropagation();
   } else if (e.key == "Escape") {
     docSearchInput.blur();
+    e.preventDefault();
+    e.stopImmediatePropagation();
   }
 });
 

@@ -23,37 +23,44 @@
   </head>
 
     <body>
-      <div class="align-items-center" style="display: flex; justify-content: space-between; margin: 10px; visibility: hidden;" id="follow-plan-div">
 
-        <div class="align-items-center" style="display: flex; justify-content: left; gap: 10px;">
-
+      <div class="row align-items-center g-2" id="follow-plan-div" style="visibility: hidden; margin: 10px; margin-top: 5px;">
+        <!-- Left Section -->
+        <div class="col-12 col-sm-5 d-flex align-items-center m-0 p-0 mt-1">
           <div class="form-check form-switch" id="swap-button-in-plan">
-            <input class="form-check-input" style="transform: scale(1.5); transform-origin: left center;" type="checkbox" role="switch" id="swap-button-in-plan-btn" onchange="window.parent.swap_plan()">
-            <label class="form-check-label ms-3" for="swap-button-in-plan-btn">Swap Plan (s)</label>
+            <input class="form-check-input" style="transform: scale(1.5); transform-origin: top left;" type="checkbox" role="switch" id="swap-button-in-plan-btn" onchange="window.parent.swap_plan()">
+            <label class="form-check-label ms-3 mt-1" for="swap-button-in-plan-btn">Swap Plan (s)</label>
           </div>
-
+          
+          <div>
           <button class="btn btn-primary btn-sm" 
-          style="align-self: flex-start; display: none; align-items: center; justify-content: center;" 
-          id="buzz-button-in-plan" 
-          onclick="window.parent.buzz()">Buzz (space)</button>
-
+            style="display: none;" 
+            id="buzz-button-in-plan" 
+            onclick="window.parent.buzz()">Answer (Enter)</button>
+      
           <button class="btn btn-secondary opacity-75 btn-sm" 
-          style="align-self: flex-start; visibility: hidden; align-items: center; justify-content: center;" 
-          id="skip-button-in-plan" 
-          onclick="window.parent.skip_plan()">Skip (no credit)</button>
+            style="display: none;" 
+            id="skip-button-in-plan" 
+            onclick="window.parent.skip_plan()">Skip (no credit)</button>
+          </div>
         </div>
       
-        <div class="form-check" id="edit-instructions-container">
-          <input class="form-check-input" type="checkbox" value="" id="edit-instructions-checkbox">
-          <label class="form-check-label" for="edit-instructions-checkbox" id="edit-instructions-checkbox-label">
-            I can&apos;t answer the question with the given plan
-          </label>
+        <!-- Right Section -->
+        <div class="col-12 col-sm-7">
+          <div class="form-check text-sm-end text-start" id="edit-instructions-container">
+            <input class="form-check-input" type="checkbox" value="" id="edit-instructions-checkbox">
+            <label class="form-check-label" for="edit-instructions-checkbox" id="edit-instructions-checkbox-label">
+              I can&apos;t answer the question with the given plan
+            </label>
+          </div>
         </div>
       </div>
+      
+      
 
       <div style="display: none;" id="rogue-notes">
         <div class="form-group  m-2">
-          <textarea id="rogue-notes-area" class="form-control" placeholder="Enter your own plan here..." rows=10></textarea>
+          <textarea id="rogue-notes-area" class="form-control" placeholder="Enter your own plan here..." rows=15></textarea>
         </div>
         <div id="rogue-notes-status" style="visibility: hidden;" class="m-2">
           <p>Status update!</p>
@@ -99,4 +106,5 @@
   </html>
   '>
   </iframe>
+
 </div>

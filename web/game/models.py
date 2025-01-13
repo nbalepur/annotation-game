@@ -149,6 +149,7 @@ class Room(models.Model):
     instruction_map = models.JSONField(null=True, blank=True)
 
     curr_instructions_letter = models.TextField(max_length=1, null=True)
+    picked_letter = models.TextField(max_length=1, null=True)
 
     curr_subanswers_a = models.JSONField(null=True, blank=True)
     curr_subanswers_b = models.JSONField(null=True, blank=True)

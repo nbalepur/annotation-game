@@ -214,10 +214,19 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         user.category_preference = category_map[category]
         await user.asave()
 
+        old_category = room.category
+        if old_category == category_map[category]:
+            return
         room.category = category_map[category]
         await room.asave()
 
-        await self.show_and_disable_tools(room=room, player=player, update_tools=True, disable_tools=True, disable_plan=True)
+        if old_category in {Question.Category.MULTIHOP} and category_map[category] in {Question.Category.MULTIHOP, Question.Category.EVERYTHING}:
+            return
+        if old_category in {Question.Category.MATH} and category_map[category] in {Question.Category.MATH}:
+            return
+
+        await self.show_and_disable_tools(room=room, player=player, update_tools=True, disable_tools=True, disable_plan=True,
+                                          category=Question.Category.MATH if category_map[category] == Question.Category.MATH else Question.Category.MULTIHOP)
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -420,7 +429,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                            show_question_inputs={'user': user},
                            status_inputs={'status': room.state},
                            instr_inputs={'should_clear': True, 'num_steps': -1},
-                           disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True},
+                           disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True, 'category': None},
                            )
         # await self.update_status(room, room.state, player)
         # await self.get_shown_question(room=room, user=user)
@@ -468,6 +477,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 "data": {
                     "response_type": "toggle_comparison",
                     "show_comparison": show_comparison,
+                    "got_what_wanted": room.picked_letter == room.curr_instructions_letter and room.picked_letter in {'A', 'B'},
                 },
             }}
 
@@ -478,14 +488,12 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         if "populate_comparison_data" in full_data:
             """Populate visible information in the comparison pane"""
-            print(1)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 full_data["populate_comparison_data"]
             )
 
         if "toggle_comparison_data" in full_data:
-            print(2)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 full_data["toggle_comparison_data"]
@@ -678,7 +686,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                                          show_question_inputs={'user': user},
                                          status_inputs={'status': room.state},
                                          comparison_inputs={'show_comparison': True},
-                                         disable_inputs={'update_tools': False, 'disable_tools': False, 'disable_plan': False},
+                                         disable_inputs={'update_tools': False, 'disable_tools': False, 'disable_plan': False, 'category': None},
                                          )
 
                 await self.log_tool_use(
@@ -702,7 +710,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             await self.update_ui(room=room, player=player,
                                instr_inputs={'num_steps': steps_seen, 'should_clear': steps_seen == 1},
                                status_inputs={'status': room.state},
-                               disable_inputs={'update_tools': False, 'disable_tools': False, 'disable_plan': False},
+                               disable_inputs={'update_tools': False, 'disable_tools': False, 'disable_plan': False, 'category': None},
                                )
 
             # await self.get_init_model_instructions(
@@ -732,7 +740,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 player,
                 "",
                 dict(),
-                "pairwise_comparison" if room.show_comparisons_before else "read_instructions",
+                "read_instructions",
                 "success",
             )
 
@@ -840,7 +848,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
             await self.update_ui(room=room, player=player,
                                      status_inputs={'status': "buzz_correct", 'answer': cleaned_content},
-                                     disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True}
+                                     disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True, 'category': None}
                                      )
         else:
             # Keep playing if it's wrong
@@ -921,7 +929,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
     @sync_to_async
     def decide_instruction_to_show(self, room: Room, player: Player):
         """Decide which instruction the user should see"""
-    
+
         if room.current_question.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP}:
             return "A"
 
@@ -1163,7 +1171,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         
         disable_outputs = {'should_run_disable': False}
         if disable_inputs:
-            disable_outputs = disable_outputs | (await self.show_and_disable_tools_dict(room, player, disable_inputs['update_tools'], disable_inputs['disable_tools'], disable_inputs['disable_plan']))
+            disable_outputs = disable_outputs | (await self.show_and_disable_tools_dict(room, player, disable_inputs['update_tools'], disable_inputs['disable_tools'], disable_inputs['disable_plan'], disable_inputs['category']))
             #await self.show_and_disable_tools(room, player, disable_inputs['update_tools'])
             disable_outputs["should_run_disable"] = True
 
@@ -1284,9 +1292,12 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             },
         )
 
-    async def show_and_disable_tools_dict(self, room: Room, player: Player, update_tools: bool, disable_tools: bool, disable_plan: bool):
+    async def show_and_disable_tools_dict(self, room: Room, player: Player, update_tools: bool, disable_tools: bool, disable_plan: bool, category: None | Question.Category):
 
         question = (await question_from_room(room))
+
+        if category == None:
+            category = question.category
 
         update_tools_dict = dict()
         update_doc_dict = dict()
@@ -1298,9 +1309,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 "type": "update_room",
                 "data": {
                     "response_type": "update_tools",
-                    "use_calculator": (question is None and room.category in {Question.Category.MATH}) or (question is not None and question.category == Question.Category.MATH), 
+                    "use_calculator": category == Question.Category.MATH, 
                     "use_doc": False,
-                    "use_web": (question is None and room.category in {Question.Category.MULTIHOP, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MULTIHOP),
+                    "use_web": category == Question.Category.MULTIHOP,
                 }
             }}
 
@@ -1309,7 +1320,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     "type": "update_room",
                     "data": {
                         "response_type": "update_doc",
-                        "use_doc": (question is None and room.category in {Question.Category.MULTIHOP, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MULTIHOP),
+                        "use_doc": category == Question.Category.MULTIHOP,
                         "doc_content": curr_doc,
                     },
                 }}
@@ -1319,9 +1330,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             "data": {
                 "response_type": "disable_tools",
                 "should_disable": disable_tools,
-                "should_clear_document": False if not update_tools else (
-            (question is None and room.category in {Question.Category.MULTIHOP})
-            or (question is not None and question.category == Question.Category.MULTIHOP)),
+                "should_clear_document": False if not update_tools else (category == Question.Category.MULTIHOP)
             },
         }}
 
@@ -1336,19 +1345,19 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         return update_tools_dict | update_doc_dict | disable_tools_dict | disable_plan_dict
 
 
-    async def show_and_disable_tools(self, room: Room, player: Player, update_tools: bool, disable_tools: bool, disable_plan: bool):
+    async def show_and_disable_tools(self, room: Room, player: Player, update_tools: bool, disable_tools: bool, disable_plan: bool, category: None | Question.Category):
         """Update the visible tools and document based on the current question"""
-        
-        full_data = await self.show_and_disable_tools_dict(room, player, update_tools, disable_tools, disable_plan)
 
+        full_data = await self.show_and_disable_tools_dict(room, player, update_tools, disable_tools, disable_plan, category)
+
+        """Update the tools"""
         if full_data.get("update_tools_data", dict()):
-            """Update the tool"""
             await self.channel_layer.group_send(
                 self.room_group_name,
                 full_data["update_tools_data"]
             )
 
-            """Update the document"""
+        """Update the document"""
         if full_data.get("update_doc_data", dict()):
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -1652,17 +1661,17 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 """
         
         script = """<script>
-          document.addEventListener("keypress", function (event) {
-            if (window.parent && typeof window.parent.handleKeyPress === "function") {
-              window.parent.handleKeyPress(event);
-            }
-          });
-          document.addEventListener("keydown", function (event) {
-            if (window.parent && typeof window.parent.handleKeyDown === "function") {
-              window.parent.handleKeyDown(event);
-            }
-          });
-        </script>"""
+document.addEventListener("keypress", function (event) {
+    if (window.parent && typeof window.parent.handleKeyPress === "function") {
+    window.parent.handleKeyPress(event);
+    }
+});
+document.addEventListener("keydown", function (event) {
+    if (window.parent && typeof window.parent.handleKeyDown === "function") {
+    window.parent.handleKeyDown(event);
+    }
+});
+</script>"""
 
         final_html = f"""
         <html>
@@ -1672,10 +1681,6 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             <title>{query}</title>
             {wikipedia_css}
             <style>
-                .highlight {openbracket}
-                    background-color: yellow; /* Color for the highlight */
-                    transition: background-color 1s ease; /* Smooth transition */
-                {closebracket}
                 body {openbracket}
                 font-size: 1.2em; /* Scale up text size by 20% */
                 {closebracket}
@@ -1688,6 +1693,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 </div>
                 {fixed_html_content}
             </div>
+            {script}
         </body>
         </html>
         """
@@ -1767,6 +1773,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
     
     async def navigate_history(self, room: Room, p: Player, inc: int):
 
+        await self.log_tool_use(room, p, '', {'curr_search': room.search_history[room.history_idx]},
+                                'increase_history' if inc == 1 else 'decrease_history', 'start')
+
         room.history_idx += inc
         wiki_query, select_idxs, typed_query_web, typed_query_search = room.search_history[room.history_idx]
         room.curr_query = wiki_query
@@ -1793,6 +1802,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 }
             )
         )
+        await self.log_tool_use(room, p, '', {'curr_search': room.search_history[room.history_idx]},
+                        'increase_history' if inc == 1 else 'decrease_history', 'start')
 
     async def send_web_search_success(
         self,
@@ -1946,7 +1957,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
             try:
                 api_url = "https://en.wikipedia.org/w/api.php"
-                rand_idx = random.choice(list(range(1, 4)))
+                rand_idx = random.choice(list(range(0, 3)))
                 WIKI_TOKENS = [os.getenv(f'WIKIMEDIA_API_KEY{token_num}') for token_num in range(1, 4)]
                 USER_AGENTS = [os.getenv(f'USER_AGENT{token_num}')  for token_num in range(1, 4)]
                 wiki_token, user_agent = WIKI_TOKENS[rand_idx], USER_AGENTS[rand_idx]
@@ -2039,8 +2050,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                                     </div>
                                     {fixed_html_content}
                                 </div>
+                                {script}
                             </body>
-                            {script}
+                            
                             </html>
                             """
                             await self.send_web_search_success(
@@ -2080,10 +2092,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             shown_first=room.show_comparisons_before,
         )
 
-        room.state = Room.GameState.INSTRUCTION_READING
         room.state = Room.GameState.PLAYING
         room.start_time = timezone.now().timestamp()
         room.end_time = room.start_time + QUESTION_TIME
+        room.picked_letter = chosen_adjusted
         await room.asave()
 
         #await self.toggle_comparison_visibility(room=room, show_comparison=False)
@@ -2098,9 +2110,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         await self.update_ui(room=room, player=p,
                             instr_inputs={'num_steps': steps_seen, 'should_clear': steps_seen == 1},
                             status_inputs={'status': room.state},
-                            disable_inputs={'update_tools': True, 'disable_tools': False, 'disable_plan': False},
+                            disable_inputs={'update_tools': True, 'disable_tools': False, 'disable_plan': False, 'category': None},
                             comparison_inputs={'show_comparison': False}
                             )
+        await self.log_tool_use(room, p, "", dict(), "pairwise_comparison", "success",)
 
     @sync_to_async
     def clean_query(self, query):
@@ -2121,7 +2134,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         html = await self.retrieve_from_document_cache(search_query)
 
         idxs = await self.select_content(room, p, query, html)
-        room.search_history = room.search_history[:room.history_idx+1] + [(room.curr_query, idxs, query, room.curr_query_raw)]
+        room.search_history = room.search_history[:room.history_idx+1] + [(room.curr_query, idxs, room.curr_query_raw, query)]
         room.history_idx += 1
         await room.asave()
 
@@ -2259,7 +2272,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             await self.update_ui(room=room, player=player,
                                status_inputs={'status': room.state, 'answer': curr_answer},
                                instr_inputs={'num_steps': -1, 'should_clear': True},
-                               disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True}
+                               disable_inputs={'update_tools': True, 'disable_tools': True, 'disable_plan': True, 'category': None}
                                )
 
             # await self.update_status(room, room.state, player, curr_answer)
