@@ -638,9 +638,9 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             < NUM_QUESTIONS_NEEDED
         ]
         filtered_questions.sort(
-            key=lambda q: abs(
-                NUM_QUESTIONS_NEEDED
-                - question_to_user_count.get((q.question_id, is_comparison), 0)
+            key=lambda q: (
+                abs(NUM_QUESTIONS_NEEDED - question_to_user_count.get((q.question_id, is_comparison), 0)),
+                q.question_id
             )
         )
 

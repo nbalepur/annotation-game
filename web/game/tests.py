@@ -1724,7 +1724,7 @@ class TestDecideNextQuestion:
 
         # Create tutorial, sanity, and regular questions
         self.tutorial_question = Question.objects.create(
-            question_id=1,
+            question_id=100000000,
             generation_method=Question.GenerationMethod.TUTORIAL,
             category=Question.Category.MATH
         )
@@ -2227,6 +2227,91 @@ class TestDecideNextQuestion:
             self.room, self.player, Question.Category.MATH, False
         )
         assert next_question == return_question_less
+
+    def test_show_earlier_if_tied(self):
+        
+        overflow_questions = self.regular_questions[:-2]
+
+        AnswerData.objects.create(
+            user=self.user,
+            question_id=self.tutorial_question.question_id,
+            category=Question.Category.MATH,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=False,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True
+        )
+        AnswerData.objects.create(
+            user=self.user,
+            question_id=self.tutorial_question.question_id,
+            category=Question.Category.MATH,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True
+        )
+        
+        
+        for epoch in range(6):
+            user_pair = User.objects.create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}", experiment_group=User.ExperimentGroup.PAIRWISE)
+            user_swap = User.objects.create(user_id=100 + epoch, name=f"user1{epoch}", email=f"user1{epoch}", experiment_group=User.ExperimentGroup.SWAP)
+
+            for q in overflow_questions:
+                AnswerData.objects.create(
+                    user=user_pair,
+                    question_id=q.question_id,
+                    category=Question.Category.MATH,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=True,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+                AnswerData.objects.create(
+                    user=user_swap,
+                    question_id=q.question_id,
+                    category=Question.Category.MATH,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+
+        next_question_pair = async_to_sync(self.consumer.decide_next_question)(
+            self.room, self.player, Question.Category.MATH, True
+        )
+        next_question_swap = async_to_sync(self.consumer.decide_next_question)(
+            self.room, self.player, Question.Category.MATH, False
+        )
+        assert next_question_pair == self.regular_questions[-2]
+        assert next_question_swap == self.regular_questions[-2]
 
     def test_seen_all_and_all_annotated(self):
 
@@ -2740,7 +2825,7 @@ class TestDecideNextQuestionTrivia:
 
         # Create tutorial, sanity, and regular questions
         self.tutorial_question = Question.objects.create(
-            question_id=1,
+            question_id=100000000,
             generation_method=Question.GenerationMethod.TUTORIAL,
             category=Question.Category.MULTIHOP
         )
@@ -3242,6 +3327,90 @@ class TestDecideNextQuestionTrivia:
             self.room, self.player, Question.Category.MULTIHOP, False
         )
         assert next_question == return_question_less
+
+    def test_show_earlier_if_tied(self):
+
+        AnswerData.objects.create(
+            user=self.user,
+            question_id=self.tutorial_question.question_id,
+            category=Question.Category.MULTIHOP,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=False,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True
+        )
+        AnswerData.objects.create(
+            user=self.user,
+            question_id=self.tutorial_question.question_id,
+            category=Question.Category.MULTIHOP,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True
+        )
+        
+        overflow_questions = self.regular_questions[:-2]
+        
+        for epoch in range(6):
+            user_pair = User.objects.create(user_id=epoch, name=f"user{epoch}", email=f"user{epoch}", experiment_group=User.ExperimentGroup.PAIRWISE)
+            user_swap = User.objects.create(user_id=100 + epoch, name=f"user1{epoch}", email=f"user1{epoch}", experiment_group=User.ExperimentGroup.SWAP)
+
+            for q in overflow_questions:
+                AnswerData.objects.create(
+                    user=user_pair,
+                    question_id=q.question_id,
+                    category=Question.Category.MULTIHOP,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=True,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+                AnswerData.objects.create(
+                    user=user_swap,
+                    question_id=q.question_id,
+                    category=Question.Category.MULTIHOP,
+                    final_instructions_letter="A",
+                    instructions_a={},
+                    instructions_b={},
+                    subanswers_a={},
+                    subanswers_b={},
+                    steps_seen_a=1,
+                    steps_seen_b=1,
+                    did_comparison=False,
+                    followed_plan=True,
+                    is_correct=True,
+                    is_final=True
+                )
+
+        next_question_pair = async_to_sync(self.consumer.decide_next_question)(
+            self.room, self.player, Question.Category.MULTIHOP, True
+        )
+        next_question_swap = async_to_sync(self.consumer.decide_next_question)(
+            self.room, self.player, Question.Category.MULTIHOP, False
+        )
+        assert next_question_pair == self.regular_questions[-2]
+        assert next_question_swap == self.regular_questions[-2]
 
     def test_seen_all_and_all_annotated(self):
 
