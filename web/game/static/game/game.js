@@ -289,6 +289,7 @@ function handleServerResponse(data) {
     resetRogueCheckbox(data['is_pairwise']);
     clearReportData();
     currPlanHeader = data['is_pairwise'] ? `<h5 style="font-size: large;">Plan (p)</h5>` : `<h5 style="font-size: large;">Plan A (p)</h5>`;
+    instructionHeader.innerHTML = currPlanHeader;
   } else if (data['response_type'] === 'clear_instructions') {
     clearInstructions();
   } else if (data['response_type'] === 'check_duplicate_user_data') {

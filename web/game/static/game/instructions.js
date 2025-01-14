@@ -712,7 +712,7 @@ function updateStatus(status, player, answer, allowSwaps) {
     } else if (status === "contest") {
         statusText.innerHTML = `Task: <span class=text-secondary>Type your answer</span></span>`;
     } else if (status === "buzz_correct") {
-        statusText.innerHTML = `<span class=text-secondary>You buzzed <span class=text-success>correctly!</span>. Hit <span class=text-primary>Next</span> to continue</span>`;
+        statusText.innerHTML = `<span class=text-secondary>You buzzed <span class=text-success>correctly</span> with <span class=text-success>"${answer}"</span>! Hit <span class=text-primary>Next</span> to continue</span>`;
         buzzStatsUpdate(true);
         // statusText.classList.add('flash-highlight');
         // setTimeout(() => {

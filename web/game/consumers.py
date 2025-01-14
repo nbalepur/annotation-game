@@ -557,7 +557,6 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         self, room: Room, player: Player, category: Question.Category, is_comparison: bool
     ):
         """Decide the next question to present to the user"""
-
         # if either category can be shown, decide what the next one should be
         if category == Question.Category.EVERYTHING:
             category = self.decide_question_category(player)
@@ -662,6 +661,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.last_guess = None
             room.curr_query = None
             room.curr_query_raw = None
+            room.picked_letter = None
             room.search_history = []
             room.history_idx = -1
             room.instruction_map = {}
@@ -671,7 +671,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             # get this logging party started
             await self.log_tool_use(room, player, "", dict(), "question", "start")
 
-            show_comparisons_before = (user).experiment_group == User.ExperimentGroup.PAIRWISE
+            show_comparisons_before = user.experiment_group == User.ExperimentGroup.PAIRWISE
             room.show_comparisons_before = show_comparisons_before
 
             if show_comparisons_before:
@@ -2113,7 +2113,7 @@ document.addEventListener("keydown", function (event) {
                             disable_inputs={'update_tools': True, 'disable_tools': False, 'disable_plan': False, 'category': None},
                             comparison_inputs={'show_comparison': False}
                             )
-        await self.log_tool_use(room, p, "", dict(), "pairwise_comparison", "success",)
+        await self.log_tool_use(room, p, "", dict(), "pairwise_comparison", "success")
 
     @sync_to_async
     def clean_query(self, query):

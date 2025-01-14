@@ -83,7 +83,7 @@
             "generation_method": "attention_p",
             "instructions_a": {
                 "steps": [
-                    "Find out what was the library founded by Ben Franking in 1731",
+                    "Find out what was the library founded by Ben Franklin in 1731",
                     "Find the city where this library was located",
                     "Find the local transportation agency in this city"
                 ],
