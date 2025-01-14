@@ -26,7 +26,9 @@ let endTime;
 let buzzStartTime;
 let buzzPassedTime = 0;
 let graceTime = 3;
-let buzzTime = 5;
+let buzzTime = 10;
+
+let paused = false;
 
 let readingTime = 30;
 // let readingTime = 3; // seconds to read the question
@@ -166,7 +168,10 @@ function update() {
       // }
 
       buzzPassedTime = 0;
-      currentTime += 0.1;
+
+      if (!paused) {
+        currentTime += 0.1;
+      }
 
       contentProgress.style.display = '';
       buzzProgress.style.display = 'none';
@@ -177,8 +182,11 @@ function update() {
         sendRequest('no_buzz');
         contentProgress.style.width = '0%';
       }
-      questionPassedTime += 0.1;
 
+      if (!paused) {
+        questionPassedTime += 0.1;
+      }
+      
       break;
 
     case 'contest':
@@ -290,6 +298,7 @@ function handleServerResponse(data) {
     clearReportData();
     currPlanHeader = data['is_pairwise'] ? `<h5 style="font-size: large;">Plan (p)</h5>` : `<h5 style="font-size: large;">Plan A (p)</h5>`;
     instructionHeader.innerHTML = currPlanHeader;
+    unpause();
   } else if (data['response_type'] === 'clear_instructions') {
     clearInstructions();
   } else if (data['response_type'] === 'check_duplicate_user_data') {
@@ -373,9 +382,11 @@ function handleServerResponse(data) {
   else if (data['response_type'] === 'calculation_result') {
     calc_result = data['result'];
     setCalculation(calc_result);
+    unpause();
   }
   else if (data['response_type'] === 'navigate_web_search_result') {
     setNavigateWebSearch(data['html'], data['typed_query_web'],  data['typed_query_search'], data['select_idxs'], data['allow_forwards'], data['allow_backwards']);
+    unpause();
   }
   else if (data['response_type'] === 'web_search_result') {
     search_result = data['result'];
@@ -384,12 +395,14 @@ function handleServerResponse(data) {
     docSearchInput.value = data['doc_search_query'];
     webSearchInput.value = data['web_search_query'];
     disableNavigation(data['allow_forwards'], data['allow_backwards']);
+    unpause();
   }
   else if (data['response_type'] === 'content_selection_result') {
     doc_idxs = data['result'];
     num_docs = data['num_docs'];
     setContentSelectionResult(doc_idxs, num_docs);
     disableNavigation(data['allow_forwards'], data['allow_backwards']);
+    unpause();
   } else if (data['response_type'] === 'reauthenticate') {
     window.location.href = '/?reauthenticate=true';
   }
@@ -535,14 +548,14 @@ function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, al
 }
 
 function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
-  copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
+  // copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
   const iframe = document.getElementById('view-page-collapse');
   iframe.srcdoc = res;
 }
 
 function setContentSelectionResult(doc_idxs, num_docs) {
   if (doc_idxs.length === 1) {
-    copySearchBtn.style.visibility = '';
+    // copySearchBtn.style.visibility = '';
     const iframe = document.getElementById('view-page-collapse');
 
     const handleScrollAndHighlight = () => {

@@ -123,7 +123,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
           Next Step (Enter)
         </button>
         <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${index + 1}">
-           Copy to Tool
+           Copy to Tool (t)
          </button>
          `);
 
@@ -217,6 +217,16 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
       // stepBtn.style.display = '';
     }
   });
+
+  const clipboardButtons = container.querySelectorAll('.copy-btn');
+  if (clipboardButtons.length > 0) {
+    const referenceWidth = clipboardButtons[0].offsetWidth;
+    clipboardButtons.forEach((button, buttonIdx) => {
+      if (buttonIdx !== 0) {
+        button.innerText = 'Copy to Tool';
+      }
+    });
+  }
 }
 
 
@@ -259,7 +269,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
             Next Step (Enter)
           </button>
           <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
-            Copy to Tool 
+            Copy to Tool (t)
           </button>
         `}
       </div>
@@ -283,7 +293,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
             Next Step (Enter)
           </button>
           <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-secondary copy-btn" data-copy-id="answer-step-${lastIndex + 1}">
-            Copy to Tool
+            Copy to Tool (t)
           </button>
         `}
       </div>
@@ -294,6 +304,16 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
   }
 
   container.prepend(stepDiv);
+
+  const clipboardButtons = container.querySelectorAll('.copy-btn');
+  if (clipboardButtons.length > 0) {
+    const referenceWidth = clipboardButtons[0].offsetWidth;
+    clipboardButtons.forEach((button, buttonIdx) => {
+      if (buttonIdx !== 0) {
+        button.innerText = 'Copy to Tool';
+      }
+    });
+  }
 
   if (stepNum !== 1) {
     const closeButton = stepDiv.querySelector('.close-btn');
@@ -381,6 +401,17 @@ function getSubanswers() {
   return subanswers;
 }
 
+function getLastCopy() {
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const subanswers = getSubanswers();
+  if (subanswers.length === 0) {
+    return '';
+  }
+  const closeButtons = iframeDoc.querySelectorAll('.copy-btn');
+  return subanswers[closeButtons.length - 1];
+}
+
 function sendSubanswers(isCorrect, isFinal) {
 
   const instructionFrame = document.getElementById('instruction-frame')
@@ -429,10 +460,12 @@ function removeStep(stepElement, isLastStep) {
   subanswers = getSubanswers();
   stepElement.remove();
   reassignCloseAndStepButton();
-  // if (isLastStep) {
-  //   stepBtn.style.display = '';
-  //   buzzBtn.style.display = 'none';
-  // }
+
+  const iframe = document.getElementById('instruction-frame');
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const container = iframeDoc.getElementById('instructions-container');
+  const clipboardButtons = container.querySelectorAll('.copy-btn');
+  clipboardButtons[0].innerText = 'Copy to Tool (t)';
   sendRequest("decrease_steps", subanswers);
 }
 
@@ -818,12 +851,18 @@ function copyTextToClipboard(textToCopy) {
 }
 
 function navigateHistory(increment) {
+  pause();
   sendRequest('navigate_history', increment)
 }
 
 function copyDocText(elementText='') {
 
-    if (elementText === '') {
+  const iframe = document.getElementById('view-page-collapse');
+  const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+  const selectedText = iframeDocument.getSelection ? iframeDocument.getSelection().toString() : '';
+
+
+    if (elementText === '' && selectedText === '') {
 
         const docIframe = docContent;
         const docIframeDocument = docIframe.contentDocument || docIframe.contentWindow.document;
@@ -836,6 +875,7 @@ function copyDocText(elementText='') {
         elementText = highlightedElement.innerText || highlightedElement.textContent;
     }
 
+    elementText = elementText === '' ? selectedText : elementText;
     copyTextToClipboard(elementText);
 
     const instructionIframe = document.getElementById('instruction-frame');
@@ -880,6 +920,16 @@ function clearToolHistory() {
     }
 }
 
+function pause() {
+  paused = true;
+  contentProgress.classList.add('paused');
+}
+
+function unpause() {
+  paused = false;
+  contentProgress.classList.remove('paused');
+}
+
   function calculate() {
     const expression = calculatorToolInput.value;
     if (!expression) {
@@ -891,6 +941,7 @@ function clearToolHistory() {
       return;
     }
     calculatorToolInput.blur();
+    pause();
     sendRequest("calculate", expression);
   }
 
@@ -916,7 +967,7 @@ function clearToolHistory() {
 
     loadingDoc();
     
-
+    pause();
     // setTimeout(() => {
     //   console.log("Delay complete. Proceeding with search...");
     //   googleToolInput.blur();
@@ -935,6 +986,7 @@ function clearToolHistory() {
       return;
     }
     contentSelectorToolInput.blur();
+    pause();
     sendRequest("content_select", query);
   }
 

@@ -472,12 +472,14 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     },
                 }}
 
+        curr_q = await question_from_room(room)
         return populate_dict | {"toggle_comparison_data": {
                 "type": "update_room",
                 "data": {
                     "response_type": "toggle_comparison",
                     "show_comparison": show_comparison,
-                    "got_what_wanted": room.picked_letter == room.curr_instructions_letter and room.picked_letter in {'A', 'B'},
+                    "got_what_wanted": (room.picked_letter == room.curr_instructions_letter and room.picked_letter in {'A', 'B'}) or 
+                    (curr_q.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP}),
                 },
             }}
 
@@ -499,8 +501,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 full_data["toggle_comparison_data"]
             )
 
-    def decide_question_category(self, player: Player):
+    async def decide_question_category(self, player: Player):
         """Decide the question category for the player"""
+
+        user = await user_from_player(player)
 
         # find the unseen math questions
         all_questions_math = Question.objects.filter(
@@ -514,7 +518,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 )
             )
         seen_questions_overall_math = AnswerData.objects.filter(
-                user=player.user, category=Question.Category.MATH
+                user=user, category=Question.Category.MATH
             ).values_list("question_id", flat=True)
         unseen_questions_math = all_questions_math.exclude(question_id__in=seen_questions_overall_math)
 
@@ -530,21 +534,31 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 )
             )
         seen_questions_overall_trivia = AnswerData.objects.filter(
-                user=player.user, category=Question.Category.MULTIHOP
+                user=user, category=Question.Category.MULTIHOP
             ).values_list("question_id", flat=True)
         unseen_questions_trivia = all_questions_trivia.exclude(question_id__in=seen_questions_overall_trivia)
 
         # decide which question to show
-        if len(unseen_questions_math) + len(unseen_questions_trivia) == 0:
+        unseen_math, unseen_trivia = (await unseen_questions_math.acount()), (await unseen_questions_trivia.acount())
+        seen_math_all, seen_trivia_all = (await seen_questions_overall_math.acount()), (await seen_questions_overall_trivia.acount())
+        if (unseen_math + unseen_trivia) == 0:
             return (
                 Question.Category.MULTIHOP
                 if random.uniform(0, 1) > 0.5
                 else Question.Category.MATH
             )  # pick randomly if no more questions
-        if len(unseen_questions_math) == 0:
+        if unseen_math == 0:
             return Question.Category.MULTIHOP  # pick trivia if no more math questions
-        if len(unseen_questions_trivia) == 0:
+        if unseen_trivia == 0:
             return Question.Category.MATH  # pick math if no more trivia questions
+        
+        # if they have not seen trivia, show them the trivia tutorial
+        if seen_trivia_all == 0:
+            return Question.Category.MULTIHOP
+        
+        # if they have not seen math, show them the trivia tutorial
+        if seen_math_all == 0:
+            return Question.Category.MATH
 
         return (
             Question.Category.MULTIHOP
@@ -552,19 +566,21 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             else Question.Category.MATH
         )  # random selection otherwise
         
-    @sync_to_async
-    def decide_next_question(
+    async def decide_next_question(
         self, room: Room, player: Player, category: Question.Category, is_comparison: bool
     ):
         """Decide the next question to present to the user"""
         # if either category can be shown, decide what the next one should be
         if category == Question.Category.EVERYTHING:
-            category = self.decide_question_category(player)
+            category = await self.decide_question_category(player)
+
+        user = await user_from_player(player)
 
         # (question_id, did_comparison) -> number of users who have done it
         question_user_count = AnswerData.objects.filter(
                 followed_plan=True, is_final=True, is_report=False
             ).values("question_id", "did_comparison").annotate(user_count=Count("user__user_id", distinct=True))
+        question_user_count = await sync_to_async(list)(question_user_count)
         question_to_user_count = {
             (entry["question_id"], entry["did_comparison"]): entry["user_count"]
             for entry in question_user_count
@@ -572,28 +588,28 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         # questions the user has already seen for this category and experimental group
         seen_questions = AnswerData.objects.filter(
-                user=player.user, category=category, did_comparison=is_comparison
+                user=user, category=category, did_comparison=is_comparison
             ).values_list("question_id", flat=True)
 
         # questions the user has seen overall
         seen_questions_overall = AnswerData.objects.filter(
-                user=player.user, category=category
+                user=user, category=category
             ).values_list("question_id", flat=True)
 
         # check if we need to give a tutorial question or an attention check question
-        if len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_TUTORIAL")):
-            return Question.objects.filter(
+        if (await seen_questions.acount()) == int(os.getenv("NUM_SEEN_FOR_TUTORIAL")):
+            return await Question.objects.filter(
                     category=category, generation_method=Question.GenerationMethod.TUTORIAL
-                ).first()
-        elif len(seen_questions) == int(os.getenv("NUM_SEEN_FOR_ATTENTION")) + 1:
+                ).afirst()
+        elif (await seen_questions.acount()) == int(os.getenv("NUM_SEEN_FOR_ATTENTION")) + 1:
             attention_type = (
                 Question.GenerationMethod.ATTENTION_PAIRWISE
                 if is_comparison
                 else Question.GenerationMethod.ATTENTION_SWAP
             )
-            return Question.objects.filter(
+            return await Question.objects.filter(
                     category=category, generation_method=attention_type
-                ).first()
+                ).afirst()
 
         # otherwise, get the questions that have not been seen
         all_questions = Question.objects.filter(
@@ -606,7 +622,10 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     | Q(generation_method=Question.GenerationMethod.CLAUDE)
                 )
             )
+        all_questions_list = await sync_to_async(list)(all_questions)
+
         unseen_questions = all_questions.exclude(question_id__in=seen_questions_overall)
+        unseen_questions = await sync_to_async(list)(unseen_questions)
 
         # determine the question limit: for swapping, we need 3 annotations. for pairwise, we need 6 annotations (3 on plan A, 3 on plan B)
         NUM_QUESTIONS_NEEDED = 6 if is_comparison else 3
@@ -627,8 +646,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         # if all questions have been annotated
         if len(filtered_questions) == 0:
-            if unseen_questions.count() == 0:
-                q = random.choice(all_questions)
+            if len(unseen_questions) == 0:
+                q = random.choice(all_questions_list)
                 return q
             else:
                 q = random.choice(unseen_questions)
@@ -666,6 +685,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             room.history_idx = -1
             room.instruction_map = {}
 
+            await room.asave()
             await self.load_instructions(room=room, player=player)
 
             # get this logging party started
@@ -926,15 +946,16 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             (await self.get_shown_question_dict(room, user))["get_shown_question_data"]
         )
 
-    @sync_to_async
-    def decide_instruction_to_show(self, room: Room, player: Player):
+    async def decide_instruction_to_show(self, room: Room, player: Player):
         """Decide which instruction the user should see"""
 
-        if room.current_question.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP}:
+        curr_q = await question_from_room(room)
+        user = await user_from_player(player)
+        if curr_q.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP}:
             return "A"
 
         # if users can swap, give them a random plan, as they can switch to the other one
-        if player.user.experiment_group == User.ExperimentGroup.SWAP:
+        if user.experiment_group == User.ExperimentGroup.SWAP:
             is_swapped = random.uniform(0, 1) > 0.5
             room.instruction_map = {'swapped': is_swapped}
             return "B" if is_swapped else "A"
@@ -946,8 +967,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         seen_instr_A = instruction_obj.filter(final_instructions_letter="A").values("user_id")
         seen_instr_B = instruction_obj.filter(final_instructions_letter="B").values("user_id")
 
-        num_shown_A = seen_instr_A.distinct().count()
-        num_shown_B = seen_instr_B.distinct().count()
+        num_shown_A = await seen_instr_A.distinct().acount()
+        num_shown_B = await seen_instr_B.distinct().acount()
 
         if num_shown_A == num_shown_B:
             return "A" if random.uniform(0, 1) > 0.5 else "B"
@@ -1064,9 +1085,6 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         await self.log_tool_use(
             room, player, {}, {'curr_subanswers': subanswers}, "next_step", "start"
         )
-
-        if room.curr_instructions_letter is None:
-            await self.load_instructions(room=room, player=player)
 
         curr_steps = (
             room.steps_seen_a
@@ -1562,17 +1580,16 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             notes=notes,
         )
 
-    @sync_to_async
-    def log_leaderboard(self, room: Room, p: Player):
+    async def log_leaderboard(self, room: Room, p: Player):
         """Log the stats on this question for the leaderboard"""
         user = p.user
-        curr_q = room.current_question
+        curr_q = await question_from_room(room)
         # find the last time the user looked at the question
-        last_question_call = ToolLog.objects.filter(
+        last_question_call = await ToolLog.objects.filter(
                 user_id=user.user_id,
                 question_id=curr_q.question_id,
                 tool_name="question",
-            ).order_by("-queried_at").first()
+            ).order_by("-queried_at").afirst()
 
         # get all subsequent tool calls
         if last_question_call:
@@ -1586,15 +1603,15 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             return
 
         all_buzzes = tool_calls.filter(tool_name="buzz")
-        num_buzzes = all_buzzes.count() // 2
-        num_correct_buzzes = all_buzzes.filter(tool_execution_status="success").count()
+        num_buzzes = (await all_buzzes.acount()) // 2
+        num_correct_buzzes = await all_buzzes.filter(tool_execution_status="success").acount()
 
         correctness = (
             0.0 if num_buzzes == 0 else (1.0 * num_correct_buzzes) / num_buzzes
         )
 
         # Convert query results to a list for runtime calculations
-        tool_calls = list(tool_calls)
+        tool_calls = await sync_to_async(list)(tool_calls)
         total_time_taken = (
             tool_calls[-1].queried_at - tool_calls[2].queried_at
         ).total_seconds()
@@ -1611,7 +1628,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             for idx in range(len(tool_calls_noninstruct) // 2)
         )
 
-        LeaderboardLog.objects.create(
+        await LeaderboardLog.objects.acreate(
             user=p.user,
             question_id=curr_q.question_id,
             correctness_score=correctness,
@@ -1711,7 +1728,7 @@ document.addEventListener("keydown", function (event) {
             "web_search_query": '',
             "select_idxs": [],
             "allow_forwards": False,
-            "allow_backwards": True,
+            "allow_backwards": room.history_idx != 0,
         }))
 
         # log tool use
@@ -1752,7 +1769,7 @@ document.addEventListener("keydown", function (event) {
                     response_data = await response.json()
                     search_results = response_data.get("items", [])
                     if not search_results:
-                        return ["no_search_results"], "error"
+                        return ["Your search returned no Wikipedia pages"], "error"
                     
         except Exception as e:
             return [str(e)], "error"
@@ -2370,9 +2387,9 @@ def get_or_create_expt_group(user: User):
     
     # (question_id, did_comparison) -> number of users who have done it
     question_to_user_count = dict()
-    for entry in AnswerData.objects.filter(is_final=True, is_report=False
-                                                            ).values("question_id", "did_comparison"
-                                                            ).annotate(user_count=Count("user__user_id", distinct=True)).all():
+    all_entries = AnswerData.objects.filter(is_final=True, is_report=False).values("question_id", "did_comparison").annotate(user_count=Count("user__user_id", distinct=True))
+    all_entries = all_entries
+    for entry in all_entries:
         question_to_user_count[(entry["question_id"], entry["did_comparison"])] = entry["user_count"]
 
     num_swap_questions_done = 0
@@ -2387,14 +2404,14 @@ def get_or_create_expt_group(user: User):
     num_pairwise_users = User.objects.filter(experiment_group=User.ExperimentGroup.PAIRWISE).count()
 
     if num_swap_questions_done == num_pairwise_questions_done:
-        if num_swap_users < num_pairwise_users:
+        if num_swap_users * 2 < num_pairwise_users:
             return (User.ExperimentGroup.SWAP, True)
-        elif num_pairwise_users < num_swap_users:
+        elif num_pairwise_users < num_swap_users * 2:
             return (User.ExperimentGroup.PAIRWISE, True)
         else:
             return (
                 (User.ExperimentGroup.PAIRWISE, True)
-                if random.uniform(0, 1) > 0.5
+                if random.uniform(0, 1) > 0.33
                 else (User.ExperimentGroup.SWAP, True)
             )
     elif num_swap_questions_done > num_pairwise_questions_done:

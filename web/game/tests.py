@@ -764,19 +764,23 @@ class TestExperimentGroup:
     def test_equal_questions_done_and_more_swap_users(self):
 
         user = User.objects.create(name="testuser", email="testuser", user_id=1000)
+        user2 = User.objects.create(name="testuser2", email="testuser2", user_id=999)
         
-        # extra swap user
-        User.objects.create(name="randuser", email="email", user_id=2134561923, experiment_group = User.ExperimentGroup.SWAP)
+        # more swap users
+        swap_user = User.objects.create(name="randuser", email="email", user_id=2134561923, experiment_group = User.ExperimentGroup.SWAP)
+
 
         for num_swap_done in range(5):
 
             assert get_or_create_expt_group(user) == (User.ExperimentGroup.PAIRWISE, True)
+            assert get_or_create_expt_group(user2) == (User.ExperimentGroup.PAIRWISE, True)
 
             if True:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
                         pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user2, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise-copy_" + str(user_num), email=str(num_swap_done) + "_pairwise-copy_" + str(user_num), user_id=1234 + int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -828,9 +832,8 @@ class TestExperimentGroup:
 
         user = User.objects.create(name="testuser", email="t", user_id=1000)
         
-        # extra swap user
+        # extra pairwise users
         User.objects.create(name="randuser", email="r", user_id=2134561923, experiment_group = User.ExperimentGroup.PAIRWISE)
-
         for num_swap_done in range(5):
 
             assert get_or_create_expt_group(user) == (User.ExperimentGroup.SWAP, True)
@@ -840,6 +843,7 @@ class TestExperimentGroup:
 
                     for user_num in range(6):
                         pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        airwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise-copy_" + str(user_num), email=str(num_swap_done) + "_pairwise-copy_" + str(user_num), user_id=1234 + int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -893,17 +897,19 @@ class TestExperimentGroup:
 
         for num_swap_done in range(5):
 
+
             out = []
             for _ in range(100):
                 out.append(get_or_create_expt_group(user))
             num_swap = [o == (User.ExperimentGroup.SWAP, True) for o in out]
-            assert 35 <= sum(num_swap) <= 65
+            assert 5 <= sum(num_swap) <= 45
 
             if True:
                 for qs, c in [(self.math_questions, Question.Category.MATH), (self.trivia_questions, Question.Category.MULTIHOP)]:
 
                     for user_num in range(6):
                         pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise-copy_" + str(user_num), email=str(num_swap_done) + "_pairwise-copy_" + str(user_num), user_id=1234+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -961,6 +967,7 @@ class TestExperimentGroup:
 
                     for user_num in range(6):
                         pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise_" + str(user_num), email=str(num_swap_done) + "_pairwise_" + str(user_num), user_id=int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
+                        pairwise_user2, _ = User.objects.get_or_create(name=str(num_swap_done) + "_pairwise2_" + str(user_num), email=str(num_swap_done) + "_pairwise2_" + str(user_num), user_id=1234 + int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.PAIRWISE)
 
                         AnswerData.objects.create(
                             question_id=qs[num_swap_done].question_id,
@@ -1005,55 +1012,13 @@ class TestExperimentGroup:
                             guessed_answer={"guess": "Guessed answer"},
                             true_answer={"true": "True answer"},
                             final_instructions_letter="A",
-                        )
-
-        for user_num in range(6):
-            swap_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
-            pairwise_user, _ = User.objects.get_or_create(name=str(num_swap_done) + "_swap_" + str(user_num), email=str(num_swap_done) + "_swap_" + str(user_num), user_id=10000+int(str(num_swap_done) + str(user_num)), experiment_group=User.ExperimentGroup.SWAP)
-            AnswerData.objects.create(
-                question_id=self.math_questions[-1].question_id,
-                user=swap_user,
-                category=Question.Category.MATH,
-                instructions_a={"step1": "Do this"},
-                instructions_b={"step1": "Do that"},
-                subanswers_a={"sub1": "Answer A1"},
-                subanswers_b={"sub1": "Answer B1"},
-                steps_seen_a=3,
-                steps_seen_b=2,
-                did_comparison=False,
-                followed_plan=True,
-                is_correct=True,
-                is_final=True,
-                is_report=False,
-                guessed_answer={"guess": "Guessed answer"},
-                true_answer={"true": "True answer"},
-                final_instructions_letter="A",
-            )
-            AnswerData.objects.create(
-                question_id=self.math_questions[-1].question_id,
-                user=pairwise_user,
-                category=Question.Category.MATH,
-                instructions_a={"step1": "Do this"},
-                instructions_b={"step1": "Do that"},
-                subanswers_a={"sub1": "Answer A1"},
-                subanswers_b={"sub1": "Answer B1"},
-                steps_seen_a=3,
-                steps_seen_b=2,
-                did_comparison=True,
-                followed_plan=True,
-                is_correct=True,
-                is_final=True,
-                is_report=False,
-                guessed_answer={"guess": "Guessed answer"},
-                true_answer={"true": "True answer"},
-                final_instructions_letter="A",
-            )      
+                        ) 
         
         out = []
         for _ in range(100):
             out.append(get_or_create_expt_group(user))
         num_swap = [o == (User.ExperimentGroup.SWAP, True) for o in out]
-        assert 35 <= sum(num_swap) <= 65
+        assert 5 <= sum(num_swap) <= 45
         
 
 @pytest.mark.django_db
@@ -1110,7 +1075,7 @@ class TestEverythingQuestions:
             )
         consumer = QuizbowlConsumer()
         for _ in range(10):
-            assert consumer.decide_question_category(self.player) == Question.Category.MATH
+            assert async_to_sync(consumer.decide_question_category)(self.player) == Question.Category.MATH
 
     def test_rogue_does_nothing(self):
 
@@ -1136,7 +1101,7 @@ class TestEverythingQuestions:
             )
         consumer = QuizbowlConsumer()
         for _ in range(10):
-            assert consumer.decide_question_category(self.player) == Question.Category.MULTIHOP
+            assert async_to_sync(consumer.decide_question_category)(self.player) == Question.Category.MULTIHOP
 
     def test_final_does_nothing(self):
 
@@ -1162,7 +1127,7 @@ class TestEverythingQuestions:
             )
         consumer = QuizbowlConsumer()
         for _ in range(10):
-            assert consumer.decide_question_category(self.player) == Question.Category.MULTIHOP
+            assert async_to_sync(consumer.decide_question_category)(self.player) == Question.Category.MULTIHOP
         
 
     def test_all_math_seen(self):
@@ -1188,8 +1153,28 @@ class TestEverythingQuestions:
                 final_instructions_letter="A",
             )
 
+        AnswerData.objects.create(
+            question_id=self.trivia_questions[0].question_id,
+            user=self.user,
+            category=Question.Category.MULTIHOP,
+            instructions_a={"step1": "Do this"},
+            instructions_b={"step1": "Do that"},
+            subanswers_a={"sub1": "Answer A1"},
+            subanswers_b={"sub1": "Answer B1"},
+            steps_seen_a=3,
+            steps_seen_b=2,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=False,
+            guessed_answer={"guess": "Guessed answer"},
+            true_answer={"true": "True answer"},
+            final_instructions_letter="A",
+        )
+
         consumer = QuizbowlConsumer()
-        assert consumer.decide_question_category(self.player) == Question.Category.MULTIHOP
+        assert async_to_sync(consumer.decide_question_category)(self.player) == Question.Category.MULTIHOP
 
     def test_all_trivia_seen(self):
 
@@ -1214,8 +1199,80 @@ class TestEverythingQuestions:
                 final_instructions_letter="A",
             )
 
+        AnswerData.objects.create(
+            question_id=self.math_questions[0].question_id,
+            user=self.user,
+            category=Question.Category.MATH,
+            instructions_a={"step1": "Do this"},
+            instructions_b={"step1": "Do that"},
+            subanswers_a={"sub1": "Answer A1"},
+            subanswers_b={"sub1": "Answer B1"},
+            steps_seen_a=3,
+            steps_seen_b=2,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=False,
+            guessed_answer={"guess": "Guessed answer"},
+            true_answer={"true": "True answer"},
+            final_instructions_letter="A",
+        )
+
         consumer = QuizbowlConsumer()
-        assert consumer.decide_question_category(self.player) == Question.Category.MATH
+        assert async_to_sync(consumer.decide_question_category)(self.player) == Question.Category.MATH
+
+    def test_only_math_seen(self):
+
+        AnswerData.objects.create(
+            question_id=self.math_questions[0].question_id,
+            user=self.user,
+            category=Question.Category.MATH,
+            instructions_a={"step1": "Do this"},
+            instructions_b={"step1": "Do that"},
+            subanswers_a={"sub1": "Answer A1"},
+            subanswers_b={"sub1": "Answer B1"},
+            steps_seen_a=3,
+            steps_seen_b=2,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=False,
+            guessed_answer={"guess": "Guessed answer"},
+            true_answer={"true": "True answer"},
+            final_instructions_letter="A",
+        )
+        
+        consumer = QuizbowlConsumer()
+        for _ in range(10):
+            assert async_to_sync(consumer.decide_question_category)(self.player) == Question.Category.MULTIHOP
+
+    def test_only_trivia_seen(self):
+
+        AnswerData.objects.create(
+            question_id=self.trivia_questions[0].question_id,
+            user=self.user,
+            category=Question.Category.MULTIHOP,
+            instructions_a={"step1": "Do this"},
+            instructions_b={"step1": "Do that"},
+            subanswers_a={"sub1": "Answer A1"},
+            subanswers_b={"sub1": "Answer B1"},
+            steps_seen_a=3,
+            steps_seen_b=2,
+            did_comparison=True,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True,
+            is_report=False,
+            guessed_answer={"guess": "Guessed answer"},
+            true_answer={"true": "True answer"},
+            final_instructions_letter="A",
+        )
+        
+        consumer = QuizbowlConsumer()
+        for _ in range(10):
+            assert async_to_sync(consumer.decide_question_category)(self.player) == Question.Category.MATH
 
     def test_all_seen(self):
 
@@ -1264,7 +1321,7 @@ class TestEverythingQuestions:
         consumer = QuizbowlConsumer()
         out = []
         for _ in range(1000):
-            out.append(consumer.decide_question_category(self.player))
+            out.append(async_to_sync(consumer.decide_question_category)(self.player))
         sum_a = sum([o == Question.Category.MATH for o in out])
         assert 450 <= sum_a <= 550
 
@@ -1315,7 +1372,7 @@ class TestEverythingQuestions:
         consumer = QuizbowlConsumer()
         out = []
         for _ in range(1000):
-            out.append(consumer.decide_question_category(self.player))
+            out.append(async_to_sync(consumer.decide_question_category)(self.player))
         sum_a = sum([o == Question.Category.MATH for o in out])
         assert 450 <= sum_a <= 550
     
@@ -1461,6 +1518,7 @@ class TestConsumersTrivia:
             true_answer={"true": "True answer"},
             final_instructions_letter="A",
         )
+
         # Should return "A" because "A" has been seen less
         for _ in range(1000):
             assert async_to_sync(consumer.decide_instruction_to_show)(self.room, self.player) == "A"
@@ -1661,6 +1719,7 @@ class TestDecideNextQuestion:
 
         self.room = Room.objects.create()
         self.user = User.objects.create(name="testuser", email="testuser", user_id=1000)
+        self.user2 = User.objects.create(name="testuser2", email="testuser2", user_id=1002)
         self.player = Player.objects.create(user=self.user, room=self.room)
 
         # Create tutorial, sanity, and regular questions
@@ -1668,6 +1727,17 @@ class TestDecideNextQuestion:
             question_id=1,
             generation_method=Question.GenerationMethod.TUTORIAL,
             category=Question.Category.MATH
+        )
+
+        self.tutorial_question_trivia = Question.objects.create(
+            question_id=1010101,
+            generation_method=Question.GenerationMethod.TUTORIAL,
+            category=Question.Category.MULTIHOP
+        )
+        self.question_trivia = Question.objects.create(
+            question_id=1010102,
+            generation_method=Question.GenerationMethod.GPT,
+            category=Question.Category.MULTIHOP
         )
 
         self.sanity_question = Question.objects.create(
@@ -1703,7 +1773,7 @@ class TestDecideNextQuestion:
         for flag in [True, False]:
             for q in self.extra_questions:
                 AnswerData.objects.create(
-                    user=self.user,
+                    user=self.user2,
                     question_id=q.question_id,
                     category=Question.Category.MULTIHOP,
                     final_instructions_letter="A",
@@ -1721,12 +1791,33 @@ class TestDecideNextQuestion:
 
     def test_tutorial_question(self):
         """If the user has seen 0 questions, return the tutorial question."""
-        with patch.dict("os.environ", {"NUM_SEEN_FOR_TUTORIAL": "0"}):
-            for flag in [True, False]:
-                next_question = async_to_sync(self.consumer.decide_next_question)(
-                    self.room, self.player, Question.Category.MATH, flag
-                )
-                assert next_question == self.tutorial_question
+        for flag in [True, False]:
+            next_question = async_to_sync(self.consumer.decide_next_question)(
+                self.room, self.player, Question.Category.MATH, flag
+            )
+            assert next_question == self.tutorial_question
+
+        AnswerData.objects.create(
+            user=self.user,
+            question_id=self.tutorial_question.question_id,
+            category=Question.Category.MATH,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=flag,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True
+        )
+        for flag in [True, False]:
+            next_question = async_to_sync(self.consumer.decide_next_question)(
+                self.room, self.player, Question.Category.EVERYTHING, flag
+            )
+            assert next_question == self.tutorial_question_trivia
 
     def test_sanity_question(self):
         """If the user has seen 7 questions, return the sanity question."""
@@ -2644,6 +2735,7 @@ class TestDecideNextQuestionTrivia:
 
         self.room = Room.objects.create()
         self.user = User.objects.create(name="testuser", email="testuser", user_id=1000)
+        self.user2 = User.objects.create(name="testuser2", email="testuser2", user_id=10002)
         self.player = Player.objects.create(user=self.user, room=self.room)
 
         # Create tutorial, sanity, and regular questions
@@ -2651,6 +2743,16 @@ class TestDecideNextQuestionTrivia:
             question_id=1,
             generation_method=Question.GenerationMethod.TUTORIAL,
             category=Question.Category.MULTIHOP
+        )
+        self.tutorial_question_math = Question.objects.create(
+            question_id=10101010,
+            generation_method=Question.GenerationMethod.TUTORIAL,
+            category=Question.Category.MATH
+        )
+        self.question_math = Question.objects.create(
+            question_id=101010102,
+            generation_method=Question.GenerationMethod.TUTORIAL,
+            category=Question.Category.MATH
         )
 
         self.sanity_question = Question.objects.create(
@@ -2686,7 +2788,7 @@ class TestDecideNextQuestionTrivia:
         for flag in [True, False]:
             for q in self.extra_questions:
                 AnswerData.objects.create(
-                    user=self.user,
+                    user=self.user2,
                     question_id=q.question_id,
                     category=Question.Category.MATH,
                     final_instructions_letter="A",
@@ -2704,12 +2806,33 @@ class TestDecideNextQuestionTrivia:
 
     def test_tutorial_question(self):
         """If the user has seen 0 questions, return the tutorial question."""
-        with patch.dict("os.environ", {"NUM_SEEN_FOR_TUTORIAL": "0"}):
-            for flag in [True, False]:
-                next_question = async_to_sync(self.consumer.decide_next_question)(
-                    self.room, self.player, Question.Category.MULTIHOP, flag
-                )
-                assert next_question == self.tutorial_question
+        for flag in [True, False]:
+            next_question = async_to_sync(self.consumer.decide_next_question)(
+                self.room, self.player, Question.Category.MULTIHOP, flag
+            )
+            assert next_question == self.tutorial_question
+
+        AnswerData.objects.create(
+            user=self.user,
+            question_id=self.tutorial_question.question_id,
+            category=Question.Category.MULTIHOP,
+            final_instructions_letter="A",
+            instructions_a={},
+            instructions_b={},
+            subanswers_a={},
+            subanswers_b={},
+            steps_seen_a=1,
+            steps_seen_b=1,
+            did_comparison=flag,
+            followed_plan=True,
+            is_correct=True,
+            is_final=True
+        )
+        for flag in [True, False]:
+            next_question = async_to_sync(self.consumer.decide_next_question)(
+                self.room, self.player, Question.Category.EVERYTHING, flag
+            )
+            assert next_question == self.tutorial_question_math
 
     def test_sanity_question(self):
         """If the user has seen 7 questions, return the sanity question."""

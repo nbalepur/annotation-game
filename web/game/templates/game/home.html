@@ -24,23 +24,20 @@
         {% else %}
         <!-- IRB Agreement Section -->
         <div class="row justify-content-center">
-          <div class="col-md-10 text-center mb-3">
+          <div class="col-md-10 text-center mb-2">
             <div id="agree-irb">
-              <div class="mb-4">
+              <div>
 
                 {% if user_logged_in %}
                   <h3>Welcome, <span class="text-primary">{{user_name}}</span>!</h3>
                 {% endif %}
 
                 <p>Please read and agree to the IRB below before joining a room.</p>
-                <button id="logout-btn" type="button" class="btn btn-danger btn-lg me-4">Take me Back</button>
-                <button id="agree-btn" type="button" class="btn btn-primary btn-lg">I Agree</button>
               </div>
             </div>
 
             <!-- Room Creation Section -->
-            <div id="room-section" style="display: none;">
-              <h3>Click below to get started!</h3>
+            <div id="room-section" style="display: none;" class="mb-2">
               <button onclick="joinNewRoom(true)" id="evaluation-play-btn" type="button" class="btn btn-success btn-lg" disabled>Get Started!</button>
             </div>
           </div>
@@ -50,6 +47,11 @@
         <div class="col-md-8 text-center">
           <div class="border p-3 overflow-auto ms-2 me-2" style="height: 500px;">
             {% include "irb_consent.html" %}
+            
+            <div class="mt-5">
+              <button id="logout-btn" type="button" class="btn btn-danger btn-lg me-4">Take me Back</button>
+              <button id="agree-btn" type="button" class="btn btn-primary btn-lg">I Agree</button>
+            </div>
           </div>
         </div>
 

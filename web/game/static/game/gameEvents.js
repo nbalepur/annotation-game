@@ -128,6 +128,15 @@ closeBtn2.addEventListener('click', function () {
   welcomeModal.hide();
 });
 
+requestContentInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    buzz();
+    }
+});
+
+
 });
 
 // Timed events (ms)
@@ -288,11 +297,12 @@ function handleKeyPress(e) {
         focusLastInstruction();
       }
       e.preventDefault();
+    } else if (e.key === "t") {
+      const lastCopy = getLastCopy();
+      if (lastCopy) {
+        copyTextToTool(lastCopy);
+      }
     }
-    // else if (e.key == "s") {
-    //   focusTextInput("user-notes");
-    //   e.preventDefault();
-    // }
   }
   e.stopPropagation();
 }
