@@ -26,7 +26,7 @@
 
 </head>
 
-<body>
+<body id="body">
   {% include "game/navbar.html" %}
   
   <div id="main-content">
@@ -54,6 +54,7 @@
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
   integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous"> -->
 
+
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"
   integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 
@@ -74,6 +75,7 @@
 <script src="{% static 'fontawesomefree/js/all.min.js' %}"></script>
 
 <link rel="stylesheet" href={% static "game/game.css" %}>
+<script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.1.3/dist/dom-to-image-more.min.js"></script>
 <script src={% static "game/base.js" %}></script>
 <script type="text/javascript" src={% static "game/userdata.js" %}></script>
 <script type="text/javascript" src={% static "game/utils.js" %}></script>

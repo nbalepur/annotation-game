@@ -118,7 +118,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
     }
 
     const buttonHTML = !addCloseBtn ? '' : (isLastStep && index === inputInstructions['steps'].length - 1
-      ? `<button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">Buzz (Enter)</button>`
+      ? `<button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">Answer (Enter)</button>`
       : `<button type="button" style="border-radius: 0;" id="step-next-btn" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${index + 1}">
           Next Step (Enter)
         </button>
@@ -252,7 +252,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
           <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">
-            Buzz (Enter)
+            Answer (Enter)
           </button>
         ` : `
           <button type="button" style="border-radius: 0;" id="step-next-btn" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${lastIndex + 1}">
@@ -276,7 +276,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         <textarea id="answer-step-${lastIndex + 1}" class="form-control input-sm" placeholder="Enter the answer here" rows="1"></textarea>
         ${isLastStep ? `
           <button type="button" style="border-radius: 0 0.5rem 0.5rem 0;" class="btn btn-sm btn-primary buzz-btn" id="step-buzz-btn">
-            Buzz (Enter)
+            Answer (Enter)
           </button>
         ` : `
           <button type="button" style="border-radius: 0;" id="step-next-btn" class="btn btn-sm btn-primary step-btn" data-copy-id="answer-step-${lastIndex + 1}">

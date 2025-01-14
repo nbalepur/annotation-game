@@ -208,6 +208,7 @@ accountSave.addEventListener('click', clearUserData)
 
 
 function handleKeyPress(e) {
+
   
   const modalElement = document.getElementById('welcomeModal');
   if (modalElement && modalElement.classList.contains('show')) {
@@ -296,7 +297,87 @@ function handleKeyPress(e) {
   e.stopPropagation();
 }
 
+function inlineExternalCSS() {
+  const styleSheets = Array.from(document.styleSheets);
+
+  styleSheets.forEach(sheet => {
+    try {
+      if (sheet.cssRules) {
+        const rules = Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n');
+        const style = document.createElement('style');
+        style.textContent = rules;
+        document.head.appendChild(style);
+      }
+    } catch (e) {
+      console.warn('Could not access CSS rules for', sheet.href, e);
+    }
+  });
+}
+
+async function fetchAndInlineCSS(url) {
+  const response = await fetch(url);
+  const cssText = await response.text();
+  const style = document.createElement('style');
+  style.textContent = cssText;
+  document.head.appendChild(style);
+}
+
+
+function embedIframes() {
+  const iframes = document.querySelectorAll('iframe');
+  iframes.forEach(iframe => {
+      try {
+          if (iframe.id === "instruction-frame") {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const iframeHTML = iframeDoc.documentElement.outerHTML;
+            const wrapper = document.createElement('div');
+            wrapper.style.width = iframe.style.width;
+            wrapper.style.height = iframe.style.height;
+            wrapper.innerHTML = iframeHTML;
+            iframe.replaceWith(wrapper);
+          }
+      } catch (e) {
+          console.warn('Cannot access iframe content:', e);
+      }
+  });
+}
+
+
+async function screenshot() {
+  //await fetchAndInlineCSS('https://cdn.jsdelivr.net/npm/bootstrap-table@1.22.5/dist/bootstrap-table.min.css');
+  //await fetchAndInlineCSS('https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css');
+  //inlineExternalCSS();
+  embedIframes();
+
+  var element = document.documentElement; // Use the entire HTML document for capturing
+  
+  // Set options to capture the full content
+  domtoimage.toSvg(element, {
+    width: element.scrollWidth, // Full width of the page
+    height: element.scrollHeight, // Full height of the page
+  })
+    .then(function (dataUrl) {
+      // Create a download link for the SVG
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'screenshot.svg';
+      link.click();
+    })
+    .catch(function (error) {
+      console.error('Error generating SVG screenshot:', error);
+    });
+}
+
+
+
 function handleKeyDown(e) {
+
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "p") {
+    e.preventDefault();
+    screenshot();
+}
+
+
 
   const modalElement = document.getElementById('welcomeModal');
   if (modalElement && modalElement.classList.contains('show')) {
