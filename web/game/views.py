@@ -21,11 +21,32 @@ load_dotenv()
 
 
 def home(request):
+
+    group_type_map = {
+        'swap': User.ExperimentGroup.SWAP,
+        'pairwise': User.ExperimentGroup.PAIRWISE,
+    }
+
+    prolific_id = request.GET.get('prolific_id', None)
+
+    group_type = request.GET.get('group_type', None)
+    group_type = group_type_map.get(group_type, None)
+
+    if prolific_id:
+        if not User.objects.filter(name=prolific_id).exists():
+            user = User.objects.create(email=prolific_id, name=prolific_id, user_id=prolific_id)
+            user.set_password(prolific_id)
+            expt_group, _ = (group_type, None) if group_type != None else get_or_create_expt_group(user)
+            user.experiment_group = expt_group
+            user.save()
+        request.session['user_id'] = prolific_id
+
     if 'user_id' in request.session:
         curr_user = User.objects.filter(user_id=request.session['user_id']).first()
         if curr_user is not None:
             name = curr_user.name
             return render(request, 'game/home.html', {'user_name': name, 'user_logged_in': True, 'is_password_reset': False})
+        
     return render(request, 'game/home.html', {'user_name': '', 'user_logged_in': False, 'is_password_reset': False})
 
 

@@ -3,6 +3,7 @@ import html
 import datetime
 import uuid
 import os
+from .models import User
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from dotenv import load_dotenv
@@ -44,10 +45,11 @@ def generate_name():
 
 
 def generate_id():
-    """Generate user id
-    """
-    # TODO: account for collision??
-    return uuid.uuid4().hex
+    """Generate a unique user ID."""
+    while True:
+        new_id = uuid.uuid4().hex
+        if not User.objects.filter(user_id=new_id).exists():
+            return new_id
 
 def send_email(to_email, subject, message):
     message = Mail(

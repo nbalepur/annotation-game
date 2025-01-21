@@ -574,6 +574,8 @@ function setContentSelectionResult(doc_idxs, num_docs) {
       if (targetElement) {
         if (doc_idxs[0] > 3) {
           targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          iframeDocument.defaultView.scrollTo({ top: 0, behavior: 'smooth' });
         }
         targetElement.classList.add('highlight');
       }
