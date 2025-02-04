@@ -774,7 +774,9 @@ function updateStatus(status, player, answer, allowSwaps) {
         sendSubanswers(true, false);
         toggleCloseButtonVisibility(true);
     }
-    showButtonsForState(gameState, allowSwaps);
+    if (status !== 'contest') {
+      showButtonsForState(gameState, allowSwaps)
+    }
 }
 
 function copyMathResult() {

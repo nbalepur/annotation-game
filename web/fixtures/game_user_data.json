@@ -7,7 +7,7 @@
     "name": "nbalepur",
     "email": "nbalepur@umd.edu",
     "password": "pbkdf2_sha256$720000$fGOTvGqlwb6ocbDWuprLzF$d0E1MXHmxUoZx7jw5C0EbsRYhhYmc1ktXtiOmJEYtSI=",
-    "experiment_group": "swap",
+    "experiment_group": "pairwise",
     "category_preference": "Multi-Hop",
     "auto_scroll": false,
     "reset_token": null
@@ -147,6 +147,104 @@
     "name": "test123",
     "email": "test123@gmail.com",
     "password": "pbkdf2_sha256$720000$limWGAg1YJ523nmgOJhQXw$f+MU3Ol6FxVjsevMdMiA/pWpbga/TRh8q5F9XF0ydCI=",
+    "experiment_group": "pairwise",
+    "category_preference": "Everything",
+    "auto_scroll": true,
+    "reset_token": null
+  }
+},
+{
+  "model": "game.user",
+  "pk": 12,
+  "fields": {
+    "user_id": "0c98bd2ecafe4dcebaca89b594330702",
+    "name": "swag123",
+    "email": "asdasdas@asdasdasdas.com",
+    "password": "pbkdf2_sha256$720000$mhCV2LkDdeuAEDiHHPfvM3$K1k7ZUTIMvoeHikNG8+1FtT2fnsibsvVcx35K3t8ow4=",
+    "experiment_group": "swap",
+    "category_preference": "Math",
+    "auto_scroll": false,
+    "reset_token": null
+  }
+},
+{
+  "model": "game.user",
+  "pk": 13,
+  "fields": {
+    "user_id": "12345abcdef",
+    "name": "12345abcdef",
+    "email": "12345abcdef",
+    "password": "pbkdf2_sha256$720000$MHZ5K1vBwVoR3XwcSxgzpj$KTNVXoxS63eROvczN0pf7xb9cbmQJ5YX2iuN4zPfAyg=",
+    "experiment_group": "swap",
+    "category_preference": "Everything",
+    "auto_scroll": true,
+    "reset_token": null
+  }
+},
+{
+  "model": "game.user",
+  "pk": 14,
+  "fields": {
+    "user_id": "12345abcdefg",
+    "name": "12345abcdefg",
+    "email": "12345abcdefg",
+    "password": "pbkdf2_sha256$720000$wabGZaWU5ZFuTKtJzhHZbc$iblofTiSs93G3sWu2m+d1oGYZKQ5m/ShpapdUgHxcwM=",
+    "experiment_group": "pairwise",
+    "category_preference": "Everything",
+    "auto_scroll": true,
+    "reset_token": null
+  }
+},
+{
+  "model": "game.user",
+  "pk": 15,
+  "fields": {
+    "user_id": "12345abcd",
+    "name": "12345abcd",
+    "email": "12345abcd",
+    "password": "pbkdf2_sha256$720000$FUKULWlK6wwAjUASIj8Th5$yeiXMtrZ3NsytWpqsh28hIIzhYq9ZAN232S1xeQyAes=",
+    "experiment_group": "pairwise",
+    "category_preference": "Everything",
+    "auto_scroll": true,
+    "reset_token": null
+  }
+},
+{
+  "model": "game.user",
+  "pk": 16,
+  "fields": {
+    "user_id": "12345abcde",
+    "name": "12345abcde",
+    "email": "12345abcde",
+    "password": "pbkdf2_sha256$720000$vOpLPgkWPDEtbAoV8IwnJz$5l+TRKOELQtrLg9WIV32Keaj5v56w6UfhIaDOwp2EjE=",
+    "experiment_group": "swap",
+    "category_preference": "Everything",
+    "auto_scroll": true,
+    "reset_token": null
+  }
+},
+{
+  "model": "game.user",
+  "pk": 17,
+  "fields": {
+    "user_id": "cb4a4eea244448d388c606167c6f9437",
+    "name": "123",
+    "email": "asda@asdasdasd.com",
+    "password": "pbkdf2_sha256$720000$A2ubAI5udtn2TxNKDjvFct$jJdiUqYh94R749PoDycTiVGGeLsNqX98M9N13sb8hdw=",
+    "experiment_group": "pairwise",
+    "category_preference": "Everything",
+    "auto_scroll": true,
+    "reset_token": null
+  }
+},
+{
+  "model": "game.user",
+  "pk": 18,
+  "fields": {
+    "user_id": "365e7ba8a2204939b9a8be83cdaefeea",
+    "name": "XXXXX",
+    "email": "XXX@XXX.com",
+    "password": "pbkdf2_sha256$720000$ixRYa6XvFvjf2T2ntU63ti$/6t3PETndC3AbgF1mY9DtK+KRIXTNvQU5gmBjxxT51U=",
     "experiment_group": "pairwise",
     "category_preference": "Everything",
     "auto_scroll": true,

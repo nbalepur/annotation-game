@@ -71,6 +71,8 @@
     const roomSection = document.getElementById('room-section');
     const playButton = document.getElementById('evaluation-play-btn');
 
+    console.log('hey!');
+
     agreeButton.addEventListener('click', function () {
       agreeButton.disabled = true;
       agreeButton.textContent = "IRB Accepted";
@@ -86,6 +88,7 @@
           'Content-Type': 'application/json',
           'X-CSRFToken': getCookie('csrftoken'),
         },
+        credentials: 'include',
       }).then(() => {
         window.location.reload(); // Refresh the page
       });

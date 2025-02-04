@@ -32,10 +32,14 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://annotationgame.com', 'https://*.annotationgame.com', os.getenv('PRODUCTION_URL'), os.getenv('PRODUCTION_URL').replace('https://', 'https://*.'), 'http://localhost']
+CSRF_TRUSTED_ORIGINS = ['https://annotationgame.com', 'https://*.annotationgame.com', 'http://localhost', 'http://127.0.0.1', os.getenv('PRODUCTION_URL'), os.getenv('PRODUCTION_URL').replace('https://', 'https://*.'), 'http://localhost']
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 SESSION_COOKIE_SECURE = False
-SESSION_COOKIE_SAMESITE = None  # Set to 'Lax' or 'Strict' in production
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = 'Lax'  # Set to 'Lax' or 'Strict' in production
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Application definition
 

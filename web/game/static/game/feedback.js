@@ -14,7 +14,7 @@ function populateComparisonPane(question, instr_a, instr_b) {
     instr_a = parseInstructions(instr_a);
     instr_b = parseInstructions(instr_b);
 
-    feedbackQuestion.innerText = question;
+    feedbackQuestion.innerHTML = question.replace(/\n\n/g, '<br /><br />');;
     planA.innerHTML = instr_a;
     planB.innerHTML = instr_b;
 }

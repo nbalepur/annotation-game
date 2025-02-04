@@ -22,6 +22,8 @@ load_dotenv()
 
 def home(request):
 
+    print('user id:', request.session.get('user_id', None))
+
     group_type_map = {
         'swap': User.ExperimentGroup.SWAP,
         'pairwise': User.ExperimentGroup.PAIRWISE,
@@ -164,6 +166,7 @@ def login(request):
         user = User.objects.filter(Q(email=identifier) | Q(name=identifier)).get()
         if user.check_password(password):
             request.session['user_id'] = user.user_id
+            request.session.save()
             return JsonResponse({'success': True})
         return JsonResponse({'success': False, 'message': 'Incorrect password for the input user'}, status=401)
     except User.DoesNotExist:

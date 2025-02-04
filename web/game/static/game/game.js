@@ -2,7 +2,7 @@
 // Plays client-side game
 
 const wsScheme = window.location.protocol == "https:" ? "wss" : "ws";
-// console.log(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname)
+console.log(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname)
 const options = {
   connectionTimeout: 1000,
   maxRetries: 10,
@@ -357,9 +357,12 @@ function handleServerResponse(data) {
 
     requestContentInput.value = data['guess'];
     requestContentInput.style.display = '';
+    buzzContent.style.display = '';
+    reportBtn.style.display = 'none';
+    showButtons();
     buzzPassedTime = 0;
 
-    hideButtons();
+    //hideButtons();
 
     // gameState = 'contest';
 
@@ -918,6 +921,8 @@ function answerWrapper(guess) {
 function answer(guess) {
   showButtons();
   requestContentInput.style.display = 'none';
+  buzzContent.style.display = 'none';
+  reportBtn.style.display = '';
   currentAction = 'idle';   
   sendRequest("buzz_answer", guess);
   getShownQuestion();
@@ -948,6 +953,8 @@ function chatInit() {
     // Show input bar
     requestContentInput.value = '';
     requestContentInput.style.display = '';
+    buzzContent.style.display = '';
+    reportBtn.style.display = 'none';
 
     // Hide buttons 
     nextBtn.style.display = 'none';
@@ -967,6 +974,8 @@ function sendChat() {
     buzzBtn.style.display = '';
     chatBtn.style.display = '';
     requestContentInput.style.display = 'none';
+    buzzContent.style.display = 'none';
+    reportBtn.style.display = '';
     currentAction = 'idle';
 
     if (requestContentInput.value !== "") sendRequest("chat", requestContentInput.value);

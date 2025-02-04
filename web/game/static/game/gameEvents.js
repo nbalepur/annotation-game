@@ -10,6 +10,7 @@ const offcanvasElement = document.getElementById('offcanvasSettings');
 const instructionAnnotationModal = document.getElementById("instruction-annotation-frame");
 const instructionAnnotationPage = document.getElementById("instruction-annotation-page");
 const requestContentInput = document.getElementById("request-content");
+const buzzContent = document.getElementById("buzz-content");
 const buzzProgress = document.getElementById("buzz-progress");
 const contentProgress = document.getElementById("content-progress");
 const instructionProgress = document.getElementById("instruction-progress");
@@ -136,6 +137,13 @@ requestContentInput.addEventListener('keydown', (event) => {
     }
 });
 
+buzzContent.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    buzz();
+    }
+});
 
 });
 
@@ -248,25 +256,24 @@ function handleKeyPress(e) {
         next();
       }
     } else if (e.key == "Enter" && gameState === "playing") {
-      if (buzzBtn.style.display === "") {
+      if (checkbox.checked || buzzBtn.style.display === "") {
         buzz();
         e.preventDefault();
       } else {
-        const iframe = document.getElementById('instruction-frame');
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        if (iframeDoc.getElementById('step-buzz-btn')) {
-          const container = iframeDoc.getElementById('instructions-container');
-          const currentLastStep = container.querySelector('.step-div:first-child');
-          const guess = currentLastStep.querySelector('textarea').value;
-          answerWrapper(guess);
-          e.preventDefault();
+          const iframe = document.getElementById('instruction-frame');
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          if (iframeDoc.getElementById('step-buzz-btn')) {
+            const container = iframeDoc.getElementById('instructions-container');
+            const currentLastStep = container.querySelector('.step-div:first-child');
+            const guess = currentLastStep.querySelector('textarea').value;
+            answerWrapper(guess);
+            e.preventDefault();
+          }
+          if (iframeDoc.getElementById('step-next-btn')) {
+            next_step();
+            e.preventDefault();
+          }   
         }
-        if (iframeDoc.getElementById('step-next-btn')) {
-          next_step();
-          e.preventDefault();
-        }
-        
-      }
     } else if (e.key == "m") {
       focusTextInput("calc-expression");
       e.preventDefault();

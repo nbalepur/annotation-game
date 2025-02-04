@@ -156,15 +156,17 @@
             "generation_method": "qwen",
             "instructions_a": {
                 "steps": [
-                    "Find out the country where the band U2, known for The Joshua Tree Tour, is from.",
-                    "Identify the coat of arms for the country where U2 is from.",
-                    "Determine the instrument that is featured on the coat of arms of the country."
+                    "Find out which country the band behind The Joshua Tree Tour is from.",
+                    "Identify the coat of arms for the country found in Step 1.",
+                    "Determine which instrument is depicted on the coat of arms identified in Step 2."
                 ]
             },
             "instructions_b": {
                 "steps": [
-                    "Identify the coat of arms of Ireland, the country where U2 originated.",
-                    "Find out which musical instrument is depicted on the Irish coat of arms."
+                    "Identify the band that performed The Joshua Tree Tour.",
+                    "Find out the country where the band from Step 1 originated from.",
+                    "List the main elements featured on the coat of arms of the country from Step 2.",
+                    "Identify which of the elements listed in Step 3 is an instrument."
                 ]
             },
             "uses_calculator": false,
@@ -1094,15 +1096,15 @@
             "generation_method": "claude",
             "instructions_a": {
                 "steps": [
-                    "Find Joe Lovano's primary educational institution",
-                    "Determine the state where the institution from Step 1 is located",
-                    "Look up the first governor of the state identified in Step 2"
+                    "Find Joe Lovano's main educational institution",
+                    "Determine the state where the institution is located",
+                    "Identify the first governor of the state from Step 2"
                 ]
             },
             "instructions_b": {
                 "steps": [
-                    "Directly identify the headquarters location of Lovano's workplace",
-                    "Research the pioneer leader of this territory upon its admission to the Union"
+                    "Let's begin by determining where Joe Lovano's workplace is based",
+                    "Research the pioneering political leader who first governed this territory upon statehood"
                 ]
             },
             "uses_calculator": false,
@@ -3372,15 +3374,15 @@
             "generation_method": "claude",
             "instructions_a": {
                 "steps": [
-                    "Find the automotive company responsible for producing the Dodge Caravan",
-                    "Locate the specific building that bears the name of the company from Step 1",
-                    "Determine the architectural style used in constructing the building identified in Step 2"
+                    "Find the automotive company that produces the Dodge Caravan",
+                    "Identify the specific building that bears the name of the company from Step 1",
+                    "Determine the architectural style used in the construction of the building identified in Step 2"
                 ]
             },
             "instructions_b": {
                 "steps": [
-                    "Identify Detroit's iconic automotive-company-named skyscraper",
-                    "Research the artistic/architectural movement that influenced the building's design"
+                    "Direct lookup of the relevant tower by referencing the vehicle manufacturer",
+                    "Look up the artistic/architectural movement that characterizes the building's design"
                 ]
             },
             "uses_calculator": false,
@@ -6513,15 +6515,15 @@
             "generation_method": "claude",
             "instructions_a": {
                 "steps": [
-                    "Find how many fish Ryan caught by working backwards from Jeffery's amount",
-                    "Determine Jason's catch by using the relationship with Ryan's amount from Step 1",
-                    "Add up all three people's fish catches to get the total"
+                    "Find how many fish Ryan caught by dividing Jeffery's fish by 2",
+                    "Find how many fish Jason caught by dividing Ryan's fish (from Step 1) by 3",
+                    "Add up all the fish caught by Jeffery, Ryan, and Jason"
                 ]
             },
             "instructions_b": {
                 "steps": [
-                    "Calculate the baseline number that will help determine everyone's catches",
-                    "Multiply Step 1's result by the sum of the relative proportions for all three people"
+                    "Record Jeffery's fish count",
+                    "Compute total by adding Jeffery's fish, half of Jeffery's fish (Ryan), and one-sixth of Jeffery's fish (Jason)"
                 ]
             },
             "uses_calculator": true,
@@ -6579,15 +6581,17 @@
             "generation_method": "llama",
             "instructions_a": {
                 "steps": [
-                    "Determine how many German Shepherds Peter wants by multiplying Sam's number of German Shepherds by 3",
-                    "Determine how many French Bulldogs Peter wants by multiplying Sam's number of French Bulldogs by 2",
-                    "Add the number of German Shepherds and French Bulldogs Peter wants to find the total number of dogs"
+                    "Determine the number of German Shepherds Peter wants, based on Sam's current amount.",
+                    "Find out how many French Bulldogs Peter wants to buy, considering Sam's current number of French Bulldogs.",
+                    "Add the number of German Shepherds and French Bulldogs Peter wants to get the total number of dogs he desires."
                 ]
             },
             "instructions_b": {
                 "steps": [
-                    "Find the total number of dogs Sam has",
-                    "Peter wants 3 times as many German Shepherds as Sam has dogs and 2 times as many French Bulldogs as Sam has dogs. Use the number from Step 1 to calculate the total number of dogs Peter wants."
+                    "Find the total number of dogs Sam currently has.",
+                    "Adjust for Peter wanting 3 times as many German Shepherds as Sam's total dogs minus the difference in French Bulldogs Sam has.",
+                    "Calculate the additional French Bulldogs Peter wants to match his desired amount.",
+                    "Combine the adjusted number of German Shepherds with the additional French Bulldogs Peter wants to buy."
                 ]
             },
             "uses_calculator": true,

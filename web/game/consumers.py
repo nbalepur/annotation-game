@@ -951,7 +951,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         curr_q = await question_from_room(room)
         user = await user_from_player(player)
-        if curr_q.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP}:
+        if curr_q.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP, Question.GenerationMethod.TUTORIAL}:
             return "A"
 
         # if users can swap, give them a random plan, as they can switch to the other one

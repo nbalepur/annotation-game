@@ -3,3 +3,6 @@ web/static
 *.DS_Store
 web/datadir
 *datadir/*
+web/fixtures/auth_user_data.json
+web/fixtures/game_user_data.json
+web/fixtures/document_data.json

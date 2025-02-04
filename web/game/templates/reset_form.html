@@ -53,6 +53,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
+                credentials: 'include',
                 body: JSON.stringify({ new_password: newPassword, token: token }),
             })
                 .then((response) => response.json())

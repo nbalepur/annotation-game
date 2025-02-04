@@ -5,7 +5,7 @@
         "fields": {
             "category": "Math",
             "difficulty": "HS",
-            "content": "This is a tutorial question, so it is untimed. Use this opportunity to get familiar with the interface.\n\nLiam has 15 marbles. He wins 8 more marbles in a game. Then he loses 5 marbles, but later he finds 6 more marbles under his bed. How many marbles does Liam have now?",
+            "content": "<b>This is a tutorial question, so it is untimed. Use this opportunity to get familiar with the interface.</b>\n\nLiam has 15 marbles. He wins 8 more marbles in a game. Then he loses 5 marbles, but later he finds 6 more marbles under his bed. How many marbles does Liam have now?",
             "clue_list": [],
             "length": 0,
             "answer_accept": [
@@ -38,7 +38,7 @@
         "fields": {
             "category": "Multi-Hop",
             "difficulty": "HS",
-            "content": "This is a tutorial question, so it is untimed. Use this opportunity to get familiar with the interface.\n\nWhat is the capital of the state that contains the tallest mountain in the United States?",
+            "content": "<b>This is a tutorial question, so it is untimed. Use this opportunity to get familiar with the interface.</b>\n\nWhat is the capital of the state that contains the tallest mountain in the United States?",
             "clue_list": [],
             "length": 0,
             "answer_accept": [

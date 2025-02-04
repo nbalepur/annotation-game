@@ -78,13 +78,16 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: {
               'Content-Type': 'application/json',
               'X-CSRFToken': getCookie('csrftoken'),
+              
           },
+          credentials: 'include',
           body: JSON.stringify({ identifier, password }),
       })
-          .then((response) => response.json())
+          .then((response) => {return response.json();})
           .then((data) => {
+            console.log(data);
               if (data.success) {
-                  location.reload();
+                location.reload();
               } else {
                 loginStatusWrapper.style.display = '';
                 loginStatus.textContent = data.message;
@@ -135,12 +138,14 @@ document.addEventListener('DOMContentLoaded', function () {
               'Content-Type': 'application/json',
               'X-CSRFToken': getCookie('csrftoken'),
           },
+          credentials: 'include',
           body: JSON.stringify({ email, username, password }),
       })
-          .then((response) => response.json())
+          .then((response) => {return response.json();})
           .then((data) => {
+            console.log(data);
               if (data.success) {
-                  location.reload();
+                location.reload();
               } else {
                 loginStatus.textContent = data.message;
                 loginStatusWrapper.style.display = '';
@@ -168,9 +173,10 @@ document.addEventListener('DOMContentLoaded', function () {
               'Content-Type': 'application/json',
               'X-CSRFToken': getCookie('csrftoken'),
           },
+          credentials: 'include',
           body: JSON.stringify({ email: email })
       })
-          .then((response) => response.json())
+          .then((response) => {return response.json();})
           .then((data) => {
               if (data.success) {
                   loginStatus.textContent = data.message;
