@@ -105,10 +105,20 @@
 
     <div class="section">
         <h3>Statement of Consent</h3>
-        <p>Statement of Consent
-            By clicking “I agree”, you indicate that you are at least 18 years of age; you have read this consent form or have had it read to you; your questions have been answered to your satisfaction and you voluntarily agree to participate in this research study. We advise you to download a copy of this consent form for your own records.</p>
+        <p>
+            By clicking “I agree”, you indicate that you are at least 18 years of age; you have read this consent form or have had it read to you; your questions have been answered to your satisfaction and you voluntarily agree to participate in this research study. We advise you to download a copy of this consent form for your own records.
+        </p>
+        <p>Today's Date: <span id="current-date"></span></p>
+        <p>Approved as IRBNet Package: 2237749-1</p>
     </div>
 
 </body>
-<footer>Approved as IRBNet Package: 2237749-1</footer>
+<script>
+    // Get the current date
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString();
+
+    // Populate the date in the span
+    document.getElementById("current-date").textContent = formattedDate;
+</script>
 </html>
