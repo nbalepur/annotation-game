@@ -1783,7 +1783,7 @@ document.addEventListener("keydown", function (event) {
 
 
     async def extract_elements_from_html(self, html: str):
-        soup = BeautifulSoup(html, "xlml")
+        soup = BeautifulSoup(html, "lxml")
         elements = soup.find_all(id=re.compile(r"^element-"))
         sentences = []
         for elem in elements:

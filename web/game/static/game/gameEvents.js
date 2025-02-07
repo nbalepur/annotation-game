@@ -394,10 +394,11 @@ function handleKeyDown(e) {
     screenshot();
 }
 
-
-
   const modalElement = document.getElementById('welcomeModal');
   if (modalElement && modalElement.classList.contains('show')) {
+    return;
+  }
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
     return;
   }
 
