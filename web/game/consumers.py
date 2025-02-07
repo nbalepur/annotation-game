@@ -2053,19 +2053,21 @@ document.addEventListener("keydown", function (event) {
                             title = data["parse"]["title"]
                             soup = BeautifulSoup(html_content, "html.parser")
 
+                            print("loaded into soup", datetime.datetime.now().time())
                             curr_html = ""
                             element_counter = 0
                             for p_tag in soup.find_all("p"):
                                 sentences, html_sentences = await self.get_html_sentences(p_tag)
-                                curr_html = ""
+                                curr_html = []
                                 for sent in html_sentences:
                                     if sent:
-                                        curr_html += (
-                                            f'<span id="element-{element_counter}">{sent}</span> '
-                                        )
+                                        curr_html.append(f'<span id="element-{element_counter}">{sent}</span>')
                                         element_counter += 1
+                                curr_html = ' '.join(curr_html)
                                 p_tag.clear()
                                 p_tag.append(BeautifulSoup(curr_html, "html.parser"))
+
+                            print("parsed soup sentences", datetime.datetime.now().time())
 
                             fixed_html_content = str(soup)
                             openbracket, closebracket = "{", "}"
