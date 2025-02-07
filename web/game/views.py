@@ -22,7 +22,7 @@ load_dotenv()
 
 def home(request):
 
-    print('user id:', request.session.get('user_id', None))
+    #print('user id:', request.session.get('user_id', None))
 
     group_type_map = {
         'swap': User.ExperimentGroup.SWAP,

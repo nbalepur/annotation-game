@@ -1958,7 +1958,7 @@ document.addEventListener("keydown", function (event) {
     async def web_search(self, room: Room, p: Player, query, is_wiki, use_headers):
         """Perform a web search"""
 
-        print("starting web search", datetime.datetime.now().time())
+        #print("starting web search", datetime.datetime.now().time())
         if is_wiki:
             wiki_pages = [query]
             status = "from_hyperlink"
@@ -1969,7 +1969,7 @@ document.addEventListener("keydown", function (event) {
                 await self.send_web_search_error(room, p, query, wiki_pages[0])
                 return
             
-        print("found pages", datetime.datetime.now().time())
+        #print("found pages", datetime.datetime.now().time())
 
         for page_title in wiki_pages:
             page_title_clean = page_title
@@ -1981,7 +1981,7 @@ document.addEventListener("keydown", function (event) {
                 "wiki_page_query:" + page_title_clean
             )
 
-            print("looked through cache", datetime.datetime.now().time())
+            #print("looked through cache", datetime.datetime.now().time())
 
             if cached_page_res is not None:
                 await self.send_web_search_success(
@@ -2017,20 +2017,20 @@ document.addEventListener("keydown", function (event) {
                     "Content-Type": "application/json",
                     "Accept": "application/json"
                 }
-                print("starting wiki lookup", datetime.datetime.now().time())
+                #print("starting wiki lookup", datetime.datetime.now().time())
                 async with aiohttp.ClientSession() as session:
                     async with session.get(api_url, params=params, headers=headers if use_headers else {}) as response:
                         if response.status == 403 or response.headers.get(
                             "mediawiki-api-error", ""
                         ) == "mwoauth-invalid-authorization-invalid-user":
-                            print("error in lookup", datetime.datetime.now().time())
+                            #print("error in lookup", datetime.datetime.now().time())
                             await EmergencyWarning.objects.acreate(
                                 note=f"Wikimedia key throwing error.\nKey: {rand_idx}\nAgent: {rand_idx}"
                             )
                         if response.status == 200:
-                            print("found web page", datetime.datetime.now().time())
+                            #print("found web page", datetime.datetime.now().time())
                             data = await response.json()
-                            print("loaded web page response", datetime.datetime.now().time())
+                            #print("loaded web page response", datetime.datetime.now().time())
 
                             if "error" in data:
                                 if use_headers and "invalid" in data["error"]["info"] or "forbidden" in data["error"]["info"]:
@@ -2049,7 +2049,7 @@ document.addEventListener("keydown", function (event) {
                             tree = html.fromstring(html_content, parser=html.HTMLParser())
 
 
-                            print("loaded into soup", datetime.datetime.now().time())
+                            #print("loaded into soup", datetime.datetime.now().time())
                             curr_html = ""
                             element_counter = 0
                             for p_tag in tree.xpath('//p'):
@@ -2064,7 +2064,7 @@ document.addEventListener("keydown", function (event) {
                                 p_tag.text = root.text
                                 for child in root:
                                     p_tag.append(child)
-                            print("parsed soup sentences", datetime.datetime.now().time())
+                            #print("parsed soup sentences", datetime.datetime.now().time())
 
                             fixed_html_content = html.tostring(tree, encoding="unicode")
                             openbracket, closebracket = "{", "}"
@@ -2115,7 +2115,7 @@ document.addEventListener("keydown", function (event) {
                             
                             </html>
                             """
-                            print("html parsing", datetime.datetime.now().time())
+                            #print("html parsing", datetime.datetime.now().time())
                             await self.send_web_search_success(
                                 room=room,
                                 p=p,
@@ -2127,7 +2127,7 @@ document.addEventListener("keydown", function (event) {
                                 cache_html=True,
                                 is_wiki=is_wiki,
                             )
-                            print("finishing web search", datetime.datetime.now().time(), '\n\n\n')
+                            #print("finishing web search", datetime.datetime.now().time(), '\n\n\n')
                             return
 
             except Exception as e:
