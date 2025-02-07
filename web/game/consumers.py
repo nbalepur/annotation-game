@@ -1930,6 +1930,7 @@ document.addEventListener("keydown", function (event) {
     async def web_search(self, room: Room, p: Player, query, is_wiki, use_headers):
         """Perform a web search"""
 
+        print("starting web search", datetime.datetime.now().time())
         if is_wiki:
             wiki_pages = [query]
             status = "from_hyperlink"
@@ -1939,6 +1940,8 @@ document.addEventListener("keydown", function (event) {
             if status == "error":
                 await self.send_web_search_error(room, p, query, wiki_pages[0])
                 return
+            
+        print("found pages", datetime.datetime.now().time())
 
         for page_title in wiki_pages:
             page_title_clean = page_title
@@ -1949,6 +1952,8 @@ document.addEventListener("keydown", function (event) {
             cached_page_res = await self.retrieve_from_document_cache(
                 "wiki_page_query:" + page_title_clean
             )
+
+            print("looked through cache", datetime.datetime.now().time())
 
             if cached_page_res is not None:
                 await self.send_web_search_success(
@@ -1984,15 +1989,18 @@ document.addEventListener("keydown", function (event) {
                     "Content-Type": "application/json",
                     "Accept": "application/json"
                 }
+                print("starting wiki lookup", datetime.datetime.now().time())
                 async with aiohttp.ClientSession() as session:
                     async with session.get(api_url, params=params, headers=headers if use_headers else {}) as response:
                         if response.status == 403 or response.headers.get(
                             "mediawiki-api-error", ""
                         ) == "mwoauth-invalid-authorization-invalid-user":
+                            print("error in lookup", datetime.datetime.now().time())
                             await EmergencyWarning.objects.acreate(
                                 note=f"Wikimedia key throwing error.\nKey: {rand_idx}\nAgent: {rand_idx}"
                             )
                         if response.status == 200:
+                            print("found web page", datetime.datetime.now().time())
                             data = await response.json()
 
                             if "error" in data:
@@ -2004,7 +2012,7 @@ document.addEventListener("keydown", function (event) {
                                 else:
                                     await self.send_web_search_error(room, p, query, data["error"]["info"])
                                 return
-
+                            
                             html_content = data["parse"]["text"]["*"]
                             title = data["parse"]["title"]
                             soup = BeautifulSoup(html_content, "html.parser")
@@ -2072,6 +2080,7 @@ document.addEventListener("keydown", function (event) {
                             
                             </html>
                             """
+                            print("html parsing", datetime.datetime.now().time())
                             await self.send_web_search_success(
                                 room=room,
                                 p=p,
@@ -2083,6 +2092,7 @@ document.addEventListener("keydown", function (event) {
                                 cache_html=True,
                                 is_wiki=is_wiki,
                             )
+                            print("finishing web search", datetime.datetime.now().time(), '\n\n\n')
                             return
 
             except Exception as e:
