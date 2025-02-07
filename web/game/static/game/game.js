@@ -40,6 +40,7 @@ let questionPassedTime = 0;
 let isTutorial = false;
 
 let question;
+let questionCategory;
 let category;
 let players;
 let messages;
@@ -291,7 +292,7 @@ function handleServerResponse(data) {
   } else if (data['response_type'] === "send_answer") {
     setAnswer(data['answer']);
   } else if (data['response_type'] === "get_shown_question") {
-    setQuestion(data['shown_question'], data['state']);
+    setQuestion(data['shown_question'], data['state'], data['question_category']);
     isTutorial = data['is_tutorial'];
     resetRogueCheckbox(data['is_pairwise']);
     clearReportData();
@@ -425,12 +426,14 @@ gamesock.onmessage = message => {
  * ==================================================
  */
 
-function setQuestion(question_text, state) {
+function setQuestion(question_text, state, question_category) {
   question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
   question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
   question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
   questionSpace.innerHTML = question_text.replace(/\n\n/g, '<br /><br />');
   question = question_text;
+
+  questionCategory = question_category;
 }
 
 function setReadingTime(is_tutorial) {
@@ -882,11 +885,15 @@ function buzz() {
 
     if (checkbox.checked) {
       const notes = iframeDoc.getElementById('rogue-notes-area');
-      if (notes.value.trim() === '') {
-        const rogueStatus = iframeDoc.getElementById('rogue-notes-status');
+      const wordCount = notes.value.split(/\s+/).filter(word => word.length > 0).length;
+      const rogueStatus = iframeDoc.getElementById('rogue-notes-status');
+      if (wordCount < 20) {
         rogueStatus.style.visibility = '';
-        rogueStatus.innerHTML = '<p class="text-danger"> <i class="bi bi-exclamation-octagon-fill"></i> Please type your plan or thought process before buzzing!</p>';
+        rogueStatus.innerHTML = '<p class="text-danger"> <i class="bi bi-exclamation-octagon-fill"></i> Please type your plan or thought process before answering (20+ words)!</p>';
         return;
+      } else {
+        rogueStatus.style.visibility = 'hidden';
+        rogueStatus.innerHTML = '<p class="text-danger"> <i class="bi bi-exclamation-octagon-fill"></i> Please type your plan or thought process before answering (20+ words)!</p>';
       }
       sendRequest("buzz_init", '');
     } else {
@@ -1022,6 +1029,7 @@ function focusTextInput(elem_id) {
   const focusInput = document.getElementById(elem_id);
   if (focusInput) {
     focusInput.focus();
+    focusInput.select();
   } else {
     console.warn(`No element with ID ${elem_id} found.`);
   }

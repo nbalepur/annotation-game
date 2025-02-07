@@ -481,7 +481,8 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 "data": {
                     "response_type": "toggle_comparison",
                     "show_comparison": show_comparison,
-                    "got_what_wanted": (room.picked_letter == room.curr_instructions_letter and room.picked_letter in {'A', 'B'}) or 
+                    "got_what_wanted": (room.picked_letter not in {'A', 'B'}) or
+                    (room.picked_letter == room.curr_instructions_letter and room.picked_letter in {'A', 'B'}) or 
                     (curr_q.generation_method in {Question.GenerationMethod.ATTENTION_PAIRWISE, Question.GenerationMethod.ATTENTION_SWAP}),
                 },
             }}
@@ -931,14 +932,16 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def get_shown_question_dict(self, room: Room, user: User):
         """Computes the correct amount of the question to show, depending on the state of the game."""
+        curr_q = (await question_from_room(room))
         return {"get_shown_question_data": {
                 "type": "update_room",
                 "data": {
                     "response_type": "get_shown_question",
                     "shown_question": await room.get_shown_question(),
-                    "is_tutorial": (await question_from_room(room)).generation_method == Question.GenerationMethod.TUTORIAL,
+                    "is_tutorial": curr_q.generation_method == Question.GenerationMethod.TUTORIAL,
                     "is_pairwise": user.experiment_group == User.ExperimentGroup.PAIRWISE,
                     "state": room.state,
+                    "question_category": curr_q.category
                 },
             }}
 
@@ -1793,6 +1796,10 @@ document.addEventListener("keydown", function (event) {
 
     
     async def navigate_history(self, room: Room, p: Player, inc: int):
+
+        curr_q = await question_from_room(room)
+        if curr_q.category != Question.Category.MULTIHOP:
+            return
 
         await self.log_tool_use(room, p, '', {'curr_search': room.search_history[room.history_idx]},
                                 'increase_history' if inc == 1 else 'decrease_history', 'start')

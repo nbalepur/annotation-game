@@ -416,11 +416,11 @@ function handleKeyDown(e) {
     settings();
     e.preventDefault();
   } else if (gameState === 'playing' && (e.key === "ArrowLeft" || e.key === "[")) {
-    if (bwdSearch && bwdSearch.style.backgroundColor !== 'transparent') {
+    if (bwdSearch && bwdSearch.style.backgroundColor !== 'transparent' && questionCategory === 'Multi-Hop') {
       navigateHistory(-1);
     }
   } else if (gameState === 'playing' &&  (e.key === "ArrowRight" || e.key === "]")) {
-    if (fwdSearch && fwdSearch.style.backgroundColor !== 'transparent') {
+    if (fwdSearch && fwdSearch.style.backgroundColor !== 'transparent' && questionCategory === 'Multi-Hop') {
       navigateHistory(1);
     }
   }

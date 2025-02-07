@@ -86,6 +86,7 @@ function focusLastInstruction() {
     if (newLastStep) {
       const textArea = newLastStep.querySelector('textarea');
       textArea.focus();
+      textArea.select();
     }
   }
 }
@@ -781,7 +782,7 @@ function updateStatus(status, player, answer, allowSwaps) {
 
 function copyMathResult() {
 
-    const mathRes = calculatorResult.value;
+    const mathRes = calculatorResult.value.trim();
     if (mathRes === '' || mathRes === 'Please enter an equation.' || mathRes === 'ERROR') {
       return;
     }
@@ -861,8 +862,8 @@ function copyDocText(elementText='') {
 
   const iframe = document.getElementById('view-page-collapse');
   const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-  const selectedText = iframeDocument.getSelection ? iframeDocument.getSelection().toString() : '';
 
+  const selectedText = iframeDocument.getSelection ? iframeDocument.getSelection().toString() : '';
 
     if (elementText === '' && selectedText === '') {
 
@@ -878,6 +879,7 @@ function copyDocText(elementText='') {
     }
 
     elementText = elementText === '' ? selectedText : elementText;
+    elementText = elementText.trim();
     copyTextToClipboard(elementText);
 
     const instructionIframe = document.getElementById('instruction-frame');
