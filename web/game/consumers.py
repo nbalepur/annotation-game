@@ -2002,6 +2002,7 @@ document.addEventListener("keydown", function (event) {
                         if response.status == 200:
                             print("found web page", datetime.datetime.now().time())
                             data = await response.json()
+                            print("loaded web page response", datetime.datetime.now().time())
 
                             if "error" in data:
                                 if use_headers and "invalid" in data["error"]["info"] or "forbidden" in data["error"]["info"]:
