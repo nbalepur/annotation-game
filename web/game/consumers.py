@@ -1877,51 +1877,86 @@ document.addEventListener("keydown", function (event) {
             
 
     async def get_html_sentences(self, p_tag_input):
-        children = []
+        # Build a merged list of items, where each item is either a plain string
+        # or a tuple (html_fragment, text_content) for certain tags.
+        merged_items = []  # We'll merge adjacent text nodes on the fly.
+
+        def append_item(item):
+            """Append item merging with previous if both are plain text."""
+            if isinstance(item, str):
+                if merged_items and isinstance(merged_items[-1], str):
+                    merged_items[-1] += item
+                else:
+                    merged_items.append(item)
+            else:
+                merged_items.append(item)
+
+        # Process each child in one loop.
         for c in p_tag_input.children:
             if c.name == 'sup':
-                continue
-            elif c.name in ['i', 'b']:
-                children.append(c)
-            elif c.name in ['a'] and c.get('href') and c.get('href').startswith('/wiki/') and ':' not in c.get('href'):
-                children.append(c)
+                continue  # Skip superscript elements.
+            elif c.name in ('i', 'b'):
+                # Keep the tag element: store tuple (HTML, text).
+                append_item((str(c), c.text))
+            elif c.name == 'a' and c.get('href') and c.get('href').startswith('/wiki/') and ':' not in c.get('href'):
+                append_item((str(c), c.text))
             else:
-                children.append(c.text)
+                # For other cases, we’re only interested in text.
+                append_item(c.text)
 
-        merged_children = []
-        for idx, child in enumerate(children):
-            if isinstance(child, str):
-                if not merged_children or not isinstance(merged_children[-1], str):
-                    merged_children.append(child)
-                else:
-                    merged_children[-1] += child
-            else:
-                merged_children.append(child)
+        # Normalize all items to be tuples: (html_fragment, text_content)
+        merged_items = [
+            (s, s) if isinstance(s, str) else (s[0], s[1])
+            for s in merged_items
+        ]
 
-        merged_children = [(str(c), c if isinstance(c, str) else c.text) for c in merged_children]
+        # Build the full text (by joining the text content) for sentence tokenization.
+        full_text = ''.join(text for (_, text) in merged_items)
+        sentences = [s + ' ' for s in nltk.sent_tokenize(full_text)]
 
-        sentences = [s + ' ' for s in nltk.sent_tokenize(''.join([c[1] for c in merged_children]))]
+        # Now reassemble the HTML fragments so that they align with sentence boundaries.
+        sentence_fragments = []  # This will store the HTML for each sentence.
+        current_fragments = []   # Fragments for the current sentence.
+        current_len = 0          # Accumulated text length for the current sentence.
 
-        child_ptr, sentence_ptr, curr_len = 0, 0, 0
-        sent_builder = ['']
+        child_ptr = 0
+        sentence_ptr = 0
 
-        while child_ptr < len(merged_children) and sentence_ptr < len(sentences):
-            child, child_text = merged_children[child_ptr]
-            sentence = sentences[sentence_ptr]
+        while child_ptr < len(merged_items) and sentence_ptr < len(sentences):
+            child_html, child_text = merged_items[child_ptr]
+            target_len = len(sentences[sentence_ptr])
 
-            if curr_len + len(child_text) < len(sentence):
-                curr_len += len(child_text)
-                sent_builder[-1] += child
+            # If the entire child_text fits in the current sentence:
+            if current_len + len(child_text) < target_len:
+                current_fragments.append(child_html)
+                current_len += len(child_text)
                 child_ptr += 1
             else:
-                prefix, suffix = child_text[:len(sentence) - curr_len], child_text[len(sentence) - curr_len:]
-                sent_builder[-1] += prefix
-                sent_builder.append("")
-                curr_len = 0
-                merged_children[child_ptr] = (child.replace(child_text, suffix), suffix)
+                # Only a portion of child_text fits in the current sentence.
+                needed = target_len - current_len
+                prefix_text = child_text[:needed]
+                suffix_text = child_text[needed:]
+                # Split the HTML fragment accordingly.
+                # (This simplistic approach uses string replacement; if your HTML is complex,
+                #  you might need a more robust method to split it.)
+                prefix_html = child_html.replace(child_text, prefix_text, 1)
+                suffix_html = child_html.replace(child_text, suffix_text, 1)
+
+                current_fragments.append(prefix_html)
+                sentence_fragments.append(''.join(current_fragments))
+                # Prepare for the next sentence.
+                current_fragments = []
+                current_len = 0
+                # Replace the current merged item with the leftover fragment.
+                merged_items[child_ptr] = (suffix_html, suffix_text)
                 sentence_ptr += 1
 
-        return sentences, sent_builder
+        # Append any leftover fragments as the final sentence.
+        if current_fragments:
+            sentence_fragments.append(''.join(current_fragments))
+
+        return sentences, sentence_fragments
+
  
     async def navigate_hyperlink(self, room: Room, p: Player, wiki_url: str):
         wiki_url = wiki_url.replace('/wiki/', '').strip()
