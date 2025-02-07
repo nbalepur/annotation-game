@@ -427,9 +427,9 @@ gamesock.onmessage = message => {
  */
 
 function setQuestion(question_text, state, question_category) {
-  question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
-  question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
-  question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
+  // question_text = question_text.replace('<CORRECT_BUZZ>', '<span class="badge bg-success"><i class="far fa-bell text-white"></i></span>');
+  // question_text = question_text.replace('<INCORRECT_BUZZ>', '<span class="badge bg-danger"><i class="far fa-bell text-white"></i></span>');
+  // question_text = question_text.replace('<CURRENT_BUZZ>', '<span class="badge bg-primary"><i class="far fa-bell text-white"></i></span>');
   questionSpace.innerHTML = question_text.replace(/\n\n/g, '<br /><br />');
   question = question_text;
 
