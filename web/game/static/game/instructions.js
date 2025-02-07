@@ -730,7 +730,7 @@ function updateStatus(status, player, answer, allowSwaps) {
         statusText.innerHTML = `Task: <span class=text-secondary>You <span class=text-danger>ran out of time</span>. Complete the <span class=text-secondary>pairwise comparison</span> to continue</span>`;
     } else if (status === "idle") {
         if (answer !== "") {
-            statusText.innerHTML = `Task: <span class=text-secondary>Times up! The answer is: <span class=text-primary>${answer}</span>. Hit <span class=text-primary>Next</span> to continue</span>`;
+            statusText.innerHTML = `Task: <span class=text-secondary>Time's up! The answer is: <span class=text-primary>${answer}</span>. Hit <span class=text-primary>Next</span> to continue</span>`;
             reportBtn.style.display = '';
             sendSubanswers(false, true);
         } else {
