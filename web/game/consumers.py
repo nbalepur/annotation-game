@@ -2051,7 +2051,8 @@ document.addEventListener("keydown", function (event) {
                             
                             html_content = data["parse"]["text"]["*"]
                             title = data["parse"]["title"]
-                            soup = BeautifulSoup(html_content, "html.parser")
+                            #print(html_content, '\n')
+                            soup = BeautifulSoup(html_content, "lxml")
 
                             print("loaded into soup", datetime.datetime.now().time())
                             curr_html = ""
@@ -2065,7 +2066,7 @@ document.addEventListener("keydown", function (event) {
                                         element_counter += 1
                                 curr_html = ' '.join(curr_html)
                                 p_tag.clear()
-                                p_tag.append(BeautifulSoup(curr_html, "html.parser"))
+                                p_tag.append(BeautifulSoup(curr_html, "lxml"))
 
                             print("parsed soup sentences", datetime.datetime.now().time())
 
