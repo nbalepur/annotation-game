@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 import os
 import sys
-import logging
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "quizbowl.settings")
-    logging.getLogger("sagemaker").setLevel(logging.ERROR)
-    # logging.getLogger("sagemaker.config").setLevel(logging.CRITICAL)
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
