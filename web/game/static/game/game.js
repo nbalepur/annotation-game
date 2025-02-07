@@ -29,7 +29,7 @@ let buzzTime = 10;
 
 let paused = false;
 
-let readingTime = 30;
+let readingTime = 45;
 // let readingTime = 3; // seconds to read the question
 let readingPassedTime = 0;
 
