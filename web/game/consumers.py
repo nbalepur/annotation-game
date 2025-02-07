@@ -3,6 +3,8 @@ from asgiref.sync import async_to_sync, sync_to_async
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Count
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from lxml import html, etree
+from lxml.etree import tostring
 
 from django.core.serializers import serialize
 from django.shortcuts import redirect
@@ -1780,7 +1782,7 @@ document.addEventListener("keydown", function (event) {
 
 
     async def extract_elements_from_html(self, html: str):
-        soup = BeautifulSoup(html, "html.parser")
+        soup = BeautifulSoup(html, "xlml")
         elements = soup.find_all(id=re.compile(r"^element-"))
         sentences = []
         for elem in elements:
@@ -1874,51 +1876,42 @@ document.addEventListener("keydown", function (event) {
             room.search_history = room.search_history[:room.history_idx+1] + [new_history_elem]
             room.history_idx += 1
         await room.asave()
-            
 
     async def get_html_sentences(self, p_tag_input):
-        # Build a merged list of items, where each item is either a plain string
-        # or a tuple (html_fragment, text_content) for certain tags.
-        merged_items = []  # We'll merge adjacent text nodes on the fly.
+        merged_items = []  # Stores (HTML fragment, text content)
 
-        def append_item(item):
-            """Append item merging with previous if both are plain text."""
-            if isinstance(item, str):
-                if merged_items and isinstance(merged_items[-1], str):
-                    merged_items[-1] += item
-                else:
-                    merged_items.append(item)
+        # Iterate through all children of the <p> tag
+        for child in p_tag_input.iter():
+            tag = child.tag
+            text = (child.text or "").strip()
+            tail = (child.tail or "").strip()  # Tail is the text after a tag
+
+            if tag == "sup":
+                continue  # Skip <sup> tags
+
+            if tag in {"i", "b"}:
+                # Preserve formatting tags
+                merged_items.append((tostring(child, encoding="unicode"), text))
+            elif tag == "a":
+                # Only keep valid Wikipedia links
+                href = child.get("href", "")
+                if href.startswith("/wiki/") and ":" not in href:
+                    merged_items.append((tostring(child, encoding="unicode"), text))
             else:
-                merged_items.append(item)
+                # Normal text
+                if text:
+                    merged_items.append((text, text))
+                if tail:
+                    merged_items.append((tail, tail))
 
-        # Process each child in one loop.
-        for c in p_tag_input.children:
-            if c.name == 'sup':
-                continue  # Skip superscript elements.
-            elif c.name in ('i', 'b'):
-                # Keep the tag element: store tuple (HTML, text).
-                append_item((str(c), c.text))
-            elif c.name == 'a' and c.get('href') and c.get('href').startswith('/wiki/') and ':' not in c.get('href'):
-                append_item((str(c), c.text))
-            else:
-                # For other cases, we’re only interested in text.
-                append_item(c.text)
+        # Join all text parts for sentence tokenization
+        full_text = "".join(text for _, text in merged_items)
+        sentences = [s + " " for s in nltk.sent_tokenize(full_text)]
 
-        # Normalize all items to be tuples: (html_fragment, text_content)
-        merged_items = [
-            (s, s) if isinstance(s, str) else (s[0], s[1])
-            for s in merged_items
-        ]
-
-        # Build the full text (by joining the text content) for sentence tokenization.
-        full_text = ''.join(text for (_, text) in merged_items)
-        sentences = [s + ' ' for s in nltk.sent_tokenize(full_text)]
-
-        # Now reassemble the HTML fragments so that they align with sentence boundaries.
-        sentence_fragments = []  # This will store the HTML for each sentence.
-        current_fragments = []   # Fragments for the current sentence.
-        current_len = 0          # Accumulated text length for the current sentence.
-
+        # Align sentences with original HTML fragments
+        sentence_fragments = []
+        current_fragments = []
+        current_len = 0
         child_ptr = 0
         sentence_ptr = 0
 
@@ -1932,28 +1925,27 @@ document.addEventListener("keydown", function (event) {
                 current_len += len(child_text)
                 child_ptr += 1
             else:
-                # Only a portion of child_text fits in the current sentence.
+                # Only a portion of child_text fits
                 needed = target_len - current_len
                 prefix_text = child_text[:needed]
                 suffix_text = child_text[needed:]
-                # Split the HTML fragment accordingly.
-                # (This simplistic approach uses string replacement; if your HTML is complex,
-                #  you might need a more robust method to split it.)
+
+                # Split the HTML accordingly
                 prefix_html = child_html.replace(child_text, prefix_text, 1)
                 suffix_html = child_html.replace(child_text, suffix_text, 1)
 
                 current_fragments.append(prefix_html)
-                sentence_fragments.append(''.join(current_fragments))
-                # Prepare for the next sentence.
+                sentence_fragments.append("".join(current_fragments))
+
+                # Prepare for the next sentence
                 current_fragments = []
                 current_len = 0
-                # Replace the current merged item with the leftover fragment.
                 merged_items[child_ptr] = (suffix_html, suffix_text)
                 sentence_ptr += 1
 
-        # Append any leftover fragments as the final sentence.
+        # Append any leftover fragments
         if current_fragments:
-            sentence_fragments.append(''.join(current_fragments))
+            sentence_fragments.append("".join(current_fragments))
 
         return sentences, sentence_fragments
 
@@ -2052,25 +2044,27 @@ document.addEventListener("keydown", function (event) {
                             html_content = data["parse"]["text"]["*"]
                             title = data["parse"]["title"]
                             #print(html_content, '\n')
-                            soup = BeautifulSoup(html_content, "lxml")
+                            #soup = BeautifulSoup(html_content, "lxml")
+                            tree = html.fromstring(html_content)
+
 
                             print("loaded into soup", datetime.datetime.now().time())
                             curr_html = ""
                             element_counter = 0
-                            for p_tag in soup.find_all("p"):
-                                sentences, html_sentences = await self.get_html_sentences(p_tag)
+                            for p_tag in tree.xpath('//p'):
+                                _, html_sentences = await self.get_html_sentences(p_tag)
                                 curr_html = []
                                 for sent in html_sentences:
                                     if sent:
                                         curr_html.append(f'<span id="element-{element_counter}">{sent}</span>')
                                         element_counter += 1
                                 curr_html = ' '.join(curr_html)
-                                p_tag.clear()
-                                p_tag.append(BeautifulSoup(curr_html, "lxml"))
-
+                                p_tag.text = etree.XML(f"<root>{curr_html}</root>").text  # lxml requires a root element
+                                for child in etree.XML(f"<root>{curr_html}</root>"):
+                                    p_tag.append(child)
                             print("parsed soup sentences", datetime.datetime.now().time())
 
-                            fixed_html_content = str(soup)
+                            fixed_html_content = html.tostring(tree, encoding="unicode")
                             openbracket, closebracket = "{", "}"
                             wikipedia_css = """
                             <link rel="stylesheet" href="https://en.wikipedia.org/w/load.php?debug=false&lang=en&modules=mediawiki.legacy.shared|mediawiki.skinning.content|mediawiki.skinning.interface&only=styles&skin=vector">
@@ -2197,9 +2191,9 @@ document.addEventListener("keydown", function (event) {
             return
         
         search_query = 'long_context:' + curr_q.document_context if (curr_q.category == Question.Category.LONGCONTEXT) else 'wiki_page_query:' + room.curr_query
-        html = await self.retrieve_from_document_cache(search_query)
+        curr_html = await self.retrieve_from_document_cache(search_query)
 
-        idxs = await self.select_content(room, p, query, html)
+        idxs = await self.select_content(room, p, query, curr_html)
         room.search_history = room.search_history[:room.history_idx+1] + [(room.curr_query, idxs, room.curr_query_raw, query)]
         room.history_idx += 1
         await room.asave()
