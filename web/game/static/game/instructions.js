@@ -1087,7 +1087,7 @@ function navigateHyperlink(link) {
   if (decodedPath.includes(':')) {
     return;
   }
-  sendRequest("navigate_hyperlink", decodedPath.split('#')[0]);
+  sendRequest("navigate_hyperlink", decodedPath);
 }
 
 

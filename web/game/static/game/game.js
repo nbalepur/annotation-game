@@ -2,7 +2,6 @@
 // Plays client-side game
 
 const wsScheme = window.location.protocol == "https:" ? "wss" : "ws";
-console.log(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname)
 const options = {
   connectionTimeout: 1000,
   maxRetries: 10,

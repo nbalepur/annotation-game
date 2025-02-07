@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Count
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from lxml import html, etree
+import html as html_base
 from lxml.etree import tostring
 
 from django.core.serializers import serialize
@@ -2045,7 +2046,7 @@ document.addEventListener("keydown", function (event) {
                             title = data["parse"]["title"]
                             #print(html_content, '\n')
                             #soup = BeautifulSoup(html_content, "lxml")
-                            tree = html.fromstring(html_content)
+                            tree = html.fromstring(html_content, parser=html.HTMLParser())
 
 
                             print("loaded into soup", datetime.datetime.now().time())
@@ -2059,8 +2060,9 @@ document.addEventListener("keydown", function (event) {
                                         curr_html.append(f'<span id="element-{element_counter}">{sent}</span>')
                                         element_counter += 1
                                 curr_html = ' '.join(curr_html)
-                                p_tag.text = etree.XML(f"<root>{curr_html}</root>").text  # lxml requires a root element
-                                for child in etree.XML(f"<root>{curr_html}</root>"):
+                                root = html.fragment_fromstring(f"<root>{curr_html}</root>", create_parent=True)
+                                p_tag.text = root.text
+                                for child in root:
                                     p_tag.append(child)
                             print("parsed soup sentences", datetime.datetime.now().time())
 

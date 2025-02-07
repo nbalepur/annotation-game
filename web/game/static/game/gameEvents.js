@@ -120,10 +120,10 @@ function stopVideosInModal() {
   });
 }
 
-// Add event listeners for closing the modal
-closeBtn1.addEventListener('click', function () {
-  welcomeModal.hide();
-});
+// // Add event listeners for closing the modal
+// closeBtn1.addEventListener('click', function () {
+//   welcomeModal.hide();
+// });
 
 closeBtn2.addEventListener('click', function () {
   welcomeModal.hide();
