@@ -42,6 +42,10 @@ const copyMathBtn = document.getElementById('calculator-tool-result');
 const bwdSearch = document.getElementById('content-bwd-btn');
 const fwdSearch = document.getElementById('content-fwd-btn');
 
+function handleNextStepClick(e) {
+  next_step();
+}
+
 function toggleFollowCheckbox(isVisible) {
   const iframe = instructionsFrame;
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -206,9 +210,8 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
       if (stepButton) {
         if (index === inputInstructions['steps'].length - 1) {
           stepButton.style.display = '';
-          stepButton.addEventListener('click', function(e) {
-            next_step();
-          });
+          stepButton.removeEventListener('click', handleNextStepClick);
+          stepButton.addEventListener('click', handleNextStepClick);
         } else {
           stepButton.style.display = 'none';
         }
@@ -359,9 +362,8 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
     const stepButtons = container.querySelectorAll('.step-btn');
     stepButtons.forEach((button, index) => {
       if (index === 0) {
-        button.addEventListener('click', function (e) {
-          next_step();
-        });
+        button.removeEventListener('click', handleNextStepClick);
+        button.addEventListener('click', handleNextStepClick);
       } else {
         button.style.display = 'none';
       }
@@ -453,6 +455,8 @@ function reassignCloseAndStepButton() {
     const stepButton = newLastStep.querySelector('.step-btn');
     if (stepButton) {
       stepButton.style.display = '';
+      stepButton.removeEventListener('click', handleNextStepClick);
+      stepButton.addEventListener('click', handleNextStepClick);
     }
   }
 }
@@ -970,7 +974,6 @@ function unpause() {
     }
 
     loadingDoc();
-    
     pause();
     // setTimeout(() => {
     //   console.log("Delay complete. Proceeding with search...");
@@ -1089,6 +1092,8 @@ function navigateHyperlink(link) {
   if (decodedPath.includes(':')) {
     return;
   }
+  loadingDoc();
+  pause();
   sendRequest("navigate_hyperlink", decodedPath);
 }
 

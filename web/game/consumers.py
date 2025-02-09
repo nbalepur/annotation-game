@@ -1073,7 +1073,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         )
 
         await self.log_tool_use(
-            room, player, old_letter, {
+            room, player, swapped_letter, {
                 'num_steps_seen': room.steps_seen_a if swapped_letter == "A" else room.steps_seen_b, 
                 'curr_subanswers': [''] if new_subanswers is None else new_subanswers
             }, 
