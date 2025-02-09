@@ -148,11 +148,11 @@ buzzContent.addEventListener('keydown', (event) => {
 });
 
 // Timed events (ms)
-window.setInterval(ping, 5000);
+//window.setInterval(ping, 5000);
 window.setInterval(update, 100);
 // window.setInterval(getShownQuestion, 150)
 
-window.onbeforeunload = leave;
+// window.onbeforeunload = leave;
 
 window.addEventListener("load", function () {
   navigator.permissions

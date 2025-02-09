@@ -6,7 +6,7 @@ const options = {
   connectionTimeout: 1000,
   maxRetries: 10,
 };
-const gamesock = new ReconnectingWebSocket(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname, [], options);
+// const gamesock = new ReconnectingWebSocket(wsScheme + '://' + window.location.host + '/ws' + window.location.pathname, [], options);
 
 let userID;
 let userName;
@@ -54,22 +54,22 @@ let experimentType = null;
 
 // Set up client
 document.addEventListener("DOMContentLoaded", () => {
-  gamesock.onopen = () => {
+  // gamesock.onopen = () => {
     // Ensure the DOM is ready and elements exist
     //retrieveUserdata();
     
-    if (userID === undefined) {
-      newUser();
-    } else {
-      join();
-    }
+  if (userID === undefined) {
+    newUser();
+  } else {
+    join();
+  }
 
-    nameInput.value = userName ? userName : "";
-    emailInput.value = userEmail ? userEmail : "";
+  nameInput.value = userName ? userName : "";
+  emailInput.value = userEmail ? userEmail : "";
 
-    // Set up current time if newly joined
-    currentTime = buzzStartTime;
-  };
+  // Set up current time if newly joined
+  currentTime = buzzStartTime;
+  //};
 });
 
 /**
@@ -371,15 +371,15 @@ function handleServerResponse(data) {
     }, 1);
 
   } else if (data['response_type'] === "kick") {
-    gamesock.close();
-    banAlert.style = 'display: block;'
+    // gamesock.close();
+    // banAlert.style = 'display: block;'
   } else if (data['response_type'] == "not_enough_players") {
     alert("Sorry! We can only begin playing once you have an opponent (two active players are necessary).")
   }
   else if (data['response_type'] === "too_many_players") {
-    gamesock.close();
-    alert("Sorry! You can't let you join that room since there are too many active players. Try joining another room!")
-    window.location.href = "/"
+    // gamesock.close();
+    // alert("Sorry! You can't let you join that room since there are too many active players. Try joining another room!")
+    // window.location.href = "/"
   }
   /* for tool use */
   else if (data['response_type'] === 'calculation_result') {
@@ -413,12 +413,12 @@ function handleServerResponse(data) {
 }
 
 // Handle server response
-gamesock.onmessage = message => {
+// gamesock.onmessage = message => {
 
-  const data = JSON.parse(message.data);
-  //console.log(data['response_type'], data);
-  handleServerResponse(data);
-}
+//   const data = JSON.parse(message.data);
+//   //console.log(data['response_type'], data);
+//   handleServerResponse(data);
+// }
 
 /**
  * ==================================================
@@ -808,14 +808,39 @@ function showButtons() {
  * @param {string} requestType - Type of request
  * @param {string} [content=""] - Request content
  */
-function sendRequest(requestType, content = "") {
-  const requestData = {
-    user_id: userID,
-    request_type: requestType,
-    content: content
-  };
+// function sendRequest(requestType, content = "") {
+//   const requestData = {
+//     user_id: userID,
+//     request_type: requestType,
+//     content: content
+//   };
 
-  gamesock.send(JSON.stringify(requestData));
+//   gamesock.send(JSON.stringify(requestData));
+// }
+
+function sendRequest(requestType, content = "") {
+  fetch("/receive/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+    body: JSON.stringify({ user_id: userID, request_type: requestType, content: content})
+  })
+  .then(response => response.json())
+  .then(data => {
+    data['updates'].forEach(update => {
+      if ('data' in update) {
+        handleServerResponse(update.data);
+      } else {
+        handleServerResponse(update);
+      }
+    });
+  });
+}
+
+// Helper function to get CSRF token (Django security)
+function getCSRFToken() {
+  return document.cookie.split("; ")
+    .find(row => row.startsWith("csrftoken="))
+    ?.split("=")[1];
 }
 
 // SENDING MESSAGES TO BACKEND

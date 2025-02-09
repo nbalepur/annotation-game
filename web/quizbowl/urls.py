@@ -37,4 +37,5 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('reset-password/', views.reset_password, name='reset_password'),
     path('reset-password/form/', views.password_reset_form, name='password_reset_form'),
+    path("receive/", views.receive_http, name="receive"),
 ]

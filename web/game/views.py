@@ -16,6 +16,7 @@ from django.utils.http import urlencode
 from django.urls import reverse
 import json
 import string
+from .consumers import QuizbowlConsumer
 import random
 load_dotenv()
 
@@ -51,6 +52,19 @@ def home(request):
         
     return render(request, 'game/home.html', {'user_name': '', 'user_logged_in': False, 'is_password_reset': False})
 
+@csrf_exempt
+async def receive_http(request):
+    """Handles HTTP requests by calling WebSocket consumer logic"""
+    if request.method == "POST":
+        data = json.loads(request.body.decode("utf-8"))
+        user_id = await sync_to_async(request.session.get)("user_id")
+        if not user_id:
+            redirect('home')
+        game = QuizbowlConsumer(user_id=user_id, room_name=user_id)
+        response = await game.receive(data)
+        return JsonResponse(response)
+
+    return JsonResponse({"status": "error", "message": "Invalid request method"})
 
 def generate_temp_password(length=8):
     """Generate a random temporary password."""
@@ -185,13 +199,15 @@ def game_room(request, label):
     room, _ = Room.objects.get_or_create(label=label, collects_feedback=False, defaults={"max_players": 20})
     return render(request, "game/game.html", {"room": room, "user": user})
 
-def evaluation_game_room(request, label):
+def evaluation_game_room(request):
     if 'user_id' not in request.session:
         return redirect('home')
     user = User.objects.filter(user_id=request.session['user_id']).first()
     if not user:
         return redirect('home')
-    room, _ = Room.objects.get_or_create(label=label, collects_feedback=True, uses_instructions=True, defaults={"max_players": 1})
+    
+    room, _ = Room.objects.get_or_create(label=user.user_id, collects_feedback=True, uses_instructions=True, defaults={"max_players": 1})
+
     return render(request, "game/game.html", {
         "room": room,
         "user": user,

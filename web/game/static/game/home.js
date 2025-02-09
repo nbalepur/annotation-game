@@ -49,7 +49,7 @@ function joinNewRoom(showInstructions) {
   const roomName = '';
   const evaluationRoom = setAndGetEvalRoomCookie(roomName);
   if (evaluationRoom) {
-    window.location.href = `/game/evaluation/${evaluationRoom}?${queryParams.toString()}`;
+    window.location.href = `/game/evaluation?${queryParams.toString()}`;
   } else {
     alert('Please enter a valid room name!');
   }

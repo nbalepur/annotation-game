@@ -48,48 +48,58 @@ GRACE_TIME = 3
 INSTRUCTION_READING_TIME = 10
 QUESTION_TIME = 10
 
-class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
+class QuizbowlConsumer():
     """Websocket consumer for quizbowl game"""
 
-    async def connect(self):
-        """Websocket connect"""
-        self.room_name = self.scope["url_route"]["kwargs"]["label"]
-        self.room_group_name = f"game-{self.room_name}"
+    # async def connect(self):
+    #     """Websocket connect"""
+    #     self.room_name = self.scope["url_route"]["kwargs"]["label"]
+    #     self.room_group_name = f"game-{self.room_name}"
 
-        # Validate user session
-        self.user_id = self.scope["session"].get("user_id")
-        if not self.user_id:
-            await self.close()
-            return
+    #     # Validate user session
+    #     self.user_id = self.scope["session"].get("user_id")
+    #     if not self.user_id:
+    #         await self.close()
+    #         return
 
-        try:
-            await self.channel_layer.group_add(
-                self.room_group_name, self.channel_name
-            )
-        except Exception as e:
-            await self.close()
-            return
+    #     try:
+    #         await self.channel_layer.group_add(
+    #             self.room_group_name, self.channel_name
+    #         )
+    #     except Exception as e:
+    #         await self.close()
+    #         return
 
-        await self.accept()
+    #     await self.accept()
 
-    async def disconnect(self, close_code):
-        """Websocket disconnect"""
-        await self.channel_layer.group_discard(
-            self.room_group_name, self.channel_name
-        )
+    def __init__(self, user_id, room_name):
+        self.user_id = user_id
+        self.room_name = room_name
+        self.room_group_name = f"room_{room_name}"
+
+        self.api_updates = []
+
+
+    # async def disconnect(self, close_code):
+    #     """Websocket disconnect"""
+    #     await self.channel_layer.group_discard(
+    #         self.room_group_name, self.channel_name
+    #     )
 
     async def receive(self, text_data):
         """Websocket receive"""
 
-        data = json.loads(text_data)
+        # print('receiving', text_data['request_type'])
+
+        data = text_data
         if "content" not in data or data["content"] is None:
             data["content"] = ""
 
         # ensure the session is still valid
-        session_user_id = self.scope["session"].get("user_id")
+        session_user_id = self.user_id
         if not session_user_id or session_user_id != self.user_id:
-            await self.close()
-            return
+            # await self.close()
+            return {'updates': []}
 
         room = await Room.objects.aget(label=self.room_name)
 
@@ -99,7 +109,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             await self.join(room, data)
 
         if "user_id" not in data or "request_type" not in data:
-            return
+            return {'updates': []}
 
         user_exists = await User.objects.filter(user_id=data["user_id"]).aexists()
         if not user_exists:
@@ -109,20 +119,20 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         # Handle join
         if data["request_type"] == "join":
             await self.join(room, data)
-            return
+            return {'updates': []}
 
         # Get player
         p = await room.players.filter(user__user_id=data['user_id']).afirst()
-        # Update connection if it's new
-        if p and p.channel_name != self.channel_name:
-            p.channel_name = self.channel_name
-            await p.asave()
+        # # Update connection if it's new
+        # if p and p.channel_name != self.channel_name:
+        #     p.channel_name = self.channel_name
+        #     await p.asave()
 
         if p:
             # Kick if banned user
             if p.banned:
                 await self.kick()
-                return
+                return {'updates': []}
 
             # Handle requests for joined players
             if data["request_type"] == "ping":
@@ -181,10 +191,16 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 await self.navigate_hyperlink(room, p, data['content'])
             else:
                 pass
+        
+        ret_updates = self.api_updates
+        self.api_updates = []
+        # print(ret_updates)
+        # print(len(ret_updates))
+        return {'updates': ret_updates}
 
-    async def update_room(self, event):
-        """Room update handler"""
-        await self.send_json(event["data"])
+    # async def update_room(self, event):
+    #     """Room update handler"""
+    #     await self.send_json(event["data"])
 
     async def ping(self, room, p):
         """Receive ping"""
@@ -192,14 +208,19 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         p.last_seen = timezone.now().timestamp()
         await p.asave()
 
-        room_json = await get_room_response_json(room)
-        await self.send_json(room_json)
-        await self.send_json(
-            {
-                "response_type": "lock_out",
-                "locked_out": p.locked_out,
-            }
-        )
+        # room_json = await get_room_response_json(room)
+        # self.api_updates.append(room_json)
+        # self.api_updates.append({
+        #         "response_type": "lock_out",
+        #         "locked_out": p.locked_out,
+        #     })
+        # await self.send_json(room_json)
+        # await self.send_json(
+        #     {
+        #         "response_type": "lock_out",
+        #         "locked_out": p.locked_out,
+        #     }
+        # )
 
     async def change_auto_scroll(self, room: Room, player: Player, auto_scroll: bool):
         user = await user_from_player(player)
@@ -231,13 +252,17 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         await self.show_and_disable_tools(room=room, player=player, update_tools=True, disable_tools=True, disable_plan=True,
                                           category=Question.Category.MATH if category_map[category] == Question.Category.MATH else Question.Category.MULTIHOP)
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": await get_room_response_json(room),
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": await get_room_response_json(room),
-            },
-        )
+            })
 
     async def join(self, room: Room, data):
         """Join room"""
@@ -280,16 +305,22 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
             room.state = Room.GameState.IDLE
             room_json = await get_room_response_json(room)
-            await self.send_json(room_json)
+            #await self.send_json(room_json)
+            self.api_updates.append(room_json)
             await room.asave()
 
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
+            # await self.channel_layer.group_send(
+            #     self.room_group_name,
+            #     {
+            #         "type": "update_room",
+            #         "data": await get_room_response_json(room),
+            #     },
+            # )
+
+            self.api_updates.append(({
                     "type": "update_room",
                     "data": await get_room_response_json(room),
-                },
-            )
+                }))
 
             # await self.update_status(room, room.state, p)
             # await self.show_and_disable_tools(room=room, player=p, update_tools=True)
@@ -304,13 +335,17 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
     async def leave(self, room, p):
         """Leave room"""
         await create_message("leave", p, None, room)
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": await get_room_response_json(room),
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": await get_room_response_json(room),
-            },
-        )
+            })
 
     # @sync_to_async
     # def decide_wiki_token_num(self, user: User):
@@ -326,30 +361,44 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         if (is_new):
             user.experiment_group = expt_group
             await user.asave()
-        await self.send_json(
-            {
+        # await self.send_json(
+        #     {
+        #         "response_type": "new_user",
+        #         "user_id": user.user_id,
+        #         "user_name": user.name,
+        #         "user_email": user.email,
+        #     }
+        # )
+        self.api_updates.append({
                 "response_type": "new_user",
                 "user_id": user.user_id,
                 "user_name": user.name,
                 "user_email": user.email,
-            }
-        )
+            })
 
         return user
     
     async def check_duplicate_user_data(self, adj_username, adj_email):
         """Check if there's duplicate information in the user data"""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "check_duplicate_user_data",
+        #             "username": adj_username,
+        #             "email": adj_email,
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "check_duplicate_user_data",
                     "username": adj_username,
                     "email": adj_email,
                 },
-            },
-        )
+            })
         pass
 
     async def set_user_data(self, room: Room, p: Player, content):
@@ -388,25 +437,29 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 await sync_to_async(user.full_clean)()
                 await user.asave()
 
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
+                # await self.channel_layer.group_send(
+                #     self.room_group_name,
+                #     {
+                #         "type": "update_room",
+                #         "data": await get_room_response_json(room),
+                #     },
+                # )
+                self.api_updates.append({
                         "type": "update_room",
                         "data": await get_room_response_json(room),
-                    },
-                )
+                    },)
             except ValidationError as e:
                 return
 
-    async def handle_not_enough_players(self, room: Room, send_alert: bool):
-        """Logic to run when there's not enough players"""
+    # async def handle_not_enough_players(self, room: Room, send_alert: bool):
+    #     """Logic to run when there's not enough players"""
 
-        if send_alert:
-            await self.send_json(
-                {
-                    "response_type": "not_enough_players",
-                }
-            )
+    #     if send_alert:
+    #         await self.send_json(
+    #             {
+    #                 "response_type": "not_enough_players",
+    #             }
+    #         )
 
     async def transition_to_instruction(self, room: Room, player: Player):
         """Logic for the transition state to instruction reading"""
@@ -419,13 +472,17 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         await room.asave()
 
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": await get_room_response_json(room),
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": await get_room_response_json(room),
-            },
-        )
+            },)
 
         user = await user_from_player(player)
         await self.update_ui(room=room, player=player,
@@ -494,16 +551,18 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         if "populate_comparison_data" in full_data:
             """Populate visible information in the comparison pane"""
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                full_data["populate_comparison_data"]
-            )
+            # await self.channel_layer.group_send(
+            #     self.room_group_name,
+            #     full_data["populate_comparison_data"]
+            # )
+            self.api_updates.append(full_data["populate_comparison_data"])
 
         if "toggle_comparison_data" in full_data:
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                full_data["toggle_comparison_data"]
-            )
+            # await self.channel_layer.group_send(
+            #     self.room_group_name,
+            #     full_data["toggle_comparison_data"]
+            # )
+            self.api_updates.append(full_data["toggle_comparison_data"])
 
     async def decide_question_category(self, player: Player):
         """Decide the question category for the player"""
@@ -751,13 +810,17 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             #     update_tools=False
             # )
 
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
+            # await self.channel_layer.group_send(
+            #     self.room_group_name,
+            #     {
+            #         "type": "update_room",
+            #         "data": await get_room_response_json(room),
+            #     },
+            # )
+            self.api_updates.append({
                     "type": "update_room",
                     "data": await get_room_response_json(room),
-                },
-            )
+                })
 
             await self.log_tool_use(
                 room,
@@ -802,19 +865,28 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
             await create_message("buzz_init", p, None, room)
 
-            await self.send_json(
-                {
+            # await self.send_json(
+            #     {
+            #         "response_type": "buzz_grant",
+            #         "guess": guess,
+            #     }
+            # )
+            self.api_updates.append({
                     "response_type": "buzz_grant",
                     "guess": guess,
-                }
-            )
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
+                })
+
+            # await self.channel_layer.group_send(
+            #     self.room_group_name,
+            #     {
+            #         "type": "update_room",
+            #         "data": await get_room_response_json(room),
+            #     },
+            # )
+            self.api_updates.append({
                     "type": "update_room",
                     "data": await get_room_response_json(room),
-                },
-            )
+                })
 
     async def buzz_answer(self, room: Room, player: Player, content):
         """Process a buzz answer"""
@@ -908,18 +980,32 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 room, "buzz_incorrect", player, cleaned_content
             )
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": await get_room_response_json(room),
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": await get_room_response_json(room),
-            },
-        )
+            })
 
     async def update_experiment_type(self, user: User):
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         'type': 'update_room',
+        #         'data': {
+        #             "response_type": "set_experiment_type",
+        #             "experiment_type": user.experiment_group,
+        #             "category_preference": user.category_preference,
+        #             "prefers_auto_scroll": user.auto_scroll,
+        #         },
+        #     }
+        # )
+        self.api_updates.append({
                 'type': 'update_room',
                 'data': {
                     "response_type": "set_experiment_type",
@@ -927,8 +1013,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     "category_preference": user.category_preference,
                     "prefers_auto_scroll": user.auto_scroll,
                 },
-            }
-        )
+            })
 
     async def get_shown_question_dict(self, room: Room, user: User):
         """Computes the correct amount of the question to show, depending on the state of the game."""
@@ -947,10 +1032,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def get_shown_question(self, room: Room, user: User):
         """Computes the correct amount of the question to show, depending on the state of the game."""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            (await self.get_shown_question_dict(room, user))["get_shown_question_data"]
-        )
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     (await self.get_shown_question_dict(room, user))["get_shown_question_data"]
+        # )
+        self.api_updates.append((await self.get_shown_question_dict(room, user))["get_shown_question_data"])
 
     async def decide_instruction_to_show(self, room: Room, player: Player):
         """Decide which instruction the user should see"""
@@ -1137,9 +1223,20 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         )
 
         # Send instructions only to the player's WebSocket
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "update_swapped_instructions",
+        #             "instructions": {"steps": instructions["steps"][:num_steps]},
+        #             "subanswers": subanswers,
+        #             "is_last_step": num_steps == len(instructions["steps"]),
+        #             "plan_label": ('B' if room.curr_instructions_letter == 'A' else 'A') if room.instruction_map['swapped'] else room.curr_instructions_letter
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "update_swapped_instructions",
@@ -1148,19 +1245,24 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     "is_last_step": num_steps == len(instructions["steps"]),
                     "plan_label": ('B' if room.curr_instructions_letter == 'A' else 'A') if room.instruction_map['swapped'] else room.curr_instructions_letter
                 },
-            },
-        )
+            })
 
     async def clear_instructions(self, room: Room, player: Player):
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "clear_instructions",
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "clear_instructions",
                 },
-            },
-        )
+            })
 
     async def update_ui(self, room: Room, player: Player, 
                             show_question_inputs: dict = dict(),
@@ -1201,16 +1303,23 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
             disable_outputs["should_run_disable"] = True
 
         merged_dict = show_question_outputs | status_outputs | comparison_outputs | instr_outputs | disable_outputs
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "update_ui",
+        #             "full_data": merged_dict,
+        #         }
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "update_ui",
                     "full_data": merged_dict,
                 }
-            },
-        )
+            },)
 
 
     async def get_init_model_instructions_dict(
@@ -1268,10 +1377,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         )
 
         # Send instructions only to the player's WebSocket
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            (await self.get_init_model_instructions_dict(room, player, num_steps, should_clear))["update_instructions_data"]
-        )
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     (await self.get_init_model_instructions_dict(room, player, num_steps, should_clear))["update_instructions_data"]
+        # )
+        self.api_updates.append((await self.get_init_model_instructions_dict(room, player, num_steps, should_clear))["update_instructions_data"])
 
     async def update_tools_and_doc_for_question_and_player(self, room: Room, player: Player):
         """Update the visible tools and document based on the current question for just one player"""
@@ -1279,43 +1389,65 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
 
         """Update the tool"""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "update_tools", "use_calculator": (question is None and room.category in {Question.Category.MATH, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MATH), 
+        #             "use_doc": False,
+        #             "use_web": (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
+        #         }
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "update_tools", "use_calculator": (question is None and room.category in {Question.Category.MATH, Question.Category.EVERYTHING}) or (question is not None and question.category == Question.Category.MATH), 
                     "use_doc": False,
                     "use_web": (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
                 }
-            },
-        )
+            })
 
         """Update the document"""
         curr_doc = ""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "update_doc",
+        #             "use_doc": (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
+        #             "doc_content": curr_doc,
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "update_doc",
                     "use_doc": (question is None and room.category in {Question.Category.MULTIHOP}) or (question is not None and question.category == Question.Category.MULTIHOP),
                     "doc_content": curr_doc,
                 },
-            },
-        )
+            },)
 
     async def disable_plan(self):
         """Helper function to disable the plan"""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "disable_plan",
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "disable_plan",
                 },
-            },
-        )
+            })
 
     async def show_and_disable_tools_dict(self, room: Room, player: Player, update_tools: bool, disable_tools: bool, disable_plan: bool, category: None | Question.Category):
 
@@ -1377,23 +1509,26 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
         """Update the tools"""
         if full_data.get("update_tools_data", dict()):
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                full_data["update_tools_data"]
-            )
+            # await self.channel_layer.group_send(
+            #     self.room_group_name,
+            #     full_data["update_tools_data"]
+            # )
+            self.api_updates.append(full_data["update_tools_data"])
 
         """Update the document"""
         if full_data.get("update_doc_data", dict()):
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                full_data["update_doc_data"]
-            )
+            # await self.channel_layer.group_send(
+            #     self.room_group_name,
+            #     full_data["update_doc_data"]
+            # )
+            self.api_updates.append(full_data["update_doc_data"])
 
         """Helper function to enable/disable the tool buttons"""
         await self.channel_layer.group_send(
             self.room_group_name,
             full_data["disable_tools_data"]
         )
+        self.api_updates.append(full_data["disable_tools_data"])
 
         if full_data.get("disable_plan_data", dict()):
             """Helper function to disable the plan"""
@@ -1401,6 +1536,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 full_data["disable_plan_data"]
             )
+            self.api_updates.append(full_data["disable_plan_data"])
 
     async def update_status_dict(self, room: Room, status: str, player: Player, answer=""):
         """Helper function to update the status text"""
@@ -1417,10 +1553,11 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
 
     async def update_status(self, room: Room, status: str, player: Player, answer=""):
         """Helper function to update the status text"""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            (await self.update_status_dict(room, status, player, answer))["update_status_data"]
-        )
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     (await self.update_status_dict(room, status, player, answer))["update_status_data"]
+        # )
+        self.api_updates.append((await self.update_status_dict(room, status, player, answer))["update_status_data"])
 
     async def disable_tool_btns(
         self,
@@ -1430,54 +1567,86 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         should_clear_document: bool,
     ):
         """Helper function to enable/disable the tool buttons"""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "disable_tools",
+        #             "should_disable": should_disable,
+        #             "should_clear_document": should_clear_document,
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "disable_tools",
                     "should_disable": should_disable,
                     "should_clear_document": should_clear_document,
                 },
-            },
-        )
+            })
 
 
     async def document_loading_page(self, channel_layer_send, player_channel):
         """Helper function to update document info"""
-        await channel_layer_send(
-            player_channel,
-            {
+        # await channel_layer_send(
+        #     player_channel,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "loading_doc",
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "loading_doc",
                 },
-            },
-        )
+            })
 
 
     async def update_doc(self, channel_layer_send, player_channel, use_doc, doc_content):
         """Helper function to update document info"""
-        await channel_layer_send(
-            player_channel,
-            {
+        # await channel_layer_send(
+        #     player_channel,
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "update_doc",
+        #             "use_doc": use_doc,
+        #             "doc_content": doc_content,
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "update_doc",
                     "use_doc": use_doc,
                     "doc_content": doc_content,
                 },
-            },
-        )
+            },)
 
 
     async def update_tools(
         self, channel_layer_send, player_channel, use_calc, use_doc, use_web
     ):
         """Helper function to update tool info"""
-        await channel_layer_send(
-            player_channel,  # Each player has their unique channel_name
-            {
+        # await channel_layer_send(
+        #     player_channel,  # Each player has their unique channel_name
+        #     {
+        #         "type": "update_room",
+        #         "data": {
+        #             "response_type": "update_tools",
+        #             "use_calculator": use_calc,
+        #             "use_doc": use_doc,
+        #             "use_web": use_web,
+        #         },
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": {
                     "response_type": "update_tools",
@@ -1485,8 +1654,7 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
                     "use_doc": use_doc,
                     "use_web": use_web,
                 },
-            },
-        )
+            })
 
 
     async def chat(self, room, p, content):
@@ -1495,33 +1663,37 @@ class QuizbowlConsumer(AsyncJsonWebsocketConsumer):
         m = clean_content(content)
 
         await create_message("chat", p, m, room)
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "update_room",
+        #         "data": await get_room_response_json(room),
+        #     },
+        # )
+        self.api_updates.append({
                 "type": "update_room",
                 "data": await get_room_response_json(room),
-            },
-        )
+            },)
 
 
-    async def kick(self):
-        """Kick banned player"""
-        await self.send_json(
-            {
-                "response_type": "kick",
-            }
-        )
-        await self.channel_layer.group_discard(self.room_name, self.channel_name)
+    # async def kick(self):
+    #     """Kick banned player"""
+    #     await self.send_json(
+    #         {
+    #             "response_type": "kick",
+    #         }
+    #     )
+    #     await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
 
-    async def too_many_players(self):
-        """Too many players in a room. Cannot join room."""
-        await self.send_json(
-            {
-                "response_type": "too_many_players",
-            }
-        )
-        await self.channel_layer.group_discard(self.room_name, self.channel_name)
+    # async def too_many_players(self):
+    #     """Too many players in a room. Cannot join room."""
+    #     await self.send_json(
+    #         {
+    #             "response_type": "too_many_players",
+    #         }
+    #     )
+    #     await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
     async def report_issue(self, room: Room, p: Player, report_data):
         """User reported an issue"""
@@ -1726,7 +1898,18 @@ document.addEventListener("keydown", function (event) {
         room.history_idx += 1
         await room.asave()
 
-        await self.send(text_data=json.dumps({
+        # await self.send(text_data=json.dumps({
+        #     'response_type': 'web_search_result',
+        #     'result': final_html,
+        #     'doc_search_query': '',
+        #     'will_retrieve': False,
+        #     "doc_search_query": '',
+        #     "web_search_query": '',
+        #     "select_idxs": [],
+        #     "allow_forwards": False,
+        #     "allow_backwards": room.history_idx != 0,
+        # }))
+        self.api_updates.append({
             'response_type': 'web_search_result',
             'result': final_html,
             'doc_search_query': '',
@@ -1736,7 +1919,7 @@ document.addEventListener("keydown", function (event) {
             "select_idxs": [],
             "allow_forwards": False,
             "allow_backwards": room.history_idx != 0,
-        }))
+        })
 
         # log tool use
         await self.log_tool_use(room, p, query, {"error": error}, "web_search", "failure")
@@ -1817,9 +2000,20 @@ document.addEventListener("keydown", function (event) {
         cached_page_res = await self.retrieve_from_document_cache(
             "wiki_page_query:" + wiki_query
         )
-        await self.send(
-            text_data=json.dumps(
-                {
+        # await self.send(
+        #     text_data=json.dumps(
+        #         {
+        #             "response_type": "navigate_web_search_result",
+        #             "html": cached_page_res,
+        #             "typed_query_web": typed_query_web,
+        #             "typed_query_search": typed_query_search,
+        #             "select_idxs": select_idxs,
+        #             "allow_forwards": room.history_idx != len(room.search_history) - 1,
+        #             "allow_backwards": room.history_idx > 0,
+        #         }
+        #     )
+        # )
+        self.api_updates.append({
                     "response_type": "navigate_web_search_result",
                     "html": cached_page_res,
                     "typed_query_web": typed_query_web,
@@ -1827,9 +2021,7 @@ document.addEventListener("keydown", function (event) {
                     "select_idxs": select_idxs,
                     "allow_forwards": room.history_idx != len(room.search_history) - 1,
                     "allow_backwards": room.history_idx > 0,
-                }
-            )
-        )
+                })
         await self.log_tool_use(room, p, '', {'curr_search': room.search_history[room.history_idx]},
                         'increase_history' if inc == 1 else 'decrease_history', 'start')
 
@@ -1857,9 +2049,20 @@ document.addEventListener("keydown", function (event) {
             room, p, query, title, "web_search_hyperlink" if is_wiki else "web_search", "success"
         )
 
-        await self.send(
-            text_data=json.dumps(
-                {
+        # await self.send(
+        #     text_data=json.dumps(
+        #         {
+        #             "response_type": "web_search_result",
+        #             'web_search_query': room.curr_query_raw,
+        #             'doc_search_query': uncleaned_query if user.auto_scroll and not is_wiki else '',
+        #             "result": final_html,
+        #             "allow_forwards": False,
+        #             "allow_backwards": room.history_idx >= 0,
+        #             'will_retrieve': (user.auto_scroll and not is_wiki),
+        #         }
+        #     )
+        # )
+        self.api_updates.append({
                     "response_type": "web_search_result",
                     'web_search_query': room.curr_query_raw,
                     'doc_search_query': uncleaned_query if user.auto_scroll and not is_wiki else '',
@@ -1867,9 +2070,7 @@ document.addEventListener("keydown", function (event) {
                     "allow_forwards": False,
                     "allow_backwards": room.history_idx >= 0,
                     'will_retrieve': (user.auto_scroll and not is_wiki),
-                }
-            )
-        )
+                })
 
         # auto-scroll to the relevant sentence
         if not is_wiki and user.auto_scroll:
@@ -2233,15 +2434,20 @@ document.addEventListener("keydown", function (event) {
             )
         except Exception as e:
             traceback.print_exc()
-            await self.send(
-                text_data=json.dumps(
-                    {
+            # await self.send(
+            #     text_data=json.dumps(
+            #         {
+            #             "response_type": "content_selection_result",
+            #             "result": [],
+            #             "num_docs": 0,
+            #         }
+            #     )
+            # )
+            self.api_updates.append({
                         "response_type": "content_selection_result",
                         "result": [],
                         "num_docs": 0,
-                    }
-                )
-            )
+                    })
             await self.log_tool_use(
                 room, p, query, {"error": str(e)}, "content_selection", "failure"
             )
@@ -2262,17 +2468,24 @@ document.addEventListener("keydown", function (event) {
         )
 
         # Send the retrieved content back to the frontend
-        await self.send(
-            text_data=json.dumps(
-                {
+        # await self.send(
+        #     text_data=json.dumps(
+        #         {
+        #             "response_type": "content_selection_result",
+        #             "result": doc_idxs,
+        #             "num_docs": len(docs),
+        #             "allow_forwards": False,
+        #             "allow_backwards": len(room.search_history) > 0
+        #         }
+        #     )
+        # )
+        self.api_updates.append({
                     "response_type": "content_selection_result",
                     "result": doc_idxs,
                     "num_docs": len(docs),
                     "allow_forwards": False,
                     "allow_backwards": len(room.search_history) > 0
-                }
-            )
-        )
+                })
 
         return doc_idxs
 
@@ -2314,11 +2527,12 @@ document.addEventListener("keydown", function (event) {
                 room, p, equation, {"calculation": result}, "calculator", "success"
             )
 
-            await self.send(
-                text_data=json.dumps(
-                    {"response_type": "calculation_result", "result": result}
-                )
-            )
+            # await self.send(
+            #     text_data=json.dumps(
+            #         {"response_type": "calculation_result", "result": result}
+            #     )
+            # )
+            self.api_updates.append({"response_type": "calculation_result", "result": result})
 
         except (SympifyError, TypeError, ValueError) as e:
             # Log tool use with error
@@ -2326,11 +2540,12 @@ document.addEventListener("keydown", function (event) {
                 room, p, equation, {"error": str(e)}, "calculator", "failure"
             )
 
-            await self.send(
-                text_data=json.dumps(
-                    {"response_type": "calculation_result", "result": "ERROR"}
-                )
-            )
+            # await self.send(
+            #     text_data=json.dumps(
+            #         {"response_type": "calculation_result", "result": "ERROR"}
+            #     )
+            # )
+            self.api_updates.append({"response_type": "calculation_result", "result": "ERROR"})
 
     async def handle_no_buzz(self, room: Room, player: Player, is_report: bool):
         """Handles no buzz or report actions"""
