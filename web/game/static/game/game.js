@@ -210,7 +210,7 @@ function update() {
 }
 
 function handleServerResponse(data) {
-  // console.log(data['response_type']);
+  console.log(data['response_type']);
   if (data['response_type'] === "update") {
 
     // sync client with server
@@ -605,13 +605,14 @@ function setContentSelectionResult(doc_idxs, num_docs) {
     };
 
     // Check if the iframe content is ready
-    const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-    if (iframeDocument && iframeDocument.readyState === 'complete') {
-      handleScrollAndHighlight();
-    } else {
-      loadingWeb = false;
-      iframe.addEventListener('load', handleScrollAndHighlight, { once: true });
-    }
+    // const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+    // if (iframeDocument && iframeDocument.readyState === 'complete') {
+    //   handleScrollAndHighlight();
+    // } else {
+    //   loadingWeb = false;
+    //   iframe.addEventListener('load', handleScrollAndHighlight, { once: true });
+    // }
+    handleScrollAndHighlight();
   }
 }
 
