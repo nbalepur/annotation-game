@@ -210,7 +210,7 @@ function update() {
 }
 
 function handleServerResponse(data) {
-  //console.log(data['response_type'])
+  console.log(data['response_type']);
   if (data['response_type'] === "update") {
 
     // sync client with server
@@ -392,6 +392,22 @@ function handleServerResponse(data) {
     setNavigateWebSearch(data['html'], data['typed_query_web'],  data['typed_query_search'], data['select_idxs'], data['allow_forwards'], data['allow_backwards']);
     unpause();
   }
+  else if (data['response_type'] === 'search_then_select') {
+    const iframe = document.getElementById('view-page-collapse');
+    search_result = data['web_result'];
+    updateTools(false, true, true);
+    setWebSearch(search_result, data['allow_forwards'], data['allow_backwards'], data['will_retrieve']);
+    iframe.addEventListener('load', () => {
+      doc_idxs = data['select_result'];
+      num_docs = data['num_docs'];
+      setContentSelectionResult(doc_idxs, num_docs);
+    }, { once: true });
+
+    docSearchInput.value = data['doc_search_query'];
+    webSearchInput.value = data['web_search_query'];
+    disableNavigation(data['allow_forwards'], data['allow_backwards']);
+    unpause();
+  }
   else if (data['response_type'] === 'web_search_result') {
     search_result = data['result'];
     updateTools(false, true, true);
@@ -546,16 +562,12 @@ function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, al
   docSearchInput.value = typedQuerySearch;
   disableNavigation(allowFwd, allowBwd);
   setWebSearch(html, allowFwd, allowBwd, docIdxs.length > 0);
-
-  // Wait for iframe load before calling setContentSelectionResult
   iframe.addEventListener('load', () => {
     setContentSelectionResult(docIdxs, 1);
-  }, { once: true });  // Ensures this event listener is called only once
-  loadingWeb = false;
+  }, { once: true });
 }
 
 function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
-  // copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
   loadingWeb = true;
   const iframe = document.getElementById('view-page-collapse');
   iframe.srcdoc = res;

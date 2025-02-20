@@ -195,8 +195,27 @@ class QuizbowlConsumer():
         
         ret_updates = self.api_updates
         self.api_updates = []
-        # print(ret_updates)
-        # print(len(ret_updates))
+
+        # updates edge case => merge search + select
+        # print('API:', ret_updates[-1]['data'])
+        # print('API:', ret_updates[-2].get('response_type', ''), ret_updates[-1].get('response_type', ''))
+        if len(ret_updates) >= 2 and ret_updates[-2].get('response_type', '') == 'web_search_result' and ret_updates[-1].get('response_type', '') == 'content_selection_result':
+            search_data, select_data = ret_updates[-2], ret_updates[-1]
+            new_data = {
+                'response_type': 'search_then_select',
+                'web_search_query': search_data.get('web_search_query', ''),
+                'doc_search_query': search_data.get('doc_search_query', ''),
+                'web_result': search_data['result'],
+                'will_retrieve': search_data.get('will_retrieve', False),
+                'select_result': select_data.get('result', []),
+                'allow_forwards': select_data['allow_forwards'],
+                'allow_backwards': select_data['allow_backwards'],
+                'num_docs': select_data.get('num_docs', 0)
+            }
+            ret_updates.pop()
+            ret_updates[-1] = new_data
+
+
         return {'updates': ret_updates}
 
     # async def update_room(self, event):
@@ -2478,6 +2497,7 @@ document.addEventListener("keydown", function (event) {
         #         }
         #     )
         # )
+
         self.api_updates.append({
                     "response_type": "content_selection_result",
                     "result": doc_idxs,
@@ -2487,7 +2507,6 @@ document.addEventListener("keydown", function (event) {
                 })
 
         return doc_idxs
-
 
     async def calculate(self, room: Room, p: Player, equation):
         """Executes the calculator tool using SymPy with implicit multiplication handling"""
