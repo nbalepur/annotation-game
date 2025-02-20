@@ -397,13 +397,13 @@ function handleServerResponse(data) {
     search_result = data['web_result'];
     updateTools(false, true, true);
     unpause();
-    setWebSearch(search_result, data['allow_forwards'], data['allow_backwards'], data['will_retrieve']);
     iframe.addEventListener('load', () => {
       doc_idxs = data['select_result'];
       num_docs = data['num_docs'];
       unpause();
       setContentSelectionResult(doc_idxs, num_docs);
     }, { once: true });
+    setWebSearch(search_result, data['allow_forwards'], data['allow_backwards'], data['will_retrieve']);
     docSearchInput.value = data['doc_search_query'];
     webSearchInput.value = data['web_search_query'];
     disableNavigation(data['allow_forwards'], data['allow_backwards']);
@@ -562,10 +562,10 @@ function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, al
   webSearchInput.value = typedQueryWeb;
   docSearchInput.value = typedQuerySearch;
   disableNavigation(allowFwd, allowBwd);
-  setWebSearch(html, allowFwd, allowBwd, docIdxs.length > 0);
   iframe.addEventListener('load', () => {
     setContentSelectionResult(docIdxs, 1);
   }, { once: true });
+  setWebSearch(html, allowFwd, allowBwd, docIdxs.length > 0);
 }
 
 function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
