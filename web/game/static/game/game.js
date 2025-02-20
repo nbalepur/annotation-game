@@ -593,7 +593,7 @@ function setContentSelectionResult(doc_idxs, num_docs) {
 
     // Check if the iframe content is ready
     const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-    if (!loadingWeb && iframeDocument && iframeDocument.readyState === 'complete') {
+    if (iframeDocument && iframeDocument.readyState === 'complete') {
       handleScrollAndHighlight();
     } else {
       loadingWeb = false;
