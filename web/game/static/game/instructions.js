@@ -51,9 +51,9 @@ function toggleFollowCheckbox(isVisible) {
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
   const followPlanDiv = iframeDoc.getElementById('follow-plan-div');
   if (followPlanDiv) {
-    if (isVisible && followPlanDiv.style.visibility === 'hidden') {
-      followPlanDiv.style.visibility = '';
+    if (isVisible) {
       followPlanDiv.checked = false;
+      followPlanDiv.style.visibility = '';
     } else {
       followPlanDiv.style.visibility = isVisible ? '' : 'hidden';
     }
@@ -139,7 +139,7 @@ function parseFullInstructions(inputInstructions, addCloseBtn, isLastStep) {
         ${buttonHTML}
       </div>
       <div id="step-warning-${index + 1}" style="visibility: hidden;">
-        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
+        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not necessary, hit "Next Step" again.</p>
       </div>
     `;
 
@@ -278,7 +278,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         `}
       </div>
       <div id="step-warning-${lastIndex + 1}" style="visibility: hidden;">
-        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
+        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not necessary, hit "Next Step" again.</p>
       </div>
     `;
 
@@ -302,7 +302,7 @@ function parseInstructionsBox(inputInstructions, isLastStep, stepNum) {
         `}
       </div>
       <div id="step-warning-${lastIndex + 1}" style="visibility: hidden;">
-        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not possible, hit "Next Step" again.</p>
+        <p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer. If it's not necessary, hit "Next Step" again.</p>
       </div>
     `;
   }
@@ -618,6 +618,11 @@ function toggleDisableButtons(flag) {
     const iframeDoc = instructionFrame.contentDocument || instructionFrame.contentWindow.document;
     const notes = iframeDoc.getElementById('rogue-notes-area');
     notes.disabled = flag;
+
+    const answerRogueInput = iframeDoc.getElementById('rogue-answer-input');
+    answerRogueInput.disabled = flag;
+    const answerRogueBtn = iframeDoc.getElementById('buzz-button-in-plan');
+    answerRogueBtn.disabled = flag;
 }
 
 function updateDoc(use_doc, doc_content) {
@@ -711,7 +716,7 @@ function buzzStatsUpdate(isCorrect) {
       return;
     }
   } else {
-    const rogueStatus = iframeDoc.getElementById('rogue-notes-status');
+    const rogueStatus = iframeDoc.getElementById('rogue-answer-status');
     if (!isCorrect) {
         rogueStatus.style.visibility = '';
         rogueStatus.innerHTML = '<p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-x-circle-fill"></i> Your answer is <strong>incorrect</strong>, try again!</p>';
@@ -727,7 +732,7 @@ function buzzStatsUpdate(isCorrect) {
 function updateStatus(status, player, answer, allowSwaps) {
     gameState = status;
     if (status === "compare") {
-        statusText.innerHTML = `Task: <span class=text-secondary>Complete the <span class=text-secondary>pairwise comparison</span> to continue</span>`;
+        statusText.innerHTML = `Task: <span class=text-secondary>Complete the <span class=text-secondary>pairwise comparison</span></span>`;
         //statusText.scrollIntoView({ block: 'start' });        
     } else if (status === "compare_correct") {
         statusText.innerHTML = `Task: <span class=text-secondary>Your answer was <span class=text-success>correct</span>. Complete the <span class=text-secondary>pairwise comparison</span> to continue</span>`;     
@@ -1013,11 +1018,11 @@ function toggleRogueCheckbox(checkbox, isPairwise) {
     }
     buzzPlanButton.style.display = '';
   } else {
-    skipPlanButton.style.display = 'none';
+    // skipPlanButton.style.display = 'none';
     if (!isPairwise) {
       swapPlanButton.style.display = '';
     }
-    buzzPlanButton.style.display = 'none';
+    // buzzPlanButton.style.display = 'none';
     showButtonsForState(gameState, allowSwapsGlobal);
   }
 
@@ -1053,11 +1058,17 @@ function resetRogueCheckbox(isPairwise) {
   // reset the notes
   const notes = iframeDoc.getElementById('rogue-notes-area');
   notes.value = '';
+  const rogueAnswer = iframeDoc.getElementById('rogue-answer-input');
+  rogueAnswer.value = '';
 
   // reset/hide the status
   const rogueStatus = iframeDoc.getElementById('rogue-notes-status');
   rogueStatus.style.visibility = 'hidden';
-  rogueStatus.innerHTML = '<p></p>';
+  rogueStatus.innerHTML = '';
+
+  const rogueAnswerStatus = iframeDoc.getElementById('rogue-answer-status');
+  rogueAnswerStatus.style.visibility = 'hidden';
+  rogueAnswerStatus.innerHTML = '';
 }
 
 docContent.addEventListener('load', function() {

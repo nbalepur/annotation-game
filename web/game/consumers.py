@@ -6,6 +6,7 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from lxml import html, etree
 import html as html_base
 from lxml.etree import tostring
+from text_unidecode import unidecode
 
 from django.core.serializers import serialize
 from django.shortcuts import redirect
@@ -2111,7 +2112,7 @@ document.addEventListener("keydown", function (event) {
                 append_item((str(c), c.text))
             elif c.name == 'a' and c.get('href') and c.get('href').startswith('/wiki/') and ':' not in c.get('href'):
                 append_item((str(c), c.text))
-            else:
+            elif c.name not in {'style'}:
                 # For other cases, we’re only interested in text.
                 append_item(c.text)
 
@@ -2396,9 +2397,7 @@ document.addEventListener("keydown", function (event) {
     @sync_to_async
     def clean_query(self, query):
         """Clean the query for cached lookup"""
-        cleaned_query = re.sub(r"[^a-zA-Z0-9\s\-]", "", query)
-        cleaned_query = re.sub(r"\s+", "-", cleaned_query.strip())
-        return cleaned_query.lower()
+        return unidecode(query)
 
     async def select_content_wrapper(self, room: Room, p: Player, query: str):
         """ Wrapper for long-context content selection """

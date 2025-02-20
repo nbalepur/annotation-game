@@ -2,6 +2,7 @@
 // Listeners for events during game
 
 let gameState = 'idle';
+let loadingWeb = false;
 
 const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");

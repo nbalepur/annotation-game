@@ -210,6 +210,7 @@ function update() {
 }
 
 function handleServerResponse(data) {
+  console.log(data['response_type'])
   if (data['response_type'] === "update") {
 
     // sync client with server
@@ -550,10 +551,12 @@ function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, al
   iframe.addEventListener('load', () => {
     setContentSelectionResult(docIdxs, 1);
   }, { once: true });  // Ensures this event listener is called only once
+  loadingWeb = false;
 }
 
 function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
   // copySearchBtn.style.visibility = showCopyBtn ? '' : 'hidden';
+  loadingWeb = true;
   const iframe = document.getElementById('view-page-collapse');
   iframe.srcdoc = res;
 }
@@ -576,6 +579,8 @@ function setContentSelectionResult(doc_idxs, num_docs) {
 
       // Highlight and scroll to the target element
       const targetElement = iframeDocument.getElementById('element-' + doc_idxs[0]);
+      // console.log(targetElement);
+      // console.log(iframeDocument);
       if (targetElement) {
         if (doc_idxs[0] > 3) {
           targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -588,9 +593,10 @@ function setContentSelectionResult(doc_idxs, num_docs) {
 
     // Check if the iframe content is ready
     const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-    if (iframeDocument && iframeDocument.readyState === 'complete') {
+    if (!loadingWeb && iframeDocument && iframeDocument.readyState === 'complete') {
       handleScrollAndHighlight();
     } else {
+      loadingWeb = false;
       iframe.addEventListener('load', handleScrollAndHighlight, { once: true });
     }
   }
@@ -911,16 +917,29 @@ function buzz() {
     if (checkbox.checked) {
       const notes = iframeDoc.getElementById('rogue-notes-area');
       const wordCount = notes.value.split(/\s+/).filter(word => word.length > 0).length;
+      const rogueAnswer = iframeDoc.getElementById('rogue-answer-input').value.trim();
       const rogueStatus = iframeDoc.getElementById('rogue-notes-status');
+      const rogueStatusAnswer = iframeDoc.getElementById('rogue-answer-status');
+      let hasError = false;
+      if (rogueAnswer.length === 0) {
+        rogueStatusAnswer.style.visibility = '';
+        rogueStatusAnswer.innerHTML = '<p class="text-danger"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer!</p>';
+        hasError = true;
+      } else {
+        rogueStatusAnswer.style.visibility = 'hidden';
+        rogueStatusAnswer.innerHTML = '';
+      }
       if (wordCount < 20) {
         rogueStatus.style.visibility = '';
         rogueStatus.innerHTML = '<p class="text-danger"> <i class="bi bi-exclamation-octagon-fill"></i> Please type your plan or thought process before answering (20+ words)!</p>';
-        return;
+        hasError = true;
       } else {
         rogueStatus.style.visibility = 'hidden';
-        rogueStatus.innerHTML = '<p class="text-danger"> <i class="bi bi-exclamation-octagon-fill"></i> Please type your plan or thought process before answering (20+ words)!</p>';
+        rogueStatus.innerHTML = '';
       }
-      sendRequest("buzz_init", '');
+      if (!hasError) {
+        answer(rogueAnswer);
+      }
     } else {
       const currentLastStep = container.querySelector('.step-div:first-child');
       const guess = currentLastStep.querySelector('textarea').value;
@@ -941,7 +960,7 @@ function answerWrapper(guess) {
 
   if (guess.trim() === '') {
     warningDiv.style.visibility = '';
-    warningDiv.innerHTML = '<p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer before buzzing!</p>';
+    warningDiv.innerHTML = '<p class="text-danger" style="margin-top: 5px; margin-bottom: 0px;"> <i class="bi bi-exclamation-octagon-fill"></i> Please enter an answer!</p>';
     focusTextInput(`answer-step-${subanswers.length}`);
     return;
   }

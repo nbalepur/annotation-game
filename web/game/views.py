@@ -300,8 +300,8 @@ def compute_leaderboard(question_type: Question.Category):
     for idx in combined_rank_idx:
         row = aggregated_data[idx]
         leaderboard_data.append({'username': row['user__name'], 
-                                 'correctness': f"{'%.3f' % (row['avg_correctness'] * 100)}% Accuracy", 
-                                 'time': 'N/A' if row['avg_seconds_taken'] == None else f"{'%.3f' % row['avg_seconds_taken']} Seconds", 
+                                 'correctness': '%.3f' % (row['avg_correctness'] * 100), 
+                                 'time': None if row['avg_seconds_taken'] == None else ('%.3f' % row['avg_seconds_taken']), 
                                  'num_questions': user_question_map[row['user_id']]})
     return leaderboard_data
 
