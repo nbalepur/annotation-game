@@ -2005,7 +2005,7 @@ document.addEventListener("keydown", function (event) {
             return
         
         # out of bounds (from spamming)
-        if ((room.history_idx + inc) < 0) or ((room.history_idx + inc) >= room.search_history[room.history_idx]):
+        if ((room.history_idx + inc) < 0) or ((room.history_idx + inc) >= len(room.search_history[room.history_idx])):
             return
 
         await self.log_tool_use(room, p, '', {'curr_search': room.search_history[room.history_idx]},
