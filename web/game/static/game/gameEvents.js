@@ -3,6 +3,7 @@
 
 let gameState = 'idle';
 let loadingWeb = false;
+let isRequesting = false;
 
 const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");

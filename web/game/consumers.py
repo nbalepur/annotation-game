@@ -2003,6 +2003,10 @@ document.addEventListener("keydown", function (event) {
         curr_q = await question_from_room(room)
         if curr_q.category != Question.Category.MULTIHOP:
             return
+        
+        # out of bounds (from spamming)
+        if ((room.history_idx + inc) < 0) or ((room.history_idx + inc) >= room.search_history[room.history_idx]):
+            return
 
         await self.log_tool_use(room, p, '', {'curr_search': room.search_history[room.history_idx]},
                                 'increase_history' if inc == 1 else 'decrease_history', 'start')

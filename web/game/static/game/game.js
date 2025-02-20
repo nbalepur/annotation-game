@@ -839,10 +839,13 @@ function showButtons() {
 // }
 
 function sendRequest(requestType, content = "") {
+  if (isRequesting) return;
+  isRequesting = true;
+  
   fetch("/receive/", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
-    body: JSON.stringify({ user_id: userID, request_type: requestType, content: content})
+    body: JSON.stringify({ user_id: userID, request_type: requestType, content: content })
   })
   .then(response => response.json())
   .then(data => {
@@ -853,6 +856,12 @@ function sendRequest(requestType, content = "") {
         handleServerResponse(update);
       }
     });
+  })
+  .catch(error => {
+    console.error("Request failed:", error);
+  })
+  .finally(() => {
+    isRequesting = false; // Unlock after request finishes
   });
 }
 
