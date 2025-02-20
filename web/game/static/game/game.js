@@ -396,13 +396,14 @@ function handleServerResponse(data) {
     const iframe = document.getElementById('view-page-collapse');
     search_result = data['web_result'];
     updateTools(false, true, true);
+    unpause();
     setWebSearch(search_result, data['allow_forwards'], data['allow_backwards'], data['will_retrieve']);
     iframe.addEventListener('load', () => {
       doc_idxs = data['select_result'];
       num_docs = data['num_docs'];
       setContentSelectionResult(doc_idxs, num_docs);
+      unpause();
     }, { once: true });
-
     docSearchInput.value = data['doc_search_query'];
     webSearchInput.value = data['web_search_query'];
     disableNavigation(data['allow_forwards'], data['allow_backwards']);
