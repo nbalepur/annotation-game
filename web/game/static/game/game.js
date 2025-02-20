@@ -401,8 +401,8 @@ function handleServerResponse(data) {
     iframe.addEventListener('load', () => {
       doc_idxs = data['select_result'];
       num_docs = data['num_docs'];
-      setContentSelectionResult(doc_idxs, num_docs);
       unpause();
+      setContentSelectionResult(doc_idxs, num_docs);
     }, { once: true });
     docSearchInput.value = data['doc_search_query'];
     webSearchInput.value = data['web_search_query'];
