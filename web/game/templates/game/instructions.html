@@ -65,6 +65,7 @@
             class="form-control input-sm flex-grow-1" 
             style="resize: none; border-radius: 0.5rem 0 0 0.5rem;"
             rows=1
+            onkeydown="if(event.key === `Enter`) { event.preventDefault(); window.parent.buzz(); this.blur(); }"
             placeholder="Enter your answer here..."></textarea>
           <button class="btn btn-primary btn-sm" 
             style="display: none; white-space: nowrap; height: 38px; border-radius: 0 0.5rem 0.5rem 0;" 

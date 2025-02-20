@@ -1018,7 +1018,7 @@ function toggleRogueCheckbox(checkbox, isPairwise) {
     }
     buzzPlanButton.style.display = '';
   } else {
-    // skipPlanButton.style.display = 'none';
+    skipPlanButton.style.display = 'none';
     if (!isPairwise) {
       swapPlanButton.style.display = '';
     }
