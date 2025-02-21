@@ -1544,18 +1544,18 @@ class QuizbowlConsumer():
             self.api_updates.append(full_data["update_doc_data"])
 
         """Helper function to enable/disable the tool buttons"""
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            full_data["disable_tools_data"]
-        )
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     full_data["disable_tools_data"]
+        # )
         self.api_updates.append(full_data["disable_tools_data"])
 
         if full_data.get("disable_plan_data", dict()):
             """Helper function to disable the plan"""
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                full_data["disable_plan_data"]
-            )
+            # await self.channel_layer.group_send(
+            #     self.room_group_name,
+            #     full_data["disable_plan_data"]
+            # )
             self.api_updates.append(full_data["disable_plan_data"])
 
     async def update_status_dict(self, room: Room, status: str, player: Player, answer=""):
