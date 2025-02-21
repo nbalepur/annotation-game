@@ -1747,11 +1747,14 @@ class QuizbowlConsumer():
         """Log the user's progress on completing the instructions"""
         curr_q = (await question_from_room(room))
         user = (await user_from_player(player))
+
         # first, check if the question has already been reported
         num_rep = await ReportIssue.objects.filter(
                 user=user, question_id=curr_q.question_id
             ).acount()
         is_report = num_rep > 0
+
+
 
         # if not found, log normally
         await AnswerData.objects.acreate(

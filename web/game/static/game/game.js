@@ -839,9 +839,6 @@ function showButtons() {
 // }
 
 function sendRequest(requestType, content = "") {
-  if (isRequesting) return;
-  isRequesting = true;
-  
   fetch("/receive/", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
@@ -860,9 +857,7 @@ function sendRequest(requestType, content = "") {
   .catch(error => {
     console.error("Request failed:", error);
   })
-  .finally(() => {
-    isRequesting = false; // Unlock after request finishes
-  });
+  .finally(() => {});
 }
 
 // Helper function to get CSRF token (Django security)
