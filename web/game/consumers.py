@@ -199,21 +199,21 @@ class QuizbowlConsumer():
         # updates edge case => merge search + select
         # print('API:', ret_updates[-1]['data'])
         # print('API:', ret_updates[-2].get('response_type', ''), ret_updates[-1].get('response_type', ''))
-        if len(ret_updates) >= 2 and ret_updates[-2].get('response_type', '') == 'web_search_result' and ret_updates[-1].get('response_type', '') == 'content_selection_result':
-            search_data, select_data = ret_updates[-2], ret_updates[-1]
-            new_data = {
-                'response_type': 'search_then_select',
-                'web_search_query': search_data.get('web_search_query', ''),
-                'doc_search_query': search_data.get('doc_search_query', ''),
-                'web_result': search_data['result'],
-                'will_retrieve': search_data.get('will_retrieve', False),
-                'select_result': select_data.get('result', []),
-                'allow_forwards': select_data['allow_forwards'],
-                'allow_backwards': select_data['allow_backwards'],
-                'num_docs': select_data.get('num_docs', 0)
-            }
-            ret_updates.pop()
-            ret_updates[-1] = new_data
+        # if len(ret_updates) >= 2 and ret_updates[-2].get('response_type', '') == 'web_search_result' and ret_updates[-1].get('response_type', '') == 'content_selection_result':
+        #     search_data, select_data = ret_updates[-2], ret_updates[-1]
+        #     new_data = {
+        #         'response_type': 'search_then_select',
+        #         'web_search_query': search_data.get('web_search_query', ''),
+        #         'doc_search_query': search_data.get('doc_search_query', ''),
+        #         'web_result': search_data['result'],
+        #         'will_retrieve': search_data.get('will_retrieve', False),
+        #         'select_result': select_data.get('result', []),
+        #         'allow_forwards': select_data['allow_forwards'],
+        #         'allow_backwards': select_data['allow_backwards'],
+        #         'num_docs': select_data.get('num_docs', 0)
+        #     }
+        #     ret_updates.pop()
+        #     ret_updates[-1] = new_data
 
 
         return {'updates': ret_updates}
@@ -2095,14 +2095,14 @@ document.addEventListener("keydown", function (event) {
                     'doc_search_query': uncleaned_query if user.auto_scroll and not is_wiki else '',
                     "result": final_html,
                     "allow_forwards": False,
-                    "allow_backwards": room.history_idx >= 0,
+                    "allow_backwards": room.history_idx >= 0 and not (user.auto_scroll and not is_wiki),
                     'will_retrieve': (user.auto_scroll and not is_wiki),
                 })
 
         # auto-scroll to the relevant sentence
         if not is_wiki and user.auto_scroll:
-            idxs = await self.select_content(room, p, query, final_html)
-            new_history_elem = (room.curr_query, idxs, room.curr_query_raw, room.curr_query_raw)
+            #idxs = await self.select_content(room, p, query, final_html)
+            new_history_elem = (room.curr_query, [-1], room.curr_query_raw, room.curr_query_raw)
         else:
             new_history_elem = (room.curr_query, [], room.curr_query_raw, '')
 
@@ -2436,9 +2436,25 @@ document.addEventListener("keydown", function (event) {
         search_query = 'long_context:' + curr_q.document_context if (curr_q.category == Question.Category.LONGCONTEXT) else 'wiki_page_query:' + room.curr_query
         curr_html = await self.retrieve_from_document_cache(search_query)
 
-        idxs = await self.select_content(room, p, query, curr_html)
-        room.search_history = room.search_history[:room.history_idx+1] + [(room.curr_query, idxs, room.curr_query_raw, query)]
+        idxs, num_docs = await self.select_content(room, p, query, curr_html)
+        if num_docs == None:
+            return
+
+        new_history = room.search_history[:room.history_idx+1] + [(room.curr_query, idxs, room.curr_query_raw, query)]
+        if new_history[room.history_idx][1] == [-1]: # get rid of edge case where we do search => highlight
+            new_history.pop(room.history_idx)
+            room.history_idx -= 1
+        room.search_history = new_history
         room.history_idx += 1
+
+        self.api_updates.append({
+            "response_type": "content_selection_result",
+            "result": idxs,
+            "num_docs": num_docs,
+            "allow_forwards": False,
+            "allow_backwards": len(room.search_history) > 1
+        })
+
         await room.asave()
 
     async def select_content(self, room: Room, p: Player, query: str, html: str):
@@ -2476,7 +2492,7 @@ document.addEventListener("keydown", function (event) {
             await self.log_tool_use(
                 room, p, query, {"error": str(e)}, "content_selection", "failure"
             )
-            return
+            return None, None
 
         retr_docs = [d.document.text for d in retr_results.results]
         retr_docs = [re.sub(r"\[.*?\]", " ", doc) for doc in retr_docs]
@@ -2505,15 +2521,7 @@ document.addEventListener("keydown", function (event) {
         #     )
         # )
 
-        self.api_updates.append({
-                    "response_type": "content_selection_result",
-                    "result": doc_idxs,
-                    "num_docs": len(docs),
-                    "allow_forwards": False,
-                    "allow_backwards": len(room.search_history) > 0
-                })
-
-        return doc_idxs
+        return doc_idxs, len(docs)
 
     async def calculate(self, room: Room, p: Player, equation):
         """Executes the calculator tool using SymPy with implicit multiplication handling"""

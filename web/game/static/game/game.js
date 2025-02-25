@@ -401,7 +401,7 @@ function handleServerResponse(data) {
       doc_idxs = data['select_result'];
       num_docs = data['num_docs'];
       unpause();
-      setContentSelectionResult(doc_idxs, num_docs);
+      setContentSelectionResult(doc_idxs, num_docs, false);
     }, { once: true });
     setWebSearch(search_result, data['allow_forwards'], data['allow_backwards'], data['will_retrieve']);
     docSearchInput.value = data['doc_search_query'];
@@ -417,11 +417,14 @@ function handleServerResponse(data) {
     webSearchInput.value = data['web_search_query'];
     disableNavigation(data['allow_forwards'], data['allow_backwards']);
     unpause();
+    if (data['will_retrieve']) {
+      sendRequest("content_select", data['doc_search_query']);
+    }
   }
   else if (data['response_type'] === 'content_selection_result') {
     doc_idxs = data['result'];
     num_docs = data['num_docs'];
-    setContentSelectionResult(doc_idxs, num_docs);
+    setContentSelectionResult(doc_idxs, num_docs, true);
     disableNavigation(data['allow_forwards'], data['allow_backwards']);
     unpause();
   } else if (data['response_type'] === 'reauthenticate') {
@@ -563,7 +566,7 @@ function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, al
   docSearchInput.value = typedQuerySearch;
   disableNavigation(allowFwd, allowBwd);
   iframe.addEventListener('load', () => {
-    setContentSelectionResult(docIdxs, 1);
+    setContentSelectionResult(docIdxs, 1, false);
   }, { once: true });
   setWebSearch(html, allowFwd, allowBwd, docIdxs.length > 0);
 }
@@ -574,7 +577,7 @@ function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
   iframe.srcdoc = res;
 }
 
-function setContentSelectionResult(doc_idxs, num_docs) {
+function setContentSelectionResult(doc_idxs, num_docs, should_wait) {
   if (doc_idxs.length === 1) {
     // copySearchBtn.style.visibility = '';
     const iframe = document.getElementById('view-page-collapse');
@@ -605,14 +608,17 @@ function setContentSelectionResult(doc_idxs, num_docs) {
     };
 
     // Check if the iframe content is ready
-    // const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-    // if (iframeDocument && iframeDocument.readyState === 'complete') {
-    //   handleScrollAndHighlight();
-    // } else {
-    //   loadingWeb = false;
-    //   iframe.addEventListener('load', handleScrollAndHighlight, { once: true });
-    // }
-    handleScrollAndHighlight();
+    if (should_wait) {
+        const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+        if (iframeDocument && iframeDocument.readyState === 'complete') {
+          handleScrollAndHighlight();
+        } else {
+          loadingWeb = false;
+          iframe.addEventListener('load', handleScrollAndHighlight, { once: true });
+        }
+    } else {
+      handleScrollAndHighlight();
+    }
   }
 }
 
