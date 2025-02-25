@@ -419,9 +419,11 @@ function handleServerResponse(data) {
     unpause();
     if (data['will_retrieve']) {
       sendRequest("content_select", data['doc_search_query']);
+      loadingWeb = true;
     }
   }
   else if (data['response_type'] === 'content_selection_result') {
+    loadingWeb = false;
     doc_idxs = data['result'];
     num_docs = data['num_docs'];
     setContentSelectionResult(doc_idxs, num_docs, true);
@@ -572,7 +574,6 @@ function setNavigateWebSearch(html, typedQueryWeb, typedQuerySearch, docIdxs, al
 }
 
 function setWebSearch(res, allowFwd, allowBwd, showCopyBtn) {
-  loadingWeb = true;
   const iframe = document.getElementById('view-page-collapse');
   iframe.srcdoc = res;
 }
@@ -613,7 +614,6 @@ function setContentSelectionResult(doc_idxs, num_docs, should_wait) {
         if (iframeDocument && iframeDocument.readyState === 'complete') {
           handleScrollAndHighlight();
         } else {
-          loadingWeb = false;
           iframe.addEventListener('load', handleScrollAndHighlight, { once: true });
         }
     } else {
@@ -845,6 +845,12 @@ function showButtons() {
 // }
 
 function sendRequest(requestType, content = "") {
+
+  // semaphore check
+  if (loadingWeb && ['navigate_history', 'navigate_hyperlink'].includes(requestType)) {
+    return;
+  }  
+
   fetch("/receive/", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
