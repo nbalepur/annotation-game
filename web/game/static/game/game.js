@@ -210,7 +210,7 @@ function update() {
 }
 
 function handleServerResponse(data) {
-  console.log(data['response_type']);
+  // console.log(data['response_type']);
   if (data['response_type'] === "update") {
 
     // sync client with server
