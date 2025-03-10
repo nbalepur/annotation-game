@@ -661,8 +661,12 @@ class QuizbowlConsumer():
 
         # (question_id, did_comparison) -> number of users who have done it
         # right now, do we care if they followed the plan?
+        
+        # question_user_count = AnswerData.objects.filter(
+        #     followed_plan=True, is_final=True, is_report=False
+        # ).values("question_id", "did_comparison").annotate(user_count=Count("user__user_id", distinct=True))
         question_user_count = AnswerData.objects.filter(
-                followed_plan=False, is_final=True, is_report=False
+                is_final=True, is_report=False
             ).values("question_id", "did_comparison").annotate(user_count=Count("user__user_id", distinct=True))
         question_user_count = await sync_to_async(list)(question_user_count)
         question_to_user_count = {
