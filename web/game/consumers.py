@@ -652,6 +652,11 @@ class QuizbowlConsumer():
     async def decide_next_question(
         self, room: Room, player: Player, category: Question.Category, is_comparison: bool
     ):
+        
+        return await Question.objects.filter(
+                        category=Question.Category.MATH, generation_method=Question.GenerationMethod.TUTORIAL
+                    ).afirst()
+
         """Decide the next question to present to the user"""
         # if either category can be shown, decide what the next one should be
         if category == Question.Category.EVERYTHING:

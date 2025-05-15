@@ -371,7 +371,7 @@ async function screenshot() {
   var element = document.documentElement; // Use the entire HTML document for capturing
   
   // Set options to capture the full content
-  domtoimage.toSvg(element, {
+  domtoimage.toPng(element, {
     width: element.scrollWidth, // Full width of the page
     height: element.scrollHeight, // Full height of the page
   })
@@ -379,7 +379,7 @@ async function screenshot() {
       // Create a download link for the SVG
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = 'screenshot.svg';
+      link.download = 'screenshot.png';
       link.click();
     })
     .catch(function (error) {

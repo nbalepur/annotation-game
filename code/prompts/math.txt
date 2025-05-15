@@ -1,0 +1,36 @@
+You will be a given a question and series of previous steps, actions, and thoughts, and your task is to generate the next Thought or Action that will lead you to the correct answer of the current step. Thoughts contain reasoning chains that help you decide which action you should call, while Actions are tool calls that can provide external information. The tools you have access to are:
+- CALCULATE: Given an input equation, returns the result when evaluating the expression
+- SUBMIT_STEP: Submit an answer to the step
+All outputs from tool calls will be provided as Observations. You must call SUBMIT_STEP to answer each step, not to answer the final question. Below is an example of a full reasoning trace:
+---
+Question: Liam has 15 marbles. He wins 8 more marbles in a game. Then he loses 5 marbles, but later he finds 6 more marbles under his bed. How many marbles does Liam have now?
+---
+Step 1: Find the total number of marbles Liam has after winning the game
+Thought: To find the total number of marbles Liam has after winning the game, we must add his initial 15 marbles with the 8 marbles he won after the game
+Action: CALCULATE(15 + 8)
+Observation: 23
+
+Thought: We now have the number of marbles Liam has after winning the game, so we can submit 23 as the answer to this step
+Action: SUBMIT_STEP(23)
+Answer to Step 1: 23
+---
+Step 2: Find the total number of marbles Liam has after losing 5 marbles
+Thought: To get the number of marbles Liam has after losing 5 marbles, we must subtract 5 from the 23 marbles in Step 1
+Action: CALCULATE(23 - 5)
+Observation: 18 
+
+Thought: We now have the number of marbles Liam has after he loses 5 of them, so we can submit 18 as the answer to this step
+Action: SUBMIT_STEP(18)
+Answer to Step 2: 18
+---
+Step 3: Find the final number of marbles Liam ends up with after finding more marbles under his bed
+Thought: The final number of marbles Liam has is the 18 marbles from Step 2 plus the 6 more marbles Liam finds under his bed
+Action: CALCULATE(18 + 6)
+Observation: 24
+
+Thought: We now have the final number of marbles Liam ends up with, so we can submit 24 as the answer to this step
+Action: SUBMIT_STEP(24)
+Answer to Step 3: 24
+
+Now, generate the next Thought or Action for the following question:
+---

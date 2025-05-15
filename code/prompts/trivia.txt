@@ -1,0 +1,36 @@
+You will be a given a question and series of previous steps, actions, and thoughts, and your task is to generate the next Thought or Action that will lead you to the correct answer of the current step. Thoughts contain reasoning chains that help you decide which action you should call, while Actions are tool calls that can provide external information. The tools you have access to are:
+- SEARCH: Given an input search query, returns the title, first paragraph, and most similar context within a relevant Wikipedia page
+- SUBMIT_STEP: Submit an answer to the step
+All outputs from tool calls will be provided as Observations. You must call SUBMIT_STEP to answer each step, not to answer the final question. Below is an example of a full reasoning trace:
+---
+Question: What is the capital of the state that contains the tallest mountain in the United States?
+---
+Step 1: Find the tallest mountain in the United States
+Thought: To find the tallest mountain in the United States, we can search for the right Wikipedia page with this query
+Action: SEARCH(tallest mountain United States)
+Observation: <Title>List of mountain peaks of the United States</Title><First Paragraph>This article comprises three sortable tables of major mountain peaks of the United States of America. </First Paragraph><Selected Content>The summit of a mountain or hill may be measured in three main ways:  Download coordinates as:  Of the 100 highest major summits of the United States, only Denali exceeds 6000 meters (19,685 feet) elevation, four peaks exceed 5000 meters (16,404 feet), and all 100 peaks exceed 4012 meters (13,163 feet) elevation.  Of these 100 summits, 53 are located in Colorado, 23 in Alaska, 14 in California, five in Wyoming, two in Hawaiʻi, and one each in Washington, Utah, and New Mexico.  Five of these summits are located on the international border between Alaska and Yukon, and one is located on the international border between Alaska and British Columbia. </Selected Content>
+
+Thought: The last observation states that Denali is the only mountain exceeding 6000 meters, so is the tallest mountain in the United States. Thus, we can submit Mount Denali as the answer to this step
+Action: SUBMIT_STEP(Mount Denali)
+Answer to Step 1: Mount Denali
+---
+Step 2: Find the state that contains this mountain
+
+Thought: To find the state with this mountain, we must find where Mount Denali is located
+Action: SEARCH(Mount Denali location)
+Observation: <Title>Denali</Title><First Paragraph>Denali (/dəˈnɑːli/), federally designated as Mount McKinley, is the highest mountain peak in North America, with a summit elevation of 20,310 feet (6,190\xa0m) above sea level.  It is the tallest mountain in the world from base to peak on land, measuring 18,000\xa0ft (5,500\xa0m).  With a topographic prominence of 20,194 feet (6,155\xa0m) and a topographic isolation of 4,621.1 miles (7,436.9\xa0km), Denali is the third most prominent and third-most isolated peak on Earth, after Mount Everest and Aconcagua.  Located in the Alaska Range in the interior of the U.S. state of Alaska, Denali is the centerpiece of Denali National Park and Preserve. </First Paragraph><Selected Content>Denali (/dəˈnɑːli/), federally designated as Mount McKinley, is the highest mountain peak in North America, with a summit elevation of 20,310 feet (6,190\xa0m) above sea level.  It is the tallest mountain in the world from base to peak on land, measuring 18,000\xa0ft (5,500\xa0m).  With a topographic prominence of 20,194 feet (6,155\xa0m) and a topographic isolation of 4,621.1 miles (7,436.9\xa0km), Denali is the third most prominent and third-most isolated peak on Earth, after Mount Everest and Aconcagua.  Located in the Alaska Range in the interior of the U.S. state of Alaska, Denali is the centerpiece of Denali National Park and Preserve.  The Koyukon people who inhabit the area around the mountain have referred to the peak as "Denali" for centuries. </Selected Content>
+
+Thought: The last observation states that Denali is located in the U.S. state of Alaska, so we can submit Alaska as the answer to this step
+Action: SUBMIT_STEP(Alaska)
+Answer to Step 2: Alaska
+---
+Step 3: Find the capital of this state
+
+Thought: To find the capital of this state, we must find the capital of Alaska, which can be found on its Wikipedia page
+Action: SEARCH(Alaska capital)
+Observation:<Title>Juneau, Alaska</Title><First Paragraph>Juneau (/ˈdʒuːnoʊ/ ⓘ JOO-noh; Tlingit: Dzánti K'ihéeni [ˈtsʌ́ntʰɪ̀ kʼɪ̀ˈhíːnɪ̀] transl.  Base of the Flounder's River), officially the City and Borough of Juneau, is the capital of the U.S. state of Alaska, located along the Gastineau Channel and the Alaskan panhandle.  Juneau was named the capital of Alaska in 1906, when the government of what was then the District of Alaska was moved from Sitka as dictated by the U.S. Congress in 1900.  On July 1, 1970, the City of Juneau merged with the City of Douglas and the surrounding Greater Juneau Borough to form the current consolidated city-borough, which ranks as the second-largest municipality in the United States by area and is larger than either Rhode Island or Delaware. </First Paragraph><Selected Content>Atop the mountains is the Juneau Icefield, a large ice mass from which about 30 glaciers flow; two of them, the Mendenhall Glacier and the Lemon Creek Glacier, are visible from the local road system.  The Mendenhall Glacier has been gradually retreating; its front face is declining in width and height.  The Alaska State Capitol in downtown Juneau was built as the Federal and Territorial Building in 1931.  Prior to statehood, it housed federal government offices, the federal courthouse, and a post office.  It also housed the territorial legislature and other territorial offices, including that of the governor. </Selected Content>
+
+Thought: The title of this page is Juneau, Alaska, so we can submit Juneau as the answer to this step
+Action: SUBMIT_STEP(Juneau)
+Answer to Step 3: Juneau
+---
