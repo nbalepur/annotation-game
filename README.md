@@ -1,4 +1,4 @@
-🌌 Planorama
+# Planorama
 
 [![Paper](https://img.shields.io/badge/Paper-EMNLP%202025-blue)](https://nbalepur.github.io/assets/pdf/Planorama.pdf)
 [![Dataset](https://img.shields.io/badge/Dataset-HuggingFace-orange)](https://huggingface.co/datasets/nbalepur/Planorama-user-data)
