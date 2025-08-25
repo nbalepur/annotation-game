@@ -8,8 +8,8 @@
 
 This repository contains the code for **Planorama**, the interface developed for our EMNLP 2025 paper.  
 
-📄 [Read the paper](https://nbalepur.github.io/assets/pdf/Planorama.pdf)  
-📊 [Explore the dataset](https://huggingface.co/datasets/nbalepur/Planorama-user-data)  
+📄 Our paper: https://nbalepur.github.io/assets/pdf/Planorama.pdf  
+📊 Our dataset of  preferences and outcomes when using plans in Planorama: https://huggingface.co/datasets/nbalepur/Planorama-user-data)  
 
 ---
 
