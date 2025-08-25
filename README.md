@@ -1,90 +1,119 @@
-# Kuiperbowl
+# 🌌 Planorama
 
-Real-time multiplayer quizbowl
+[![Paper](https://img.shields.io/badge/Paper-EMNLP%202025-blue)](https://nbalepur.github.io/assets/pdf/Planorama.pdf)
+[![Dataset](https://img.shields.io/badge/Dataset-HuggingFace-orange)](https://huggingface.co/datasets/nbalepur/Planorama-user-data)
 
-![Quizbowl game page](docs/game.png)
+> **A Good Plan is Hard to Find: Aligning Models with Preferences is Misaligned with What Helps Users**  
+> EMNLP 2025
 
-## Local Development
+This repository contains the code for **Planorama**, the interface developed for our EMNLP 2025 paper.  
 
-### Setting up PostgreSQL
-Install PostgreSQL. One quick and dirty way to install postgres is with:
-```
+📄 [Read the paper](https://nbalepur.github.io/assets/pdf/Planorama.pdf)  
+📊 [Explore the dataset](https://huggingface.co/datasets/nbalepur/Planorama-user-data)  
+
+---
+
+## 🚀 Local Development
+
+### 1. PostgreSQL Setup
+Install PostgreSQL. A quick option is via Conda:
+
+```bash
 conda install anaconda::postgresql
 ```
 
-Ensure you initialize the desired file system location of the database cluster with the -D option. By default `/usr/local/pgsql/data`, but you might run into issues using WSL if you don't use a home subdirectory, but you might run into issues using WSL if you don't use a home subdirectory.
-```
+Initialize a database cluster (⚠️ WSL users: prefer a subdirectory under `$HOME`):
+
+```bash
 mkdir datadir
 pg_ctl -D datadir initdb
 pg_ctl -D datadir -l logfile start
 ```
 
-Create a user called `postgres` and a database called `kuiperbowl`.
-```
+Create the user and database:
+
+```bash
 createuser -s postgres
 createdb -U postgres -h localhost -p 5432 kuiperbowl
 ```
 
-Configure `web/.env.local` from `.env` with proper credentials.
+Then, configure `web/.env.local` from `.env` with your credentials.
 
-### Run the application
-Set up a virtual environment if desired:
+---
 
-```
-conda create -n helpfulness       
+### 2. Application Setup
+
+Create and activate a virtual environment:
+
+```bash
+conda create -n helpfulness
 conda activate helpfulness
 conda install pip
 ```
 
-Then, run:
+Install dependencies & set up:
 
-```
+```bash
 cd web
-
-pip install -r "requirements.txt"
+pip install -r requirements.txt
 python manage.py migrate
+```
 
-# Start redist cache for channel layer
-# https://channels.readthedocs.io/en/stable/tutorial/part_2.html#enable-a-channel-layer
+Start Redis for channel layers (via Docker):
+
+```bash
 docker run -p 6379:6379 -d redis:5
+```
 
+Load fixtures:
+
+```bash
 python manage.py loaddata fixtures/question_fixtures.json
 python manage.py loaddata fixtures/document_fixtures.json
+```
 
+Run the server:
+
+```bash
 python manage.py runserver --insecure
 ```
 
-## Entering Tossup Data
+---
 
-Tossup questions can be loaded easily from a fixture. Data can be downloaded
-from the [Protobowl DB dumps repo](https://github.com/neotenic/database-dumps)
-or custom made. See `fixtures/sample.json` for an example custom fixture.
+## 📚 Entering Question Data
 
-```
-# Load fixture data from PB db dump
+Our math and trivia questions can be loaded directly from the repository:
+```bash
 cd web
 python scripts/pb_load.py
-python manage.py loaddata fixtures/pbdump.json
+python manage.py loaddata fixtures/sanity_tutorial_questions.json
+python manage.py loaddata fixtures/question_fixtures.json
 ```
 
-## Using Docker
+---
 
-### Set Up and Run
+## 🐳 Using Docker
 
-Configure `.env` with proper credentials.
+### Quick Start
 
-Start application:
+1. Configure `.env` with the correct credentials.  
+2. Build and run:
 
-```
+```bash
 docker-compose up --build
 ```
 
-### Loading Data
+---
+
+## 📖 Citation
+
+If you use this code or dataset, please cite our EMNLP 2025 paper:
 
 ```
-# Get container name of kuiperbowl_web
-docker ps
-
-docker exec -it <CONTAINER ID> bash
-python /usr/src/app/manage.py loaddata <FIXTURE PATH>
+@inproceedings{balepur2025planorama,
+  title={A Good Plan is Hard to Find: Aligning Models with Preferences is Misaligned with What Helps Users},
+  author={Balepur, N. and others},
+  booktitle={Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year={2025}
+}
 ```
